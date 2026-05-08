@@ -7,6 +7,8 @@
 >
 > For HTTP transport or remote Blender setup, see [blender_mcp-remote.md](./docs/blender_mcp-remote.md) (English) / [blender_mcp-remote_zh.md](./docs/blender_mcp-remote_zh.md) (中文).
 
+![Claude Code + Blender MCP 架构图](./assets/imgs/claude-code-mcp-blender.png)
+
 ---
 
 ## Requirements

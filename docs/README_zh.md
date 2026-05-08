@@ -7,6 +7,8 @@
 >
 > HTTP 模式或远端控制局域网 Blender 的方案，参见 [blender_mcp-remote_zh.md](./blender_mcp-remote_zh.md)。
 
+![Claude Code + Blender MCP 架构图](../assets/imgs/claude-code-mcp-blender.png)
+
 ---
 
 ## 1. 环境假设

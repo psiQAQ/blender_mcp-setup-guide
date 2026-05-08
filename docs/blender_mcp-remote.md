@@ -7,6 +7,8 @@
 >
 > For local single-machine setup, see [README_zh.md](./README_zh.md).
 
+![Claude Code + Blender MCP Architecture](../assets/imgs/claude-code-mcp-blender.png)
+
 ---
 
 ## 0. Key Takeaways (Read First)

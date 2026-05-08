@@ -7,6 +7,8 @@
 >
 > 单机本地部署方案，参见 [README_zh.md](./README_zh.md)。
 
+![Claude Code + Blender MCP 架构图](../assets/imgs/claude-code-mcp-blender.png)
+
 ---
 
 ## 0. 关键结论（先读）
