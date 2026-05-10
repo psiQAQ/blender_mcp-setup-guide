@@ -3,3 +3,7 @@ __pycache__/
 .venv/
 build/
 .assets/*:Zone.Identifier
+submodules/
+docs/superpowers/
+docs/extension-dev-prompt.md
+.claude/settings.local.json

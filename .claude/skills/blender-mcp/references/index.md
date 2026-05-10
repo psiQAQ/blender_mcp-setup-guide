@@ -1,0 +1,33 @@
+# Blender MCP Plugin Development References
+
+This directory contains modular reference docs for Blender add-on and extension development workflows used by this skill.
+
+## Recommended reading order
+
+1. [Template Guide](./template-guide.md)
+2. [System Adaptation](./system-adaptation.md)
+3. [Extension Workflow](./extension-workflow.md)
+4. [Lifecycle](./lifecycle.md)
+5. [Pitfalls and Fixes](./pitfalls-and-fixes.md)
+6. [Migration Notes](./migration-notes.md)
+
+## When to use which doc
+
+- If you need to create a new add-on scaffold: start with **Template Guide**.
+- If you are about to run Blender commands or edit add-on files: read **System Adaptation** first.
+- If you need iterative reload flow: use **Extension Workflow**.
+- If registration/unregistration behaves unexpectedly: check **Lifecycle** and **Pitfalls and Fixes**.
+- If you are converting old `bl_info` style add-ons to extension mode: check **Migration Notes**.
+
+## Built-in template
+
+Default local template path:
+
+- `.claude/skills/blender-mcp/templates/extension_addon/`
+
+The skill should ask users whether they want to reuse this template when they request:
+
+- create plugin scaffolding
+- create template
+- create new add-on
+- create extension add-on

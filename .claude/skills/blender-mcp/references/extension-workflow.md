@@ -1,0 +1,120 @@
+# Extension Development Workflow
+
+Use this workflow for iterative extension add-on development.
+
+## Before running commands or file operations
+
+Read:
+
+- `./system-adaptation.md`
+
+That document defines how to:
+
+- detect agent runtime system and Blender runtime system
+- choose same-system or cross-system file strategy
+- resolve path handling details (including WSL `/mnt/c/...` cases)
+
+## Template policy
+
+Use only this template:
+
+- `templates/extension_addon/`
+
+Registration flow is autoload-only (`auto_load.py`).
+
+## Version policy
+
+Target Blender 4.2+ extension workflow.
+
+Do not add legacy add-on compatibility branches in the default flow.
+
+## Core iteration loop
+
+1. Edit code in project workspace.
+2. Copy/update only changed files into Blender add-on folder.
+3. Disable and re-enable add-on in Blender.
+4. Verify behavior.
+5. Repeat until stable.
+
+## Minimal reload commands
+
+```python
+bpy.ops.preferences.addon_disable(module="my_addon")
+bpy.ops.preferences.addon_enable(module="my_addon")
+```
+
+## Build-before-reload (optional)
+
+When the extension has build artifacts or generated outputs, run build scripts before reload.
+
+Recommended order:
+
+1. Run build script (only if your project requires it).
+2. Sync changed files to Blender target directory.
+3. Run add-on disable/enable.
+
+## sync_and_reload helper (optional)
+
+Template script:
+
+- `templates/extension_addon/scripts/sync_and_reload.py`
+
+Purpose:
+
+- Provides `--source`, `--target`, `--module`, `--dry-run` CLI.
+- Syncs only newer/new files (currently `.py` / `.toml` / `.json`).
+- Prints next-step Blender reload commands and does not call Blender API.
+
+Example:
+
+```bash
+python templates/extension_addon/scripts/sync_and_reload.py \
+  --source /path/to/workspace/addon_src \
+  --target "/path/to/blender/addons/my_addon" \
+  --module my_addon \
+  --dry-run
+```
+
+WSL development + Windows Blender example:
+
+```bash
+python templates/extension_addon/scripts/sync_and_reload.py \
+  --source /home/ustcw/project-folder/blender_mcp/my_addon \
+  --target "/mnt/c/Users/<user>/AppData/Roaming/Blender Foundation/Blender/4.5/scripts/addons/my_addon" \
+  --module my_addon \
+  --dry-run
+```
+
+## No auto-install policy
+
+- The extension iteration workflow never auto-installs Python packages.
+- The helper only syncs files and prints reload hints.
+- If dependencies are missing, install only after explicit user confirmation.
+
+## CI release reference (extension-native)
+
+Use this as a minimal GitHub Actions reference for extension package builds.
+
+```yaml
+name: extension-release
+on:
+  push:
+    tags:
+      - "v*"
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: blender --command extension build --source-dir . --output-dir dist
+```
+
+### version consistency check
+
+Before build, validate git tag and manifest `version` consistency. Fail fast when they do not match.
+
+## Safety checks
+
+- Quote paths with spaces.
+- Use module name (not display name) for disable/enable.
+- Avoid relying on `hasattr(bpy.ops...)` for unregister checks.

@@ -1,0 +1,39 @@
+schema_version = "1.0.0"
+
+id = "your_extension_id"
+version = "0.1.0"
+name = "Your Extension Name"
+tagline = "Starter template for a Blender extension add-on"
+maintainer = "Your Name"
+type = "add-on"
+
+# Extension system is available from Blender 4.2+
+blender_version_min = "4.2.0"
+
+license = [
+  "SPDX:GPL-3.0-or-later",
+]
+
+# Optional metadata
+# website = "https://example.com"
+# tags = ["Development"]
+
+# Optional permissions (add only what you really need)
+# [permissions]
+# files = "Import and export files"
+# network = "Sync data with a remote service"
+# clipboard = "Copy values to the system clipboard"
+
+# Optional wheels (extension packaging expects bundled wheel files)
+# wheels = [
+#   "./wheels/example_pkg-0.1.0-py3-none-any.whl",
+# ]
+
+# Optional build config
+# [build]
+# paths_exclude_pattern = [
+#   "__pycache__/",
+#   "/.git/",
+#   "/*.zip",
+#   "*.pyc",
+# ]
