@@ -21,9 +21,13 @@ This directory contains modular reference docs for Blender add-on and extension 
 - If registration/unregistration behaves unexpectedly: check **Lifecycle** and **Pitfalls and Fixes**.
 - If you are converting old `bl_info` style add-ons to extension mode: check **Migration Notes**.
 
-## Installation reference (raw)
+## Setup guide reference (raw)
 
-Use this when `blender-mcp` command or Claude MCP registration is missing:
+Use this when `blender-mcp` command or Claude MCP registration is missing.
+
+Note:
+- This guide is maintained by this repository (not official Blender documentation).
+- It is used to install official Blender MCP components.
 
 - Local setup (EN): `https://raw.githubusercontent.com/psiQAQ/blender_mcp-setup-guide/main/docs/blender_mcp-setup_en.md`
 

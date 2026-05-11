@@ -1,6 +1,6 @@
 ---
 name: blender-mcp-skills
-description: Use when users need Blender MCP setup or extension workflows, including installing official blender-mcp/add-on, fixing missing MCP connections, creating extension templates, or handling register/unregister/reload behavior across different runtime systems.
+description: Use when users need Blender MCP setup or extension workflows, including installing blender-mcp server + Blender MCP add-on components, fixing missing MCP connections, creating extension templates, or handling register/unregister/reload behavior across different runtime systems.
 type: skills
 ---
 
@@ -12,7 +12,7 @@ This skill provides a reliable workflow for Blender extension add-on development
 
 Trigger this skill whenever users ask to:
 
-- install official Blender MCP (Blender Add-on + blender-mcp server)
+- install Blender MCP components (Blender Add-on + blender-mcp server)
 - fix missing blender-mcp command or missing Claude MCP connection
 - create plugin scaffolding
 - create a template
@@ -21,16 +21,21 @@ Trigger this skill whenever users ask to:
 - migrate legacy add-on structure to extension structure
 - debug register/unregister/reload lifecycle issues
 
-## Official Blender MCP install gate (mandatory)
+## Blender MCP component install gate (mandatory)
 
 Before extension development, always run a readiness check:
 
 1. `blender-mcp --help` must run successfully.
 2. `claude mcp list` must show a configured Blender MCP server entry.
 
-If either check fails, stop development tasks and run official installation first.
+If either check fails, stop development tasks and run the repository-maintained setup guide first.
 
-Official tutorial (raw URL):
+Setup guide source note:
+
+- This guide is maintained by this repository (not official Blender documentation).
+- Its goal is to install official Blender MCP components correctly.
+
+Setup guide (raw URL):
 
 - Local setup (EN): `https://raw.githubusercontent.com/psiQAQ/blender_mcp-setup-guide/main/docs/blender_mcp-setup_en.md`
 
