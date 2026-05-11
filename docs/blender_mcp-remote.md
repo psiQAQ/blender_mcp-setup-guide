@@ -5,7 +5,7 @@
 > Control Blender on a remote machine over LAN from Claude Code using Blender's official MCP Server.  
 > Architecture: `Claude Code (local) ⇄ (stdio or HTTP) ⇄ blender-mcp process (local) ⇄ (TCP socket) ⇄ Blender MCP Add-on (remote) ⇄ Blender Python API`
 >
-> For local single-machine setup, see [README_zh.md](./README_zh.md).
+> For local single-machine setup, see [blender_mcp-setup_en.md](./blender_mcp-setup_en.md).
 
 ![Claude Code + Blender MCP Architecture](../assets/imgs/claude-code-mcp-blender.png)
 

@@ -1,9 +1,13 @@
 #!/usr/bin/env python3
-"""Preflight checks for Blender extension templates."""
+"""Validate Blender extension metadata and run Blender extension validate."""
 
 from __future__ import annotations
 
+import argparse
 import ast
+import os
+import shutil
+import subprocess
 import sys
 from pathlib import Path
 
@@ -18,13 +22,75 @@ REQUIRED_MANIFEST_KEYS = (
     "id",
     "version",
     "name",
+    "tagline",
+    "maintainer",
     "type",
     "blender_version_min",
     "license",
 )
 
 
-def _discover_extension_root() -> Path:
+def _normalize_os_name(value: str) -> str:
+    v = value.strip().lower()
+    if v in {"windows", "win32", "cygwin", "msys"}:
+        return "windows"
+    if v in {"linux", "gnu/linux"}:
+        return "linux"
+    if v in {"darwin", "macos", "mac", "osx"}:
+        return "darwin"
+    return v
+
+
+def _is_wsl() -> bool:
+    import platform
+
+    release = platform.release().lower()
+    return "microsoft" in release or "wsl" in release
+
+
+def _to_wsl_path(path_value: str) -> str:
+    p = path_value.strip()
+    if len(p) < 3 or p[1:3] != ":\\":
+        return p
+
+    drive = p[0].lower()
+    rest = p[3:].replace("\\", "/")
+    return f"/mnt/{drive}/{rest}" if rest else f"/mnt/{drive}/"
+
+
+def _resolve_blender_binary(user_blender: str | None) -> str:
+    candidates: list[str] = []
+
+    if user_blender:
+        candidates.append(user_blender)
+
+    env_blender = os.environ.get("BLENDER_BIN", "").strip() or os.environ.get("BLENDER", "").strip()
+    if env_blender:
+        candidates.append(env_blender)
+
+    if shutil.which("blender"):
+        candidates.append("blender")
+
+    for candidate in candidates:
+        if candidate == "blender":
+            return candidate
+
+        if _is_wsl():
+            wsl_candidate = _to_wsl_path(candidate)
+            if wsl_candidate != candidate and Path(wsl_candidate).exists():
+                return wsl_candidate
+
+        if Path(candidate).exists():
+            return candidate
+
+    raise RuntimeError(
+        "Unable to locate Blender executable for extension validate. Provide --blender, set BLENDER_BIN/BLENDER, or add blender to PATH."
+    )
+
+
+def _discover_extension_root(source_path: str | None) -> Path:
+    if source_path:
+        return Path(source_path).resolve()
     return Path(__file__).resolve().parent.parent
 
 
@@ -95,8 +161,31 @@ def _scan_absolute_import_warnings(extension_root: Path, project_modules: set[st
     return warnings
 
 
+def _run_blender_validate(blender_bin: str, source_path: Path, valid_tags_json: str | None) -> None:
+    cmd = [blender_bin, "--command", "extension", "validate"]
+    if valid_tags_json:
+        cmd.extend(["--valid-tags", valid_tags_json])
+    cmd.append(str(source_path))
+
+    proc = subprocess.run(cmd, check=False)
+    if proc.returncode != 0:
+        raise RuntimeError(f"Blender extension validate failed with exit code {proc.returncode}")
+
+
 def main() -> int:
-    extension_root = _discover_extension_root()
+    parser = argparse.ArgumentParser(description="Run preflight checks and Blender extension validate.")
+    parser.add_argument("--source-path", help="Extension source path (default: template root).")
+    parser.add_argument("--blender", help="Blender executable path.")
+    parser.add_argument("--valid-tags", help="Optional JSON file for Blender valid-tags validation.")
+    parser.add_argument(
+        "--skip-blender-validate",
+        action="store_true",
+        help="Run local preflight only and skip Blender extension validate.",
+    )
+
+    args = parser.parse_args()
+
+    extension_root = _discover_extension_root(args.source_path)
     manifest_path = extension_root / "blender_manifest.toml"
 
     errors: list[str] = []
@@ -107,7 +196,7 @@ def main() -> int:
     else:
         try:
             manifest = _read_manifest(manifest_path)
-        except Exception as exc:  # pragma: no cover
+        except Exception as exc:
             errors.append(f"failed to parse blender_manifest.toml: {exc}")
             manifest = {}
 
@@ -141,8 +230,9 @@ def main() -> int:
     if errors:
         for msg in errors:
             print(f"ERROR: {msg}")
-    else:
-        print("OK: manifest and wheel checks passed")
+        return 1
+
+    print("OK: local preflight checks passed")
 
     if warns:
         for msg in warns:
@@ -150,7 +240,26 @@ def main() -> int:
     else:
         print("OK: no project absolute-import warnings")
 
-    return 1 if errors else 0
+    if args.skip_blender_validate:
+        print("OK: skipped blender extension validate")
+        return 0
+
+    try:
+        blender_bin = _resolve_blender_binary(args.blender)
+    except RuntimeError as exc:
+        print(f"ERROR: {exc}")
+        return 1
+
+    print(f"INFO: blender_binary={blender_bin}")
+
+    try:
+        _run_blender_validate(blender_bin, extension_root, args.valid_tags)
+    except RuntimeError as exc:
+        print(f"ERROR: {exc}")
+        return 1
+
+    print("OK: blender extension validate passed")
+    return 0
 
 
 if __name__ == "__main__":

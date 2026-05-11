@@ -5,15 +5,17 @@ This directory contains modular reference docs for Blender add-on and extension 
 ## Recommended reading order
 
 1. [Template Guide](./template-guide.md)
-2. [System Adaptation](./system-adaptation.md)
-3. [Extension Workflow](./extension-workflow.md)
-4. [Lifecycle](./lifecycle.md)
-5. [Pitfalls and Fixes](./pitfalls-and-fixes.md)
-6. [Migration Notes](./migration-notes.md)
+2. [Manifest Fields](./manifest-fields.md)
+3. [System Adaptation](./system-adaptation.md)
+4. [Extension Workflow](./extension-workflow.md)
+5. [Lifecycle](./lifecycle.md)
+6. [Pitfalls and Fixes](./pitfalls-and-fixes.md)
+7. [Migration Notes](./migration-notes.md)
 
 ## When to use which doc
 
 - If you need to create a new add-on scaffold: start with **Template Guide**.
+- If you need to edit or review `blender_manifest.toml`: check **Manifest Fields**.
 - If you are about to run Blender commands or edit add-on files: read **System Adaptation** first.
 - If you need iterative reload flow: use **Extension Workflow**.
 - If registration/unregistration behaves unexpectedly: check **Lifecycle** and **Pitfalls and Fixes**.
@@ -23,7 +25,7 @@ This directory contains modular reference docs for Blender add-on and extension 
 
 Default local template path:
 
-- `.claude/skills/blender-mcp/templates/extension_addon/`
+- `.claude/skills/blender-mcp-skills/templates/extension_addon/`
 
 The skill should ask users whether they want to reuse this template when they request:
 

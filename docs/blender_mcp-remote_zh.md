@@ -5,7 +5,7 @@
 > 目标：在本机运行 Claude Code，通过 Blender 官方 MCP Server 远端控制局域网内另一台电脑上的 Blender。  
 > 架构：`本机 Claude Code ⇄ (stdio 或 HTTP) ⇄ 本机 blender-mcp 进程 ⇄ (TCP socket) ⇄ 远端 Blender MCP Add-on ⇄ Blender Python API`
 >
-> 单机本地部署方案，参见 [README_zh.md](./README_zh.md)。
+> 单机本地部署方案，参见 [blender_mcp-setup_zh.md](./blender_mcp-setup_zh.md)。
 
 ![Claude Code + Blender MCP 架构图](../assets/imgs/claude-code-mcp-blender.png)
 

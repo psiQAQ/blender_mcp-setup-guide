@@ -30,6 +30,7 @@ result = {
     "blender_system": platform.system(),
     "blender_version": bpy.app.version_string,
     "binary_path": bpy.app.binary_path,
+    "binary_path_python": getattr(bpy.app, "binary_path_python", ""),
     "scripts_user": bpy.utils.user_resource("SCRIPTS", path="addons"),
 }
 ```

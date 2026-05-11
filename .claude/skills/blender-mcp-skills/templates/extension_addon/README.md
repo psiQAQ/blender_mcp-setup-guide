@@ -13,14 +13,20 @@ extension_addon/
 ├─ blender_manifest.toml
 ├─ __init__.py
 ├─ auto_load.py
-├─ _properties.py
-├─ _operators.py
-├─ _panels.py
-├─ _preferences.py
+├─ properties.py
+├─ preferences.py
+├─ operators/
+│  ├─ __init__.py
+│  └─ object_ops.py
+├─ panels/
+│  ├─ __init__.py
+│  └─ viewport_panel.py
+├─ utils/
+│  ├─ __init__.py
+│  └─ common.py
 ├─ scripts/
-│  ├─ preflight_extension.py
-│  ├─ build_extension.sh
-│  ├─ build_extension.ps1
+│  ├─ validate_extension.py
+│  ├─ build_extension.py
 │  └─ sync_and_reload.py
 └─ README.md
 ```
@@ -45,31 +51,40 @@ Use this template for Blender 4.2+ extension development.
 Run in the extension root directory (where `blender_manifest.toml` is located):
 
 ```bash
-blender --command extension build
+python scripts/build_extension.py
 ```
 
-## Scripted preflight and build
+## Scripted validation and build
 
 Run from the extension root (the folder containing `blender_manifest.toml`).
 
 ```bash
-# Run checks only
-python scripts/preflight_extension.py
+# Optional: gather Blender runtime info from MCP and save to JSON
+# (binary_path / binary_path_python / blender_system / extension_root)
 
-# Build with preflight (Bash)
-bash scripts/build_extension.sh
+# Validate (local preflight + blender --command extension validate)
+python scripts/validate_extension.py
 
-# Show Bash script help
-bash scripts/build_extension.sh --help
+# Validate with explicit Blender executable
+python scripts/validate_extension.py \
+  --blender "/path/to/blender"
+
+# Unified build entrypoint (runs validate_extension.py first)
+python scripts/build_extension.py \
+  --mcp-info-json /path/to/blender_mcp_info.json
+
+# Cross-system mode example (WSL -> Windows Blender)
+python scripts/build_extension.py \
+  --mcp-info-json /path/to/blender_mcp_info.json \
+  --allow-cross-system
 ```
 
-```powershell
-# Build with preflight (PowerShell)
-pwsh -File scripts/build_extension.ps1
+Python interpreter selection priority used by script orchestration:
 
-# Show PowerShell script help
-pwsh -File scripts/build_extension.ps1 -Help
-```
+1. User-specified interpreter (`--python` or `EXTENSION_DEV_PYTHON`)
+2. Project virtual environment (`.venv`)
+3. Blender bundled Python (`binary_path_python` from MCP info JSON or `BLENDER_PYTHON`)
+4. System Python from PATH (`python3` / `python`)
 
 ## sync_and_reload helper (optional)
 

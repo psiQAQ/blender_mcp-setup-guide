@@ -1,5 +1,7 @@
 import bpy
 
+from ..utils.common import get_extension_settings
+
 
 class EXAMPLE_PT_panel(bpy.types.Panel):
     bl_idname = "EXAMPLE_PT_panel"
@@ -10,7 +12,7 @@ class EXAMPLE_PT_panel(bpy.types.Panel):
 
     def draw(self, context):
         layout = self.layout
-        settings = getattr(context.scene, "example_extension_settings", None)
+        settings = get_extension_settings(context)
 
         if settings:
             layout.prop(settings, "message")

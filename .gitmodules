@@ -1,0 +1,21 @@
+[submodule "submodules/BlenderAddonPackageTool"]
+	path = submodules/BlenderAddonPackageTool
+	url = https://github.com/xzhuah/BlenderAddonPackageTool
+[submodule "submodules/blender_vscode"]
+	path = submodules/blender_vscode
+	url = https://github.com/JacquesLucke/blender_vscode
+[submodule "submodules/AdvancedBlenderAddon"]
+	path = submodules/AdvancedBlenderAddon
+	url = https://github.com/eliemichel/AdvancedBlenderAddon
+[submodule "submodules/blender-addon-template"]
+	path = submodules/blender-addon-template
+	url = https://github.com/b0o/blender-addon-template
+[submodule "submodules/clean-blender-addon-template"]
+	path = submodules/clean-blender-addon-template
+	url = https://github.com/martin-lorentzon/clean-blender-addon-template
+[submodule "submodules/blender-extension-template"]
+	path = submodules/blender-extension-template
+	url = https://github.com/lokimckay/blender-extension-template
+[submodule "submodules/BlenderTemplate"]
+	path = submodules/BlenderTemplate
+	url = https://github.com/ux3d/BlenderTemplate

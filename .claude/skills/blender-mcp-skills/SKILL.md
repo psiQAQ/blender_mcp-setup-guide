@@ -1,5 +1,5 @@
 ---
-name: blender-mcp
+name: blender-mcp-skills
 description: Use when users need Blender MCP plugin or extension workflows, especially creating scaffolds/templates/new add-ons, handling register/unregister/reload behavior, or adapting file and command operations across different runtime systems.
 type: skills
 ---
@@ -31,7 +31,7 @@ Before implementation, ask:
 ## Built-in template policy
 
 - Keep one local template:
-  - `.claude/skills/blender-mcp/templates/extension_addon/`
+  - `.claude/skills/blender-mcp-skills/templates/extension_addon/`
 - Registration strategy is autoload-only (`auto_load.py` topology registration).
 - Keep template source code in template directories.
 - Do not inline full template source code inside `SKILL.md`.
@@ -40,7 +40,7 @@ Before implementation, ask:
 
 Before running Blender commands or touching add-on files, read:
 
-- `.claude/skills/blender-mcp/references/system-adaptation.md`
+- `.claude/skills/blender-mcp-skills/references/system-adaptation.md`
 
 That document defines:
 
@@ -48,6 +48,22 @@ That document defines:
 - how to detect the Blender runtime system
 - how to choose same-system vs cross-system path strategy
 - how to handle WSL-mounted Windows paths (such as `/mnt/c/...`) when applicable
+
+For build operations, always query runtime facts through MCP first and validate before execution:
+
+- Blender executable location (`bpy.app.binary_path`)
+- Blender bundled Python (`bpy.app.binary_path_python` when available)
+- Blender runtime system (`platform.system()` in Blender)
+- Extension root containing `blender_manifest.toml` (must match the local build target)
+
+## Python environment priority for template scripts
+
+When running template scripts for checks, tests, and build, use this interpreter priority:
+
+1. User-specified extension development Python environment
+2. Project virtual environment (`.venv`)
+3. Blender bundled Python (from MCP-discovered `bpy.app.binary_path_python`)
+4. System Python available in PATH
 
 ## Minimal reload commands
 
@@ -68,10 +84,11 @@ Use module name (not display name).
 
 ## Reference navigation
 
-- Index: `.claude/skills/blender-mcp/references/index.md`
-- System adaptation: `.claude/skills/blender-mcp/references/system-adaptation.md`
-- Extension workflow: `.claude/skills/blender-mcp/references/extension-workflow.md`
-- Lifecycle: `.claude/skills/blender-mcp/references/lifecycle.md`
-- Pitfalls and fixes: `.claude/skills/blender-mcp/references/pitfalls-and-fixes.md`
-- Template guide: `.claude/skills/blender-mcp/references/template-guide.md`
-- Migration notes: `.claude/skills/blender-mcp/references/migration-notes.md`
+- Index: `.claude/skills/blender-mcp-skills/references/index.md`
+- System adaptation: `.claude/skills/blender-mcp-skills/references/system-adaptation.md`
+- Extension workflow: `.claude/skills/blender-mcp-skills/references/extension-workflow.md`
+- Lifecycle: `.claude/skills/blender-mcp-skills/references/lifecycle.md`
+- Pitfalls and fixes: `.claude/skills/blender-mcp-skills/references/pitfalls-and-fixes.md`
+- Template guide: `.claude/skills/blender-mcp-skills/references/template-guide.md`
+- Manifest fields: `.claude/skills/blender-mcp-skills/references/manifest-fields.md`
+- Migration notes: `.claude/skills/blender-mcp-skills/references/migration-notes.md`

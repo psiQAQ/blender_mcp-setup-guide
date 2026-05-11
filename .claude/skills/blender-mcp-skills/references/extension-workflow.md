@@ -49,9 +49,18 @@ When the extension has build artifacts or generated outputs, run build scripts b
 
 Recommended order:
 
-1. Run build script (only if your project requires it).
-2. Sync changed files to Blender target directory.
-3. Run add-on disable/enable.
+1. Query Blender runtime facts through MCP (`binary_path`, `binary_path_python`, Blender runtime system) and confirm the extension root containing `blender_manifest.toml`.
+2. Review manifest fields against `./manifest-fields.md` when metadata was edited.
+3. Run unified Python build entrypoint (`scripts/build_extension.py`) which calls `scripts/validate_extension.py` first.
+4. Sync changed files to Blender target directory.
+5. Run add-on disable/enable.
+
+Python interpreter priority for script execution:
+
+1. User-specified extension development Python environment
+2. Project virtual environment (`.venv`)
+3. Blender bundled Python from MCP (`bpy.app.binary_path_python`)
+4. System Python in PATH
 
 ## sync_and_reload helper (optional)
 
@@ -106,7 +115,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - run: blender --command extension build --source-dir . --output-dir dist
+      - run: python scripts/build_extension.py
 ```
 
 ### version consistency check
