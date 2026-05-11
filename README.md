@@ -4,13 +4,27 @@
 
 ![Claude Code + Blender MCP 架构图](assets/imgs/claude-code-mcp-blender.png)
 
-A practical repository for building and operating Blender MCP workflows with Claude Code.
+This repository provides two things together:
 
-## What this repo provides
+1. **Official Blender MCP installation tutorials** (local and remote)
+2. **A matching practical skill package** (`blender-mcp-skills`) with templates and development guidance
 
-- Local and remote Blender MCP setup guides
-- An extension-only Blender add-on template (Blender 4.2+)
-- Python-based validation/build helpers for extension packaging
+It is designed to let agents install first, then build extension workflows consistently.
+
+## One-line prompt for agent (official installation)
+
+```text
+Follow https://raw.githubusercontent.com/psiQAQ/blender_mcp-setup-guide/main/docs/blender_mcp-setup_en.md to install the official Blender MCP (Blender Add-on + blender-mcp server), register it with Claude Code, and verify the connection end-to-end.
+```
+
+## Skill capabilities (brief)
+
+`blender-mcp-skills` focuses on:
+
+- Extension-only scaffold workflow for Blender 4.2+
+- Autoload-based module topology (`operators/panels/utils`)
+- Validation/build scripting guidance (`validate_extension.py`, `build_extension.py`)
+- Cross-system runtime adaptation hints (WSL/Linux/Windows path strategy)
 
 ## Tutorials
 
@@ -29,25 +43,53 @@ A practical repository for building and operating Blender MCP workflows with Cla
 npx skills add ./.claude/skills/blender-mcp-skills
 ```
 
-## Repository structure
+## Repository structure (expanded for skill)
 
 ```text
 blender_mcp/
 ├─ README.md
 ├─ LICENSE
 ├─ assets/
+│  └─ imgs/
 ├─ docs/
-├─ .claude/skills/blender-mcp-skills/
+│  ├─ README_zh.md
+│  ├─ blender_mcp-setup_en.md
+│  ├─ blender_mcp-setup_zh.md
+│  ├─ blender_mcp-remote.md
+│  └─ blender_mcp-remote_zh.md
+├─ .claude/
+│  └─ skills/
+│     └─ blender-mcp-skills/
+│        ├─ SKILL.md
+│        ├─ references/
+│        │  ├─ index.md
+│        │  ├─ template-guide.md
+│        │  ├─ extension-workflow.md
+│        │  ├─ lifecycle.md
+│        │  ├─ system-adaptation.md
+│        │  ├─ pitfalls-and-fixes.md
+│        │  ├─ migration-notes.md
+│        │  └─ manifest-fields.md
+│        └─ templates/
+│           └─ extension_addon/
+│              ├─ operators/ panels/ utils/
+│              └─ scripts/
 └─ submodules/
 ```
 
-## Prompt example
+## Prompt example (natural trigger)
 
 ```text
-Use .claude/skills/blender-mcp-skills/templates/extension_addon to scaffold a Blender 4.2+ extension-only add-on,
-keep autoload topology registration, split modules into operators/panels/utils,
-and run validate_extension.py + build_extension.py.
+I want to build a Blender add-on for [your idea].
+Please use blender-mcp-skills to drive the full workflow and deliver a releasable extension package.
 ```
+
+## TODO (next features)
+
+- Add more production-grade extension templates (by complexity)
+- Add stricter automated validation recipes
+- Add more migration playbooks from legacy add-ons
+- Add richer agent-facing prompt snippets for common tasks
 
 ## Acknowledgements
 
