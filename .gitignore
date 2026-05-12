@@ -5,6 +5,6 @@ build/
 .assets/*:Zone.Identifier
 submodules/reports
 docs/superpowers/
-docs/extension-dev-prompt.md
+docs/extension-dev-prompt*.md
 docs/extensions-getting_started.md
 .claude/settings.local.json

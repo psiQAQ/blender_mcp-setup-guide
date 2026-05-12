@@ -21,14 +21,20 @@ Trigger this skill whenever users ask to:
 - migrate legacy add-on structure to extension structure
 - debug register/unregister/reload lifecycle issues
 
-## Blender MCP component install gate (mandatory)
+## Blender MCP gate (minimal)
 
-Before extension development, always run a readiness check:
+Before extension development, run checks in this exact order:
 
 1. `blender-mcp --help` must run successfully.
-2. `claude mcp list` must show a configured Blender MCP server entry.
+2. Run one Blender MCP query and fetch these fields together:
 
-If either check fails, stop development tasks and run the repository-maintained setup guide first.
+   - Blender version (`bpy.app.version_string` or `bpy.app.version`)
+   - Blender executable path (`bpy.app.binary_path`)
+   - Runtime system (`platform.system()`)
+
+If version is lower than 5.1, remind the user that `>= 5.1` is recommended.
+
+No other gate checks are required.
 
 Setup guide source note:
 
@@ -49,6 +55,23 @@ Before implementation, ask:
    - Default recommendation: 4.2+
 2. Is extension-only delivery acceptable?
    - Default: yes, extension-only
+
+## Extension install rule (critical)
+
+For extension-only delivery, do not deploy source folders to legacy add-on paths.
+
+Use extension-native flow only:
+
+1. Build zip from extension root.
+   - Default output location: parent directory of the extension source folder.
+2. Install zip into extension repo (prefer `user_default`).
+3. Verify enabled key format `bl_ext.<repo_module>.<extension_id>`.
+4. Ensure zip path is readable by Blender host system (especially cross-system cases).
+
+Detailed install steps and examples:
+
+- `.claude/skills/blender-mcp-skills/references/extension-install.md`
+- `.claude/skills/blender-mcp-skills/references/system-adaptation.md`
 
 ## Built-in template policy
 
@@ -109,6 +132,7 @@ Use module name (not display name).
 - Index: `.claude/skills/blender-mcp-skills/references/index.md`
 - System adaptation: `.claude/skills/blender-mcp-skills/references/system-adaptation.md`
 - Extension workflow: `.claude/skills/blender-mcp-skills/references/extension-workflow.md`
+- Extension install: `.claude/skills/blender-mcp-skills/references/extension-install.md`
 - Lifecycle: `.claude/skills/blender-mcp-skills/references/lifecycle.md`
 - Pitfalls and fixes: `.claude/skills/blender-mcp-skills/references/pitfalls-and-fixes.md`
 - Template guide: `.claude/skills/blender-mcp-skills/references/template-guide.md`

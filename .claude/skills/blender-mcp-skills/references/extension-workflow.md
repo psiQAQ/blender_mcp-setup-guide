@@ -31,10 +31,36 @@ Do not add legacy add-on compatibility branches in the default flow.
 ## Core iteration loop
 
 1. Edit code in project workspace.
-2. Copy/update only changed files into Blender add-on folder.
+2. For dev reload, sync changed source files to the active development module path only when needed.
 3. Disable and re-enable add-on in Blender.
 4. Verify behavior.
 5. Repeat until stable.
+
+## Build and install (extension-native, required before delivery)
+
+1. Run `python scripts/build_extension.py` in extension root.
+2. Install generated zip into extension repo (prefer `user_default`) using Blender extension install flow.
+3. Confirm extension is enabled under key `bl_ext.<repo_module>.<extension_id>`.
+
+Do not treat extension packages as legacy add-ons. Specifically, do not deploy extension source to legacy paths like:
+
+- `.../scripts/addons/<module>`
+- `D:\\Program Files\\Blender Foundation\\addons\\<module>`
+
+Install operator example:
+
+```python
+bpy.ops.extensions.package_install_files(
+    filepath=r"C:\\path\\to\\your_extension-1.0.0.zip",
+    repo="user_default",
+    enable_on_install=True,
+    overwrite=True,
+)
+```
+
+See also:
+
+- `./extension-install.md`
 
 ## Minimal reload commands
 

@@ -65,6 +65,7 @@ blender_mcp/
 │        │  ├─ index.md
 │        │  ├─ template-guide.md
 │        │  ├─ extension-workflow.md
+│        │  ├─ extension-install.md
 │        │  ├─ lifecycle.md
 │        │  ├─ system-adaptation.md
 │        │  ├─ pitfalls-and-fixes.md

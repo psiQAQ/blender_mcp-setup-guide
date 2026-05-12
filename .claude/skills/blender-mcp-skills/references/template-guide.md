@@ -89,3 +89,24 @@ Python interpreter priority for scripted checks/build:
 2. Project virtual environment (`.venv`)
 3. Blender bundled Python from MCP (`bpy.app.binary_path_python`)
 4. System Python in PATH
+
+## Install package to Extensions repo
+
+After build, install zip to an extension repository (prefer `user_default`) instead of legacy add-on folders.
+
+```python
+bpy.ops.extensions.package_install_files(
+    filepath=r"C:\\path\\to\\your_extension-1.0.0.zip",
+    repo="user_default",
+    enable_on_install=True,
+    overwrite=True,
+)
+```
+
+Verification key pattern in preferences map:
+
+- `bl_ext.<repo_module>.<extension_id>`
+
+Detailed install checklist:
+
+- `./extension-install.md`

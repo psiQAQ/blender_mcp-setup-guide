@@ -32,6 +32,15 @@ result = {
     "binary_path": bpy.app.binary_path,
     "binary_path_python": getattr(bpy.app, "binary_path_python", ""),
     "scripts_user": bpy.utils.user_resource("SCRIPTS", path="addons"),
+    "extension_repos": [
+        {
+            "name": r.name,
+            "module": r.module,
+            "directory": r.directory,
+            "enabled": r.enabled,
+        }
+        for r in bpy.context.preferences.extensions.repos
+    ],
 }
 ```
 
@@ -48,12 +57,11 @@ If agent and Blender are on different systems, choose a shared path strategy fir
 #### B1) Agent on WSL/Linux, Blender on Windows
 
 - Preferred: write through mounted Windows path from WSL, usually `/mnt/c/...`.
-- Example add-on location pattern:
-  - `/mnt/c/Users/<user>/AppData/Roaming/Blender Foundation/Blender/<version>/scripts/addons/`
-- WSL/Windows 路径示例：
-  - WSL 源目录：`/home/ustcw/project-folder/blender_mcp/my_addon`
-  - Windows 目标目录（WSL 访问）：`/mnt/c/Users/<user>/AppData/Roaming/Blender Foundation/Blender/4.5/scripts/addons/my_addon`
-  - Windows 原生写法：`C:\Users\<user>\AppData\Roaming\Blender Foundation\Blender\4.5\scripts\addons\my_addon`
+- Build zip should be placed in a Blender-host-visible path (Windows filesystem path).
+- If agent runs in WSL but Blender runs on Windows, do not pass pure WSL paths like `/home/...` to Blender install operators.
+- Use host-resolvable paths instead, such as:
+  - Windows native path: `C:\path\to\extension.zip`
+  - UNC path from WSL source: `\\wsl.localhost\<distro>\path\to\extension.zip` (only when Blender host can access it)
 - Path conversion helpers:
 
 ```bash
@@ -76,6 +84,23 @@ script_paths = bpy.utils.script_paths(subdir="addons")
 ```
 
 For extension repository paths, inspect Blender preferences runtime state instead of assumptions.
+
+For extension-only delivery, install build zip into a Blender extension repo (prefer `user_default`) instead of copying source into legacy add-on directories.
+
+```python
+bpy.ops.extensions.package_install_files(
+    filepath=r"C:\\path\\to\\your_extension.zip",
+    repo="user_default",
+    enable_on_install=True,
+    overwrite=True,
+)
+```
+
+Zip path rule:
+
+- `filepath` must be resolvable by the Blender host runtime system.
+- Default: place zip in the extension source parent directory.
+- Keep zip outside the extension source directory itself.
 
 ## 4) Command execution safety
 

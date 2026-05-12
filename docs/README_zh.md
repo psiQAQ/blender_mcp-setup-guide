@@ -60,7 +60,7 @@ blender_mcp/
 │  ├─ SKILL.md                              # 技能入口
 │  ├─ references/                           # 开发思路与规范指导
 │  │  ├─ index.md / template-guide.md
-│  │  ├─ extension-workflow.md / lifecycle.md
+│  │  ├─ extension-workflow.md / extension-install.md / lifecycle.md
 │  │  ├─ system-adaptation.md / pitfalls-and-fixes.md
 │  │  └─ migration-notes.md / manifest-fields.md
 │  └─ templates/extension_addon/
