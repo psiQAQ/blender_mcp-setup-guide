@@ -138,6 +138,26 @@ claude mcp get blender
 
 Expected output: `Status: ✓ Connected` with `BLENDER_MCP_HOST=localhost` in the Environment section.
 
+Reference registration for other agents (example: OpenCode):
+
+Write to `~/.config/opencode/opencode.json`:
+
+```json
+{
+  "mcp": {
+    "blender": {
+      "type": "local",
+      "command": ["blender-mcp"],
+      "environment": {
+        "BLENDER_MCP_HOST": "localhost",
+        "BLENDER_MCP_PORT": "9876"
+      },
+      "enabled": true
+    }
+  }
+}
+```
+
 ### 2.5 Updating
 
 When the official repo has updates:

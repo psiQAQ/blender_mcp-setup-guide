@@ -11,7 +11,7 @@
 
 ---
 
-## 1. 环境假设
+## 环境假设
 
 | 项目 | 值 | 说明 |
 |------|-----|------|
@@ -27,13 +27,13 @@ claude mcp list
 
 ---
 
-## 2. 安装 Blender MCP Add-on
+## 1. 安装 Blender MCP Add-on
 
-### 2.1 安装 Blender 5.1+
+### 1.1 安装 Blender 5.1+
 
 从 [blender.org](https://www.blender.org/download/) 下载安装。
 
-### 2.2 安装 Add-on
+### 1.2 安装 Add-on
 
 打开 [https://www.blender.org/lab/mcp-server/](https://www.blender.org/lab/mcp-server/)，有两种安装方式：
 
@@ -42,7 +42,7 @@ claude mcp list
 
 > 拖拽安装的优势是可以收到更新通知。
 
-### 2.3 启用 Add-on
+### 1.3 启用 Add-on
 
 ```text
 Edit → Preferences → Add-ons → 搜索 "MCP"
@@ -50,7 +50,7 @@ Edit → Preferences → Add-ons → 搜索 "MCP"
 
 确认 Add-on 已启用。
 
-### 2.4 Add-on 配置（保持默认即可）
+### 1.4 Add-on 配置（保持默认即可）
 
 本地模式无需修改 Host，保持默认值：
 
@@ -65,7 +65,7 @@ Port = 9876
 Server is running
 ```
 
-### 2.5 确保 Blender 允许在线访问
+### 1.5 确保 Blender 允许在线访问
 
 Blender 5.1+ 有在线访问控制。在 Blender 中：
 
@@ -77,11 +77,11 @@ Edit → Preferences → System → Online Access → 勾选启用
 
 ---
 
-## 3. 安装 blender-mcp MCP Server
+## 2. 安装 blender-mcp MCP Server
 
 使用 `uv tool install` 全局安装，`blender-mcp` 直接作为系统命令使用。
 
-### 3.1 前置条件
+### 2.1 前置条件
 
 - 已安装 `uv`（参考 [uv 官方安装指南](https://docs.astral.sh/uv/#installation)）
 - Python ≥ 3.10
@@ -90,7 +90,7 @@ Edit → Preferences → System → Online Access → 勾选启用
 uv --version
 ```
 
-### 3.2 克隆源码到稳定位置
+### 2.2 克隆源码到稳定位置
 
 ```bash
 cd ~/.local/share
@@ -99,7 +99,7 @@ git clone --depth 1 https://projects.blender.org/lab/blender_mcp.git
 
 > `pyproject.toml` 在 `blender_mcp/mcp/` 下（非根目录），后续安装操作都在 `mcp/` 中进行。
 
-### 3.3 全局安装
+### 2.3 全局安装
 
 ```bash
 cd ~/.local/share/blender_mcp/mcp
@@ -115,7 +115,7 @@ blender-mcp --help
 
 > `uv tool install` 将包安装到 uv 的独立工具目录，不会污染系统 Python。
 
-### 3.4 注册到 Claude Code
+### 2.4 注册到 Claude Code
 
 Claude Code 通过 `claude mcp add` 注册 MCP Server。stdio 模式下 Claude Code 自动管理 `blender-mcp` 进程，退出时自动关闭。
 
@@ -137,7 +137,27 @@ claude mcp get blender
 
 应显示 `Status: ✓ Connected` 且 `Environment` 中包含 `BLENDER_MCP_HOST=localhost`。
 
-### 3.5 更新方法（git pull 兼容）
+其他 agent 可参考的注册方式（示例：OpenCode）：
+
+写入 `~/.config/opencode/opencode.json`：
+
+```json
+{
+  "mcp": {
+    "blender": {
+      "type": "local",
+      "command": ["blender-mcp"],
+      "environment": {
+        "BLENDER_MCP_HOST": "localhost",
+        "BLENDER_MCP_PORT": "9876"
+      },
+      "enabled": true
+    }
+  }
+}
+```
+
+### 2.5 更新方法（git pull 兼容）
 
 ```bash
 cd ~/.local/share/blender_mcp
@@ -157,7 +177,7 @@ blender-mcp --help
 
 > **为什么用 `--reinstall` 而不是 `upgrade`**：`uv tool install` 从本地路径安装，`upgrade` 仅检查 PyPI。`--reinstall` 强制从当前源码重新构建安装。
 
-### 3.6 卸载方法
+### 2.6 卸载方法
 
 ```bash
 # 1. 从 Claude Code 移除 MCP Server 注册
@@ -173,9 +193,9 @@ rm -rf ~/.local/share/blender_mcp
 
 ---
 
-## 4. 完整连接测试
+## 3. 完整连接测试
 
-### 4.1 检查 MCP 连接状态
+### 3.1 检查 MCP 连接状态
 
 启动 Claude Code：
 
@@ -191,7 +211,7 @@ claude
 
 确认 `blender` 状态为 **connected**。
 
-### 4.2 测试读取场景
+### 3.2 测试读取场景
 
 在 Claude Code 中输入：
 
@@ -199,7 +219,7 @@ claude
 请使用 blender MCP 读取当前 Blender 场景中的对象列表
 ```
 
-### 4.3 测试创建对象
+### 3.3 测试创建对象
 
 在 Claude Code 中输入：
 
@@ -211,7 +231,7 @@ claude
 
 ---
 
-## 5. 数据流图解
+## 4. 数据流图解
 
 ```text
 ┌──────────────────┐       stdin/stdout        ┌──────────────────┐
@@ -239,9 +259,9 @@ claude
 
 ---
 
-## 6. 常见问题
+## 5. 常见问题
 
-### 6.1 `claude mcp list` 显示 disconnected
+### 5.1 `claude mcp list` 显示 disconnected
 
 ```bash
 claude mcp get blender
@@ -252,14 +272,14 @@ claude mcp get blender
 - `BLENDER_MCP_HOST` 是否为 `localhost`
 - `BLENDER_MCP_PORT` 是否为 `9876`
 
-### 6.2 MCP connected 但操作 Blender 报错 "Cannot connect to Blender"
+### 5.2 MCP connected 但操作 Blender 报错 "Cannot connect to Blender"
 
 可能原因：
 1. Blender Add-on 未启动（检查 `Server is running` 状态）
 2. Blender 未允许在线访问（检查系统偏好设置）
 3. Add-on 的 Host 被改为了非 localhost 的值
 
-### 6.3 连接后很快断开
+### 5.3 连接后很快断开
 
 可能原因：
 1. Blender Add-on 有客户端超时机制（默认 10 秒），长时间无请求会断开
@@ -267,7 +287,7 @@ claude mcp get blender
 
 ---
 
-## 7. 删除配置
+## 6. 删除配置
 
 ```bash
 claude mcp remove blender
@@ -276,7 +296,7 @@ claude mcp list
 
 ---
 
-## 8. 安全注意事项
+## 7. 安全注意事项
 
 Blender MCP 的能力等同于"让 LLM 在 Blender 中执行任意 Python 代码"。建议：
 
@@ -287,7 +307,7 @@ Blender MCP 的能力等同于"让 LLM 在 Blender 中执行任意 Python 代码
 
 ---
 
-## 9. 参考资料
+## 8. 参考资料
 
 - Blender Lab MCP Server: https://www.blender.org/lab/mcp-server/
 - Blender MCP 源码: `blender_mcp/` 项目目录

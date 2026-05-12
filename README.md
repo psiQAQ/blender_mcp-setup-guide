@@ -17,6 +17,10 @@ It is designed to let agents install first, then build extension workflows consi
 Follow https://raw.githubusercontent.com/psiQAQ/blender_mcp-setup-guide/main/docs/blender_mcp-setup_en.md to install the official Blender MCP (Blender Add-on + blender-mcp server), register it with Claude Code, and verify the connection end-to-end.
 ```
 
+Besides Claude Code, other agents are also supported. Use each agent's MCP configuration format.
+
+The installation guides include an OpenCode example that directly adds a `blender` MCP server entry to `~/.config/opencode/opencode.json`.
+
 ## Skill capabilities (brief)
 
 `blender-mcp-skills` focuses on:

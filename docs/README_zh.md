@@ -17,6 +17,10 @@
 请严格按 https://raw.githubusercontent.com/psiQAQ/blender_mcp-setup-guide/main/docs/blender_mcp-setup_zh.md 完成官方 Blender MCP 安装（Blender Add-on + blender-mcp server），并在 Claude Code 中完成注册与连通性验证。
 ```
 
+除 Claude Code 外，也支持其他 agent。请按各家 agent 的 MCP 配置格式进行接入。
+
+安装教程中已提供 OpenCode 示例：可直接向 `~/.config/opencode/opencode.json` 添加 `blender` 的 MCP 配置。
+
 ## Skills 能力（简述）
 
 `blender-mcp-skills` 主要覆盖：
@@ -69,11 +73,12 @@ blender_mcp/
 └─ submodules/                              # 外部参考项目（git submodule）
 ```
 
-## 触发示例（给 Claude）
+## 提示词示例（自然触发）
 
-- “按教程帮我安装官方 Blender MCP，并验证连接。”
-- “我想做一个 Blender 插件（用途是 XXX），请用 `blender-mcp-skills` 帮我完成开发并产出可发布版本。”
-- “把这个旧插件升级到 Blender 4.2+ extension 结构，并按推荐流程完成验证与打包。”
+```text
+我想做一个 Blender 插件来实现 [你的需求]。
+请使用 blender-mcp-skills 驱动完整流程，并交付可发布的 extension 包。
+```
 
 ## TODO（后续能力）
 
