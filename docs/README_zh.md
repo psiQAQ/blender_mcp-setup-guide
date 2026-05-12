@@ -11,7 +11,7 @@
 
 目标是先安装打通，再稳定复用 extension 开发流程，并持续扩展更多能力。
 
-## 给 Agent 的一句话安装提示词（官方安装）
+## 给 Agent 的一句话安装 Blender 官方 MCP 的提示词
 
 ```text
 请严格按 https://raw.githubusercontent.com/psiQAQ/blender_mcp-setup-guide/main/docs/blender_mcp-setup_zh.md 完成官方 Blender MCP 安装（Blender Add-on + blender-mcp server），并在 Claude Code 中完成注册与连通性验证。

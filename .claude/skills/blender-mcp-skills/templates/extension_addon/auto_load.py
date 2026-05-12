@@ -3,17 +3,31 @@ import typing
 import inspect
 import pkgutil
 import importlib
+import sys
 from pathlib import Path
 
 blender_version = bpy.app.version
-modules = None
-ordered_classes = None
+modules = []
+ordered_classes = []
+
+
+def clear_submodule_cache(package_name):
+    if not package_name:
+        return
+
+    prefix = package_name + "."
+    for name in list(sys.modules):
+        if name == __name__:
+            continue
+        if name.startswith(prefix):
+            del sys.modules[name]
 
 
 def init():
     global modules
     global ordered_classes
 
+    clear_submodule_cache(__package__)
     modules = get_all_submodules(Path(__file__).parent)
     ordered_classes = get_ordered_classes_to_register(modules)
 
@@ -30,14 +44,25 @@ def register():
 
 
 def unregister():
-    for cls in reversed(ordered_classes):
-        _safe_unregister_class(cls)
+    global modules
+    global ordered_classes
 
-    for module in modules:
+    if modules is None:
+        modules = []
+    if ordered_classes is None:
+        ordered_classes = []
+
+    for module in reversed(modules):
         if module.__name__ == __name__:
             continue
         if hasattr(module, "unregister"):
             module.unregister()
+
+    for cls in reversed(ordered_classes):
+        _safe_unregister_class(cls)
+
+    modules = []
+    ordered_classes = []
 
 
 def _safe_register_class(cls):

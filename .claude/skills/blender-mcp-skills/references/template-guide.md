@@ -4,7 +4,7 @@
 
 Use this local template:
 
-- `.claude/skills/blender-mcp-skills/templates/extension_addon/` (`auto_load` topology registration)
+- `templates/extension_addon/` (`auto_load` topology registration)
 
 Compatibility target:
 
@@ -37,6 +37,7 @@ extension_addon/
 ├─ blender_manifest.toml
 ├─ __init__.py
 ├─ auto_load.py
+├─ constants.py
 ├─ properties.py
 ├─ preferences.py
 ├─ operators/
@@ -59,6 +60,7 @@ extension_addon/
 
 - `blender_manifest.toml`: extension metadata and compatibility.
 - `__init__.py + auto_load.py`: topology-based orchestration for dependency-safe class registration.
+- `constants.py`: centralized IDs and naming constants for safer renames.
 - `properties.py`: PropertyGroup and scene pointer property side effects.
 - `operators/object_ops.py`: executable actions.
 - `panels/viewport_panel.py`: UI layout.

@@ -11,7 +11,7 @@ This repository provides two things together:
 
 It is designed to let agents install first, then build extension workflows consistently.
 
-## One-line prompt for agent (official installation)
+## One-line prompt for agent to install the official Blender MCP
 
 ```text
 Follow https://raw.githubusercontent.com/psiQAQ/blender_mcp-setup-guide/main/docs/blender_mcp-setup_en.md to install the official Blender MCP (Blender Add-on + blender-mcp server), register it with Claude Code, and verify the connection end-to-end.

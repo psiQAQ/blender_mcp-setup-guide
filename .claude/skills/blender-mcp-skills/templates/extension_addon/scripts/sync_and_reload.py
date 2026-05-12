@@ -35,9 +35,19 @@ def parse_args() -> argparse.Namespace:
         )
     )
     parser.add_argument("--source", required=True, help="Source directory (extension workspace)")
-    parser.add_argument("--target", required=True, help="Target directory (Blender add-ons/extension path)")
+    parser.add_argument("--target", required=True, help="Target directory (installed extension repo path)")
     parser.add_argument("--module", required=True, help="Blender add-on module name, for example: my_addon")
     parser.add_argument("--dry-run", action="store_true", help="Preview copy operations without writing files")
+    parser.add_argument(
+        "--allow-legacy-target",
+        action="store_true",
+        help="Allow syncing to legacy scripts/addons paths. Disabled by default for extension-only workflow.",
+    )
+    parser.add_argument(
+        "--delete-stale",
+        action="store_true",
+        help="Delete supported files from target when they no longer exist in source.",
+    )
     return parser.parse_args()
 
 
@@ -51,6 +61,14 @@ def validate_module(module: str) -> None:
 
 def _is_path_writable(path: Path) -> bool:
     return os.access(path, os.W_OK)
+
+
+def _looks_like_legacy_addons_path(path: Path) -> bool:
+    parts = [p.lower() for p in path.parts]
+    for i in range(len(parts) - 1):
+        if parts[i] == "scripts" and parts[i + 1] in {"addons", "addons_core"}:
+            return True
+    return False
 
 
 def _compute_sha256(path: Path, chunk_size: int = 1024 * 1024) -> str:
@@ -133,6 +151,32 @@ def sync_incremental(source: Path, target: Path, dry_run: bool) -> SyncResult:
     return result
 
 
+def delete_stale_files(source: Path, target: Path, dry_run: bool) -> int:
+    deleted = 0
+
+    for dst_file in target.rglob("*"):
+        if not dst_file.is_file():
+            continue
+        if dst_file.suffix.lower() not in SUPPORTED_EXTENSIONS:
+            continue
+
+        rel_path = dst_file.relative_to(target)
+        src_file = source / rel_path
+
+        if src_file.exists():
+            continue
+
+        action = "[DRY-RUN] DELETE" if dry_run else "DELETE"
+        print(f"{action} {dst_file} (missing from source)")
+
+        if not dry_run:
+            dst_file.unlink()
+
+        deleted += 1
+
+    return deleted
+
+
 def print_reload_hint(module: str) -> None:
     print("\nRun the following in Blender Python Console:")
     print(f'bpy.ops.preferences.addon_disable(module="{module}")')
@@ -148,13 +192,22 @@ def main() -> int:
     try:
         validate_module(args.module)
         validate_paths(source, target)
+        if _looks_like_legacy_addons_path(target) and not args.allow_legacy_target:
+            print(
+                "Error: target looks like a legacy scripts/addons path. "
+                "For extension-only workflow, target an installed extension repo path instead. "
+                "Use --allow-legacy-target only when intentionally developing a legacy add-on.",
+                file=sys.stderr,
+            )
+            return 1
         result = sync_incremental(source, target, args.dry_run)
+        deleted = delete_stale_files(source, target, args.dry_run) if args.delete_stale else 0
     except Exception as exc:  # noqa: BLE001
         print(f"Error: {exc}", file=sys.stderr)
         return 1
 
     mode = "DRY-RUN" if args.dry_run else "APPLY"
-    print(f"\nSync complete [{mode}]: copied {result.copied}, skipped {result.skipped}")
+    print(f"\nSync complete [{mode}]: copied {result.copied}, skipped {result.skipped}, deleted {deleted}")
     print_reload_hint(args.module)
     return 0
 

@@ -1,5 +1,7 @@
 import bpy
 
+from .constants import SCENE_SETTINGS_NAME
+
 
 class EXAMPLE_PG_settings(bpy.types.PropertyGroup):
     message: bpy.props.StringProperty(
@@ -10,10 +12,14 @@ class EXAMPLE_PG_settings(bpy.types.PropertyGroup):
 
 
 def register():
-    if not hasattr(bpy.types.Scene, "example_extension_settings"):
-        bpy.types.Scene.example_extension_settings = bpy.props.PointerProperty(type=EXAMPLE_PG_settings)
+    if not hasattr(bpy.types.Scene, SCENE_SETTINGS_NAME):
+        setattr(
+            bpy.types.Scene,
+            SCENE_SETTINGS_NAME,
+            bpy.props.PointerProperty(type=EXAMPLE_PG_settings),
+        )
 
 
 def unregister():
-    if hasattr(bpy.types.Scene, "example_extension_settings"):
-        del bpy.types.Scene.example_extension_settings
+    if hasattr(bpy.types.Scene, SCENE_SETTINGS_NAME):
+        delattr(bpy.types.Scene, SCENE_SETTINGS_NAME)

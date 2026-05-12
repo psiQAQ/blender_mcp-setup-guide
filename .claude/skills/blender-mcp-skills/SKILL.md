@@ -32,7 +32,9 @@ Before extension development, run checks in this exact order:
    - Blender executable path (`bpy.app.binary_path`)
    - Runtime system (`platform.system()`)
 
-If version is lower than 5.1, remind the user that `>= 5.1` is recommended.
+If version is lower than 4.2, stop and explain that the default template targets the Blender Extension system for 4.2+ workflows.
+
+If version is 4.2 or newer, continue. Prefer testing on the user's active Blender version rather than forcing a fixed 5.1+ baseline.
 
 No other gate checks are required.
 
@@ -70,13 +72,13 @@ Use extension-native flow only:
 
 Detailed install steps and examples:
 
-- `.claude/skills/blender-mcp-skills/references/extension-install.md`
-- `.claude/skills/blender-mcp-skills/references/system-adaptation.md`
+- `references/extension-install.md`
+- `references/system-adaptation.md`
 
 ## Built-in template policy
 
 - Keep one local template:
-  - `.claude/skills/blender-mcp-skills/templates/extension_addon/`
+  - `templates/extension_addon/`
 - Registration strategy is autoload-only (`auto_load.py` topology registration).
 - Keep template source code in template directories.
 - Do not inline full template source code inside `SKILL.md`.
@@ -85,7 +87,7 @@ Detailed install steps and examples:
 
 Before running Blender commands or touching add-on files, read:
 
-- `.claude/skills/blender-mcp-skills/references/system-adaptation.md`
+- `references/system-adaptation.md`
 
 That document defines:
 
@@ -110,6 +112,22 @@ When running template scripts for checks, tests, and build, use this interpreter
 3. Blender bundled Python (from MCP-discovered `bpy.app.binary_path_python`)
 4. System Python available in PATH
 
+## Path reference rule
+
+All internal paths in this skill are relative to the directory containing this `SKILL.md`.
+
+Do not hard-code agent-specific roots such as:
+
+- `.claude/skills/<skill-name>/`
+- `.agents/skills/<skill-name>/`
+- `.opencode/skills/<skill-name>/`
+
+Use relative paths instead:
+
+- `references/system-adaptation.md`
+- `references/extension-install.md`
+- `templates/extension_addon/`
+
 ## Minimal reload commands
 
 ```python
@@ -129,12 +147,12 @@ Use module name (not display name).
 
 ## Reference navigation
 
-- Index: `.claude/skills/blender-mcp-skills/references/index.md`
-- System adaptation: `.claude/skills/blender-mcp-skills/references/system-adaptation.md`
-- Extension workflow: `.claude/skills/blender-mcp-skills/references/extension-workflow.md`
-- Extension install: `.claude/skills/blender-mcp-skills/references/extension-install.md`
-- Lifecycle: `.claude/skills/blender-mcp-skills/references/lifecycle.md`
-- Pitfalls and fixes: `.claude/skills/blender-mcp-skills/references/pitfalls-and-fixes.md`
-- Template guide: `.claude/skills/blender-mcp-skills/references/template-guide.md`
-- Manifest fields: `.claude/skills/blender-mcp-skills/references/manifest-fields.md`
-- Migration notes: `.claude/skills/blender-mcp-skills/references/migration-notes.md`
+- Index: `references/index.md`
+- System adaptation: `references/system-adaptation.md`
+- Extension workflow: `references/extension-workflow.md`
+- Extension install: `references/extension-install.md`
+- Lifecycle: `references/lifecycle.md`
+- Pitfalls and fixes: `references/pitfalls-and-fixes.md`
+- Template guide: `references/template-guide.md`
+- Manifest fields: `references/manifest-fields.md`
+- Migration notes: `references/migration-notes.md`

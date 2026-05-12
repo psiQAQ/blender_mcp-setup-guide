@@ -76,6 +76,18 @@ def _to_wsl_path(path_value: str) -> str:
     return f"/mnt/{drive}/{rest}" if rest else f"/mnt/{drive}/"
 
 
+def _normalize_local_path(path_value: str) -> Path:
+    value = path_value.strip()
+
+    if _is_wsl():
+        value = _to_wsl_path(value)
+
+    if os.name == "nt":
+        value = _to_shared_windows_path(value)
+
+    return Path(value).expanduser().resolve()
+
+
 def _resolve_python_runner(user_python: str | None, project_root: Path, blender_python: str | None) -> str:
     candidates: list[str] = []
 
@@ -95,9 +107,17 @@ def _resolve_python_runner(user_python: str | None, project_root: Path, blender_
         candidates.append("python")
 
     for candidate in candidates:
+        normalized_candidate = candidate
+
+        if _is_wsl():
+            normalized_candidate = _to_wsl_path(normalized_candidate)
+
+        if os.name == "nt":
+            normalized_candidate = _to_shared_windows_path(normalized_candidate)
+
         try:
             proc = subprocess.run(
-                [candidate, "--version"],
+                [normalized_candidate, "--version"],
                 stdout=subprocess.PIPE,
                 stderr=subprocess.STDOUT,
                 text=True,
@@ -107,7 +127,7 @@ def _resolve_python_runner(user_python: str | None, project_root: Path, blender_
             continue
 
         if proc.returncode == 0:
-            return candidate
+            return normalized_candidate
 
     raise RuntimeError(
         "No usable Python interpreter found. Priority is: user specified > project .venv > Blender Python > system PATH python."
@@ -235,7 +255,7 @@ def main() -> int:
 
     mcp_extension_root = mcp_info.get("extension_root")
     if isinstance(mcp_extension_root, str) and mcp_extension_root.strip():
-        expected = Path(mcp_extension_root).resolve()
+        expected = _normalize_local_path(mcp_extension_root)
         if expected != extension_root:
             print(
                 "ERROR: extension_root from MCP info does not match local template root.\n"

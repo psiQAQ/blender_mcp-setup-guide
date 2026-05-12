@@ -96,7 +96,7 @@ Template script:
 
 Purpose:
 
-- Provides `--source`, `--target`, `--module`, `--dry-run` CLI.
+- Provides `--source`, `--target`, `--module`, `--dry-run`, `--delete-stale`, and `--allow-legacy-target` CLI.
 - Syncs only newer/new files (currently `.py` / `.toml` / `.json`).
 - Prints next-step Blender reload commands and does not call Blender API.
 
@@ -105,8 +105,9 @@ Example:
 ```bash
 python templates/extension_addon/scripts/sync_and_reload.py \
   --source /path/to/workspace/addon_src \
-  --target "/path/to/blender/addons/my_addon" \
+  --target "/path/to/blender/extensions/user_default/my_extension" \
   --module my_addon \
+  --delete-stale \
   --dry-run
 ```
 
@@ -115,10 +116,13 @@ WSL development + Windows Blender example:
 ```bash
 python templates/extension_addon/scripts/sync_and_reload.py \
   --source /home/ustcw/project-folder/blender_mcp/my_addon \
-  --target "/mnt/c/Users/<user>/AppData/Roaming/Blender Foundation/Blender/4.5/scripts/addons/my_addon" \
+  --target "/mnt/c/Users/<user>/AppData/Roaming/Blender Foundation/Blender/4.5/extensions/user_default/my_extension" \
   --module my_addon \
+  --delete-stale \
   --dry-run
 ```
+
+The exact installed extension directory should be discovered from Blender extension repository settings or from the enabled module key `bl_ext.<repo_module>.<extension_id>`.
 
 ## No auto-install policy
 

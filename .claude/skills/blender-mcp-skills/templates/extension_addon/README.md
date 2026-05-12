@@ -13,6 +13,7 @@ extension_addon/
 ├─ blender_manifest.toml
 ├─ __init__.py
 ├─ auto_load.py
+├─ constants.py
 ├─ properties.py
 ├─ preferences.py
 ├─ operators/
@@ -43,7 +44,7 @@ Use this template for Blender 4.2+ extension development.
    - `name`
    - `maintainer`
    - `version`
-3. Replace demo class names and IDs.
+3. Update `constants.py` and then replace demo class names where needed.
 4. Disable/enable in Blender and verify registration behavior.
 
 ## Build
@@ -79,6 +80,35 @@ python scripts/build_extension.py \
   --allow-cross-system
 ```
 
+## Standard local verification commands
+
+Run from the extension root to perform a minimal local verification pass:
+
+```bash
+# Python syntax check
+python -m py_compile \
+  __init__.py \
+  auto_load.py \
+  constants.py \
+  preferences.py \
+  properties.py \
+  operators/object_ops.py \
+  panels/viewport_panel.py \
+  utils/common.py \
+  scripts/build_extension.py \
+  scripts/sync_and_reload.py \
+  scripts/validate_extension.py
+
+# Local preflight only (no Blender invocation)
+python scripts/validate_extension.py --skip-blender-validate
+
+# Full validate when Blender is available
+python scripts/validate_extension.py --blender "/path/to/blender"
+
+# Build extension zip
+python scripts/build_extension.py --blender "/path/to/blender"
+```
+
 Python interpreter selection priority used by script orchestration:
 
 1. User-specified interpreter (`--python` or `EXTENSION_DEV_PYTHON`)
@@ -91,12 +121,16 @@ Python interpreter selection priority used by script orchestration:
 ```bash
 python scripts/sync_and_reload.py \
   --source /path/to/source/addon \
-  --target "/path/to/blender/addons/my_addon" \
+  --target "/path/to/blender/extensions/user_default/my_example_extension" \
   --module my_addon \
+  --delete-stale \
   --dry-run
 ```
 
+Legacy `scripts/addons` targets are blocked by default in extension-only workflow.
+Use `--allow-legacy-target` only when intentionally developing a legacy add-on.
+
 ## Development notes
 
-- For WSL + Windows Blender, prefer direct writes to `/mnt/c/.../scripts/addons` when available.
+- For WSL + Windows Blender, target installed extension repo paths, and ensure paths are Blender-host resolvable.
 - Keep module side effects in module `register()`/`unregister()` and let `auto_load.py` handle class registration order.

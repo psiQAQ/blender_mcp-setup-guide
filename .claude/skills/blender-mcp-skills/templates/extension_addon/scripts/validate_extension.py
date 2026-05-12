@@ -6,6 +6,7 @@ from __future__ import annotations
 import argparse
 import ast
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -28,6 +29,17 @@ REQUIRED_MANIFEST_KEYS = (
     "blender_version_min",
     "license",
 )
+
+EXTENSION_ID_PATTERN = re.compile(r"^[a-z0-9_]+$")
+SEMVER_PATTERN = re.compile(r"^\d+\.\d+\.\d+$")
+
+
+def _parse_version_tuple(value: str) -> tuple[int, ...] | None:
+    parts = value.split(".")
+    try:
+        return tuple(int(p) for p in parts)
+    except ValueError:
+        return None
 
 
 def _normalize_os_name(value: str) -> str:
@@ -203,6 +215,34 @@ def main() -> int:
         missing = [key for key in REQUIRED_MANIFEST_KEYS if key not in manifest]
         for key in missing:
             errors.append(f"missing required manifest key: {key}")
+
+        extension_id = manifest.get("id")
+        if isinstance(extension_id, str):
+            if not EXTENSION_ID_PATTERN.fullmatch(extension_id):
+                errors.append("manifest id should use lowercase letters, digits, and underscores only.")
+        else:
+            errors.append("manifest id must be a string.")
+
+        extension_type = manifest.get("type")
+        if extension_type != "add-on":
+            errors.append("this template is add-on only; manifest type must be 'add-on'.")
+
+        version = manifest.get("version")
+        if isinstance(version, str):
+            if not SEMVER_PATTERN.fullmatch(version):
+                warns.append("manifest version should look like semantic version, for example 1.0.0.")
+        else:
+            errors.append("manifest version must be a string.")
+
+        blender_version_min = manifest.get("blender_version_min")
+        if isinstance(blender_version_min, str):
+            parsed = _parse_version_tuple(blender_version_min)
+            if parsed is None:
+                errors.append("blender_version_min must be a dot-separated numeric string, for example 4.2.0.")
+            elif parsed < (4, 2, 0):
+                errors.append("default extension template requires blender_version_min >= 4.2.0.")
+        else:
+            errors.append("blender_version_min must be a string.")
 
         wheels = manifest.get("wheels")
         if wheels is not None:

@@ -35,7 +35,7 @@ Note:
 
 Default local template path:
 
-- `.claude/skills/blender-mcp-skills/templates/extension_addon/`
+- `templates/extension_addon/`
 
 The skill should ask users whether they want to reuse this template when they request:
 

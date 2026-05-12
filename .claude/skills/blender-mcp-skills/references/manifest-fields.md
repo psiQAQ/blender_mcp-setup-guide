@@ -1,4 +1,4 @@
-# blender_manifest.toml Field Reference (Blender 5.1 docs aligned)
+# blender_manifest.toml Field Reference (Extension docs aligned, 4.2+ workflow)
 
 This reference summarizes `blender_manifest.toml` fields based on `docs/extensions-getting_started.md` (official Blender manual excerpt).
 
