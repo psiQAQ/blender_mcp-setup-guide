@@ -27,6 +27,8 @@ The installation guides include an OpenCode example that directly adds a `blende
 
 - Extension-only scaffold workflow for Blender 4.2+
 - Autoload-based module topology (`operators/panels/utils`)
+- Extension-private Python dependency management (`deps/site-packages` + `pip --target`)
+- Add-on Preferences dependency status UI and explicit user-triggered installs
 - Validation/build scripting guidance (`validate_extension.py`, `build_extension.py`)
 - Cross-system runtime adaptation hints (WSL/Linux/Windows path strategy)
 
@@ -72,15 +74,30 @@ blender_mcp/
 │        │  ├─ extension-install.md
 │        │  ├─ lifecycle.md
 │        │  ├─ system-adaptation.md
+│        │  ├─ dependency-policy.md
 │        │  ├─ pitfalls-and-fixes.md
 │        │  ├─ migration-notes.md
 │        │  └─ manifest-fields.md
 │        └─ templates/
 │           └─ extension_addon/
 │              ├─ operators/ panels/ utils/
+│              ├─ utils/dependency_manager.py
 │              └─ scripts/
+├─ tests/
+│  └─ test_validate_extension.py
 └─ submodules/
 ```
+
+## Extension dependency policy
+
+The built-in extension template supports private Python dependencies for development and internal tools:
+
+- Dependencies are declared in `utils/dependency_manager.py`.
+- Missing packages are installed only after the user clicks **Install Missing Dependencies** in Add-on Preferences.
+- Installs use Blender's Python with `pip install --target deps/site-packages`, so Blender's bundled global `site-packages` is not modified.
+- The private dependency path is added during add-on registration and removed during unregistration.
+- The default installer uses the Tsinghua PyPI mirror, with a Preferences toggle to disable it.
+- Release builds should prefer `wheels = [...]` in `blender_manifest.toml`; heavy packages such as `torch`, `opencv-python`, `scipy`, `open3d`, or CUDA stacks should usually live in an external Python environment.
 
 ## Prompt example (natural trigger)
 

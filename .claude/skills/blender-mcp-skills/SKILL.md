@@ -20,6 +20,7 @@ Trigger this skill whenever users ask to:
 - create a new extension add-on
 - migrate legacy add-on structure to extension structure
 - debug register/unregister/reload lifecycle issues
+- manage private Python dependencies for Blender extensions
 
 ## Blender MCP gate (minimal)
 
@@ -82,6 +83,18 @@ Detailed install steps and examples:
 - Registration strategy is autoload-only (`auto_load.py` topology registration).
 - Keep template source code in template directories.
 - Do not inline full template source code inside `SKILL.md`.
+
+## Python dependency policy (mandatory)
+
+Read `references/dependency-policy.md` before adding third-party Python packages to an extension.
+
+- Do not run `pip install` without `--target`.
+- Do not install into Blender bundled Python global `site-packages`.
+- Do not import optional third-party packages at module top level.
+- Do not install dependencies silently during import, `register()`, or add-on enable flow.
+- Default to showing dependency status in `AddonPreferences` and installing only after a user clicks a button.
+- The Tsinghua PyPI mirror may be the default, but users must be able to disable it.
+- Recommend an external Python environment for heavy dependencies such as `torch`, `opencv-python`, `scipy`, `open3d`, and CUDA packages.
 
 ## System operation rule (mandatory)
 
@@ -150,6 +163,7 @@ Use module name (not display name).
 - Index: `references/index.md`
 - System adaptation: `references/system-adaptation.md`
 - Extension workflow: `references/extension-workflow.md`
+- Dependency policy: `references/dependency-policy.md`
 - Extension install: `references/extension-install.md`
 - Lifecycle: `references/lifecycle.md`
 - Pitfalls and fixes: `references/pitfalls-and-fixes.md`

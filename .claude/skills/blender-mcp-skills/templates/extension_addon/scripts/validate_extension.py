@@ -32,6 +32,8 @@ REQUIRED_MANIFEST_KEYS = (
 
 EXTENSION_ID_PATTERN = re.compile(r"^[a-z0-9_]+$")
 SEMVER_PATTERN = re.compile(r"^\d+\.\d+\.\d+$")
+EXCLUDED_SCAN_DIRS = {"deps", "wheels", "scripts", ".venv", "venv", "__pycache__"}
+COMMON_TOP_LEVEL_THIRD_PARTY_IMPORTS = {"requests", "yaml", "numpy", "cv2", "PIL", "scipy", "torch", "open3d"}
 
 
 def _parse_version_tuple(value: str) -> tuple[int, ...] | None:
@@ -117,10 +119,7 @@ def _read_manifest(manifest_path: Path) -> dict:
 def _collect_project_modules(extension_root: Path) -> set[str]:
     modules: set[str] = set()
 
-    for path in extension_root.rglob("*.py"):
-        if "scripts" in path.relative_to(extension_root).parts:
-            continue
-
+    for path in _iter_addon_python_files(extension_root):
         rel_parts = path.relative_to(extension_root).parts
         if rel_parts[-1] == "__init__.py":
             if len(rel_parts) >= 2:
@@ -129,20 +128,25 @@ def _collect_project_modules(extension_root: Path) -> set[str]:
         modules.add(path.stem)
 
     for path in extension_root.iterdir():
-        if path.is_dir() and (path / "__init__.py").exists() and path.name != "scripts":
+        if path.is_dir() and (path / "__init__.py").exists() and path.name not in EXCLUDED_SCAN_DIRS:
             modules.add(path.name)
 
     return modules
 
 
+def _iter_addon_python_files(extension_root: Path):
+    for path in extension_root.rglob("*.py"):
+        rel = path.relative_to(extension_root)
+        if any(part in EXCLUDED_SCAN_DIRS for part in rel.parts):
+            continue
+        yield path
+
+
 def _scan_absolute_import_warnings(extension_root: Path, project_modules: set[str]) -> list[str]:
     warnings: list[str] = []
 
-    for path in extension_root.rglob("*.py"):
+    for path in _iter_addon_python_files(extension_root):
         rel = path.relative_to(extension_root)
-        if "scripts" in rel.parts:
-            continue
-
         source = path.read_text(encoding="utf-8")
         try:
             tree = ast.parse(source, filename=str(path))
@@ -169,6 +173,66 @@ def _scan_absolute_import_warnings(extension_root: Path, project_modules: set[st
                     warnings.append(
                         f"{rel}:{node.lineno} uses project absolute import '{node.module}' (prefer relative imports)."
                     )
+
+    return warnings
+
+
+def _source_has_pip_install(source: str) -> bool:
+    if re.search(r"\bpip\s+install\b", source):
+        return True
+
+    tokens = re.findall(r"[A-Za-z0-9_./:\\-]+", source)
+    return any(token == "pip" and idx + 1 < len(tokens) and tokens[idx + 1] == "install" for idx, token in enumerate(tokens))
+
+
+def _manifest_has_network_permission(manifest: dict) -> bool:
+    permissions = manifest.get("permissions")
+    return isinstance(permissions, dict) and bool(permissions.get("network"))
+
+
+def _scan_dependency_policy_warnings(extension_root: Path, manifest: dict) -> list[str]:
+    warnings: list[str] = []
+    pip_install_files: list[Path] = []
+
+    private_deps_path = extension_root / "deps" / "site-packages"
+    if private_deps_path.exists():
+        warnings.append("deps/site-packages exists; release builds should exclude it or use manifest wheels instead.")
+
+    for path in _iter_addon_python_files(extension_root):
+        rel = path.relative_to(extension_root)
+        source = path.read_text(encoding="utf-8")
+
+        if _source_has_pip_install(source):
+            pip_install_files.append(rel)
+            if "--target" not in source:
+                warnings.append(f"{rel}: pip install command appears to be missing --target; use deps/site-packages.")
+
+        try:
+            tree = ast.parse(source, filename=str(path))
+        except SyntaxError as exc:
+            warnings.append(f"{rel}: skipped dependency policy scan due to syntax error ({exc.msg}).")
+            continue
+
+        seen_imports: set[str] = set()
+        for node in tree.body:
+            if isinstance(node, ast.Import):
+                names = [alias.name.split(".", 1)[0] for alias in node.names]
+            elif isinstance(node, ast.ImportFrom) and node.level == 0 and node.module:
+                names = [node.module.split(".", 1)[0]]
+            else:
+                continue
+
+            for name in names:
+                if name in COMMON_TOP_LEVEL_THIRD_PARTY_IMPORTS and name not in seen_imports:
+                    warnings.append(
+                        f"{rel}:{node.lineno} uses top-level third-party import '{name}' "
+                        "(delay optional dependency imports until operator execute or business logic)."
+                    )
+                    seen_imports.add(name)
+
+    if pip_install_files and not _manifest_has_network_permission(manifest):
+        files = ", ".join(str(path) for path in pip_install_files)
+        warnings.append(f"online pip install logic found but manifest has no network permission: {files}")
 
     return warnings
 
@@ -202,6 +266,7 @@ def main() -> int:
 
     errors: list[str] = []
     warns: list[str] = []
+    manifest: dict = {}
 
     if not manifest_path.exists():
         errors.append("blender_manifest.toml not found in extension root.")
@@ -264,6 +329,7 @@ def main() -> int:
 
     project_modules = _collect_project_modules(extension_root)
     warns.extend(_scan_absolute_import_warnings(extension_root, project_modules))
+    warns.extend(_scan_dependency_policy_warnings(extension_root, manifest))
 
     print(f"OK: extension root = {extension_root}")
 
@@ -278,7 +344,7 @@ def main() -> int:
         for msg in warns:
             print(f"WARN: {msg}")
     else:
-        print("OK: no project absolute-import warnings")
+        print("OK: no local warnings")
 
     if args.skip_blender_validate:
         print("OK: skipped blender extension validate")

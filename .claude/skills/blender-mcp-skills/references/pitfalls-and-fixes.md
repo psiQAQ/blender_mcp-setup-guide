@@ -54,3 +54,39 @@
 **Fix:**
 - unregister old handlers before register
 - deduplicate handlers by function identity/name before append
+
+## 9) Private path removal does not unload modules
+
+**Symptom:** disabling the add-on removes `deps/site-packages` from `sys.path`, but previously imported packages still appear usable.
+
+**Fix:** remember that removing a path does not remove already loaded entries from `sys.modules`; restart Blender or unload specific modules only when you fully understand the side effects.
+
+## 10) Top-level optional imports break the install button
+
+**Symptom:** a missing package causes add-on enable to fail, so users cannot open Preferences to install it.
+
+**Fix:** do not import optional third-party packages at module top level; import them inside `execute()` or the function that needs them.
+
+## 11) `auto_load.py` scans dependency directories
+
+**Symptom:** reload imports packages from `deps/site-packages` as if they were add-on modules.
+
+**Fix:** exclude `deps`, `wheels`, `.venv`, `venv`, `scripts`, and `__pycache__` from recursive module discovery.
+
+## 12) Network install happens during register
+
+**Symptom:** enabling the add-on unexpectedly downloads packages.
+
+**Fix:** never install in `register()` or import-time code; only install after an explicit user action in Preferences.
+
+## 13) Binary packages fail inside Blender Python
+
+**Symptom:** packages such as `numpy`, `opencv-python`, `scipy`, or `torch` fail with ABI, DLL, or Python version errors.
+
+**Fix:** verify Blender Python compatibility first and prefer wheels or an external Python environment for heavy binary dependencies.
+
+## 14) Heavy dependencies are forced into Blender
+
+**Symptom:** add-on startup becomes fragile or slow because it embeds large ML/CV/CUDA stacks.
+
+**Fix:** run heavy dependencies in an external Python service and communicate through `subprocess`, sockets, HTTP, or MCP.

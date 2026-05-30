@@ -40,6 +40,9 @@ extension_addon/
 ├─ constants.py
 ├─ properties.py
 ├─ preferences.py
+├─ deps/
+│  └─ site-packages/      # created by private pip installs; do not ship by default
+├─ wheels/                # preferred release-time offline dependencies
 ├─ operators/
 │  ├─ __init__.py
 │  └─ object_ops.py
@@ -48,6 +51,7 @@ extension_addon/
 │  └─ viewport_panel.py
 ├─ utils/
 │  ├─ __init__.py
+│  ├─ dependency_manager.py
 │  └─ common.py
 ├─ scripts/
 │  ├─ validate_extension.py
@@ -65,7 +69,10 @@ extension_addon/
 - `operators/object_ops.py`: executable actions.
 - `panels/viewport_panel.py`: UI layout.
 - `preferences.py`: add-on settings entry point.
+- `utils/dependency_manager.py`: private dependency path, status checks, and user-triggered `pip --target` install helper.
 - `utils/common.py`: shared helper functions for reusable logic.
+- `deps/site-packages`: development/internal private dependency target; release builds should exclude it by default.
+- `wheels`: preferred location for release-time offline dependency wheels listed in `blender_manifest.toml`.
 - `scripts/validate_extension.py`: merged validator (local preflight + `blender --command extension validate`).
 - `scripts/build_extension.py`: unified Python build entrypoint with system checks and Blender path resolution.
 - `scripts/*`: validation, build orchestration, and optional sync helper.
@@ -76,6 +83,13 @@ extension_addon/
 2. Update manifest fields (`id`, `name`, `maintainer`, `version`).
 3. Rename example classes and operator IDs.
 4. Reload add-on and verify panel/operator/property behavior.
+5. If dependencies are needed, edit `utils/dependency_manager.py` and keep imports delayed until runtime.
+
+## Dependency packaging guidance
+
+- Use `deps/site-packages` only for development or internal private installs with `pip --target`.
+- Do not include `deps/site-packages` in release builds by default.
+- For published extensions, prefer `wheels = [...]` in `blender_manifest.toml` and store wheel files under `wheels/`.
 
 ## Build extension package
 

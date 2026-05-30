@@ -124,11 +124,15 @@ python templates/extension_addon/scripts/sync_and_reload.py \
 
 The exact installed extension directory should be discovered from Blender extension repository settings or from the enabled module key `bl_ext.<repo_module>.<extension_id>`.
 
-## No auto-install policy
+## Dependency install policy
 
-- The extension iteration workflow never auto-installs Python packages.
-- The helper only syncs files and prints reload hints.
-- If dependencies are missing, install only after explicit user confirmation.
+- Silent auto-install is forbidden.
+- Users may install missing packages by clicking a button in `AddonPreferences`.
+- Installs must target the extension-private `deps/site-packages` directory.
+- Install commands must use `pip install --target`.
+- Do not install packages into Blender bundled Python global `site-packages`.
+- Do not hide network installs in `register()` or add-on enable flow.
+- The helper only syncs files and prints reload hints; it does not install dependencies.
 
 ## CI release reference (extension-native)
 

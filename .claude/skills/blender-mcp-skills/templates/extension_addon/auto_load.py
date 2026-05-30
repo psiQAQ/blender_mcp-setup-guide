@@ -9,6 +9,7 @@ from pathlib import Path
 blender_version = bpy.app.version
 modules = []
 ordered_classes = []
+EXCLUDED_SUBMODULE_DIRS = {"deps", "wheels", "scripts", ".venv", "venv", "__pycache__"}
 
 
 def clear_submodule_cache(package_name):
@@ -92,6 +93,8 @@ def iter_submodules(path, package_name):
 
 def iter_submodule_names(path, root=""):
     for _, module_name, is_package in pkgutil.iter_modules([str(path)]):
+        if module_name in EXCLUDED_SUBMODULE_DIRS:
+            continue
         if is_package:
             sub_path = path / module_name
             sub_root = root + module_name + "."

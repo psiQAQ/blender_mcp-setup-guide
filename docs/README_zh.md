@@ -27,6 +27,8 @@
 
 - Blender 4.2+ extension-only 脚手架流程
 - autoload 拓扑注册与 `operators/panels/utils` 结构拆分
+- 插件私有 Python 依赖管理（`deps/site-packages` + `pip --target`）
+- Add-on Preferences 依赖状态展示与用户显式点击安装
 - 校验/构建脚本实践（`validate_extension.py`、`build_extension.py`）
 - 跨系统运行适配提示（WSL/Linux/Windows 路径策略）
 
@@ -65,13 +67,27 @@ blender_mcp/
 │  ├─ references/                           # 开发思路与规范指导
 │  │  ├─ index.md / template-guide.md
 │  │  ├─ extension-workflow.md / extension-install.md / lifecycle.md
-│  │  ├─ system-adaptation.md / pitfalls-and-fixes.md
+│  │  ├─ system-adaptation.md / dependency-policy.md / pitfalls-and-fixes.md
 │  │  └─ migration-notes.md / manifest-fields.md
 │  └─ templates/extension_addon/
 │     ├─ operators/ panels/ utils/
+│     ├─ utils/dependency_manager.py
 │     └─ scripts/
+├─ tests/
+│  └─ test_validate_extension.py
 └─ submodules/                              # 外部参考项目（git submodule）
 ```
+
+## Extension 依赖策略
+
+内置 extension 模板支持开发期和内部工具场景的插件私有 Python 依赖：
+
+- 依赖声明集中放在 `utils/dependency_manager.py`。
+- 缺失依赖只会在用户于 Add-on Preferences 中点击 **Install Missing Dependencies** 后安装。
+- 安装命令使用 Blender Python 执行 `pip install --target deps/site-packages`，不会写入 Blender 自带 Python 的全局 `site-packages`。
+- 插件注册时加入私有依赖路径，注销时从 `sys.path` 移除。
+- 默认使用清华 PyPI 镜像，并在 Preferences 中提供关闭选项。
+- 正式发布优先使用 `blender_manifest.toml` 的 `wheels = [...]`；`torch`、`opencv-python`、`scipy`、`open3d`、CUDA 栈等重型依赖通常应放在外部 Python 环境中。
 
 ## 提示词示例（自然触发）
 

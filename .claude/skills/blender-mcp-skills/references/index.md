@@ -6,16 +6,18 @@ This directory contains modular reference docs for Blender add-on and extension 
 
 1. [Template Guide](./template-guide.md)
 2. [Manifest Fields](./manifest-fields.md)
-3. [System Adaptation](./system-adaptation.md)
-4. [Extension Workflow](./extension-workflow.md)
-5. [Lifecycle](./lifecycle.md)
-6. [Pitfalls and Fixes](./pitfalls-and-fixes.md)
-7. [Migration Notes](./migration-notes.md)
+3. [Dependency Policy](./dependency-policy.md)
+4. [System Adaptation](./system-adaptation.md)
+5. [Extension Workflow](./extension-workflow.md)
+6. [Lifecycle](./lifecycle.md)
+7. [Pitfalls and Fixes](./pitfalls-and-fixes.md)
+8. [Migration Notes](./migration-notes.md)
 
 ## When to use which doc
 
 - If you need to create a new add-on scaffold: start with **Template Guide**.
 - If you need to edit or review `blender_manifest.toml`: check **Manifest Fields**.
+- If you need third-party Python packages: check **Dependency Policy**.
 - If you are about to run Blender commands or edit add-on files: read **System Adaptation** first.
 - If you need iterative reload flow: use **Extension Workflow**.
 - If registration/unregistration behaves unexpectedly: check **Lifecycle** and **Pitfalls and Fixes**.
