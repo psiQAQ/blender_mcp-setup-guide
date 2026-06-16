@@ -254,7 +254,10 @@ uv --version
 选择一个稳定路径，后续 `git pull` 和安装操作都在此目录进行：
 
 ```bash
+# Linux/macOS
 cd ~/.local/share
+# Windows
+cd %USERPROFILE%\.local\share
 git clone --depth 1 https://projects.blender.org/lab/blender_mcp.git
 ```
 
@@ -263,7 +266,10 @@ git clone --depth 1 https://projects.blender.org/lab/blender_mcp.git
 ### 5.3 全局安装
 
 ```bash
+# Linux/macOS
 cd ~/.local/share/blender_mcp/mcp
+# Windows
+cd %USERPROFILE%\.local\share\blender_mcp\mcp
 uv tool install --python 3.11 .
 ```
 
@@ -315,6 +321,20 @@ claude mcp get blender
 
 应显示 `Status: ✓ Connected` 且 `Environment` 中包含正确的环境变量。
 
+Codex 可写入 `.codex/config.toml`：
+
+```toml
+[mcp_servers.blender]
+enabled = true
+command = "blender-mcp"
+
+[mcp_servers.blender.env]
+BLENDER_MCP_HOST = "192.168.2.20"
+BLENDER_MCP_PORT = "9876"
+```
+
+如果 Blender 和 `blender-mcp` 在同一台机器上运行，将 `BLENDER_MCP_HOST` 改为 `localhost`。
+
 #### http 模式
 
 先手动启动 HTTP 服务（进程需保持运行）：
@@ -344,7 +364,10 @@ claude mcp add --transport http --scope user blender http://127.0.0.1:8000/
 ### 5.5 更新方法（git pull 兼容）
 
 ```bash
+# Linux/macOS
 cd ~/.local/share/blender_mcp
+# Windows
+cd %USERPROFILE%\.local\share\blender_mcp
 
 # （首次更新前执行）设置 upstream tracking
 git branch --set-upstream-to=origin/main main
@@ -372,7 +395,10 @@ claude mcp remove blender -s user  # 如果之前用了 --scope user
 uv tool uninstall blender-mcp
 
 # 3. 可选：删除源码
+# Linux/macOS
 rm -rf ~/.local/share/blender_mcp
+# Windows PowerShell
+Remove-Item -LiteralPath "$env:USERPROFILE\.local\share\blender_mcp" -Recurse -Force
 ```
 
 ---
@@ -542,7 +568,7 @@ Windows 也可用 OpenSSH（Windows 10+ 自带）：
 ssh -N -L 9876:127.0.0.1:9876 user@192.168.2.20
 ```
 
-### 8.3 Claude Code 配置
+### 8.3 Claude Code / Codex 配置
 
 先添加 MCP Server（参考 5.2 节完整步骤）：
 
@@ -551,6 +577,18 @@ claude mcp add blender -e BLENDER_MCP_HOST=127.0.0.1 -e BLENDER_MCP_PORT=9876 --
 ```
 
 此时 `blender-mcp` 连接的是本机的 `127.0.0.1:9876`，SSH 隧道会将流量转发到远端。
+
+Codex 可写入 `.codex/config.toml`：
+
+```toml
+[mcp_servers.blender]
+enabled = true
+command = "blender-mcp"
+
+[mcp_servers.blender.env]
+BLENDER_MCP_HOST = "127.0.0.1"
+BLENDER_MCP_PORT = "9876"
+```
 
 ### 8.4 两种方案对比
 

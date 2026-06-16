@@ -250,7 +250,10 @@ uv --version
 ### 5.2 Clone the Source
 
 ```bash
+# Linux/macOS
 cd ~/.local/share
+# Windows
+cd %USERPROFILE%\.local\share
 git clone --depth 1 https://projects.blender.org/lab/blender_mcp.git
 ```
 
@@ -259,7 +262,10 @@ git clone --depth 1 https://projects.blender.org/lab/blender_mcp.git
 ### 5.3 Global Install
 
 ```bash
+# Linux/macOS
 cd ~/.local/share/blender_mcp/mcp
+# Windows
+cd %USERPROFILE%\.local\share\blender_mcp\mcp
 uv tool install --python 3.11 .
 ```
 
@@ -303,6 +309,20 @@ claude mcp get blender
 
 Should show `Status: ✓ Connected` with correct environment variables.
 
+For Codex, add this to `.codex/config.toml`:
+
+```toml
+[mcp_servers.blender]
+enabled = true
+command = "blender-mcp"
+
+[mcp_servers.blender.env]
+BLENDER_MCP_HOST = "192.168.2.20"
+BLENDER_MCP_PORT = "9876"
+```
+
+If Blender and `blender-mcp` run on the same machine, change `BLENDER_MCP_HOST` to `localhost`.
+
 #### http mode
 
 Start the HTTP service manually (keep the process running):
@@ -332,7 +352,10 @@ claude mcp add --transport http --scope user blender http://127.0.0.1:8000/
 ### 5.5 Updating (git pull compatible)
 
 ```bash
+# Linux/macOS
 cd ~/.local/share/blender_mcp
+# Windows
+cd %USERPROFILE%\.local\share\blender_mcp
 
 # First time only: set upstream tracking
 git branch --set-upstream-to=origin/main main
@@ -360,7 +383,10 @@ claude mcp remove blender -s user
 uv tool uninstall blender-mcp
 
 # 3. Optionally delete source
+# Linux/macOS
 rm -rf ~/.local/share/blender_mcp
+# Windows PowerShell
+Remove-Item -LiteralPath "$env:USERPROFILE\.local\share\blender_mcp" -Recurse -Force
 ```
 
 ---
@@ -523,13 +549,25 @@ Windows (OpenSSH, built-in on Windows 10+):
 ssh -N -L 9876:127.0.0.1:9876 user@192.168.2.20
 ```
 
-### 8.3 Claude Code Registration
+### 8.3 Claude Code / Codex Registration
 
 ```bash
 claude mcp add blender -e BLENDER_MCP_HOST=127.0.0.1 -e BLENDER_MCP_PORT=9876 -- blender-mcp
 ```
 
 The `blender-mcp` connects to `127.0.0.1:9876` locally, and the SSH tunnel forwards traffic to the remote machine.
+
+For Codex, add this to `.codex/config.toml`:
+
+```toml
+[mcp_servers.blender]
+enabled = true
+command = "blender-mcp"
+
+[mcp_servers.blender.env]
+BLENDER_MCP_HOST = "127.0.0.1"
+BLENDER_MCP_PORT = "9876"
+```
 
 ### 8.4 Direct vs SSH Tunnel Comparison
 

@@ -93,7 +93,10 @@ uv --version
 ### 2.2 克隆源码到稳定位置
 
 ```bash
+# Linux/macOS
 cd ~/.local/share
+# Windows
+cd %USERPROFILE%\.local\share
 git clone --depth 1 https://projects.blender.org/lab/blender_mcp.git
 ```
 
@@ -102,7 +105,10 @@ git clone --depth 1 https://projects.blender.org/lab/blender_mcp.git
 ### 2.3 全局安装
 
 ```bash
+# Linux/macOS
 cd ~/.local/share/blender_mcp/mcp
+# Windows
+cd %USERPROFILE%\.local\share\blender_mcp\mcp
 uv tool install --python 3.11 .
 ```
 
@@ -139,7 +145,7 @@ claude mcp get blender
 
 其他 agent 可参考的注册方式（示例：OpenCode）：
 
-写入 `~/.config/opencode/opencode.json`：
+写入 `~/.config/opencode/opencode.json`（Linux/macOS）或 `%USERPROFILE%\\.config\\opencode\\opencode.json`（Windows）：
 
 ```json
 {
@@ -157,10 +163,25 @@ claude mcp get blender
 }
 ```
 
+Codex 可写入 `.codex/config.toml`：
+
+```toml
+[mcp_servers.blender]
+enabled = true
+command = "blender-mcp"
+
+[mcp_servers.blender.env]
+BLENDER_MCP_HOST = "localhost"
+BLENDER_MCP_PORT = "9876"
+```
+
 ### 2.5 更新方法（git pull 兼容）
 
 ```bash
+# Linux/macOS
 cd ~/.local/share/blender_mcp
+# Windows
+cd %USERPROFILE%\.local\share\blender_mcp
 
 # （首次更新前执行）设置 upstream tracking
 git branch --set-upstream-to=origin/main main
@@ -188,7 +209,10 @@ claude mcp remove blender -s user  # 如果之前用了 --scope user
 uv tool uninstall blender-mcp
 
 # 3. 可选：删除源码
+# Linux/macOS
 rm -rf ~/.local/share/blender_mcp
+# Windows PowerShell
+Remove-Item -LiteralPath "$env:USERPROFILE\.local\share\blender_mcp" -Recurse -Force
 ```
 
 ---

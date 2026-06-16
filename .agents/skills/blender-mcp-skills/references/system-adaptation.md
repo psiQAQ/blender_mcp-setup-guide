@@ -6,7 +6,7 @@ Use this document before running Blender commands or touching add-on files.
 
 Check both runtime sides first:
 
-1. **Agent runtime system** (where Claude tools run)
+1. **Agent runtime system** (where agent tools run)
 2. **Blender runtime system** (where Blender process runs)
 
 ### 1.1 Check agent runtime system

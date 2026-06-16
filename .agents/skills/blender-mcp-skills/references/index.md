@@ -25,7 +25,7 @@ This directory contains modular reference docs for Blender add-on and extension 
 
 ## Setup guide reference (raw)
 
-Use this when `blender-mcp` command or Claude MCP registration is missing.
+Use this when `blender-mcp` command or agent-side MCP registration is missing.
 
 Note:
 - This guide is maintained by this repository (not official Blender documentation).

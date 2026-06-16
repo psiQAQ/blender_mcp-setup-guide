@@ -94,7 +94,10 @@ uv --version
 ### 2.2 Clone the Source
 
 ```bash
+# Linux/macOS
 cd ~/.local/share
+# Windows
+cd %USERPROFILE%\.local\share
 git clone --depth 1 https://projects.blender.org/lab/blender_mcp.git
 ```
 
@@ -103,7 +106,10 @@ git clone --depth 1 https://projects.blender.org/lab/blender_mcp.git
 ### 2.3 Global Install
 
 ```bash
+# Linux/macOS
 cd ~/.local/share/blender_mcp/mcp
+# Windows
+cd %USERPROFILE%\.local\share\blender_mcp\mcp
 uv tool install --python 3.11 .
 ```
 
@@ -140,7 +146,7 @@ Expected output: `Status: ✓ Connected` with `BLENDER_MCP_HOST=localhost` in th
 
 Reference registration for other agents (example: OpenCode):
 
-Write to `~/.config/opencode/opencode.json`:
+Write to `~/.config/opencode/opencode.json` (Linux/macOS) or `%USERPROFILE%\\.config\\opencode\\opencode.json` (Windows):
 
 ```json
 {
@@ -158,12 +164,27 @@ Write to `~/.config/opencode/opencode.json`:
 }
 ```
 
+For Codex, add this to `.codex/config.toml`:
+
+```toml
+[mcp_servers.blender]
+enabled = true
+command = "blender-mcp"
+
+[mcp_servers.blender.env]
+BLENDER_MCP_HOST = "localhost"
+BLENDER_MCP_PORT = "9876"
+```
+
 ### 2.5 Updating
 
 When the official repo has updates:
 
 ```bash
+# Linux/macOS
 cd ~/.local/share/blender_mcp
+# Windows
+cd %USERPROFILE%\.local\share\blender_mcp
 
 # First time only: set upstream tracking
 git branch --set-upstream-to=origin/main main
@@ -191,7 +212,10 @@ claude mcp remove blender -s user  # if you used --scope user
 uv tool uninstall blender-mcp
 
 # 3. Optionally delete the source
+# Linux/macOS
 rm -rf ~/.local/share/blender_mcp
+# Windows PowerShell
+Remove-Item -LiteralPath "$env:USERPROFILE\.local\share\blender_mcp" -Recurse -Force
 ```
 
 ---

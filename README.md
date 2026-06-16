@@ -2,7 +2,7 @@
 
 # Blender MCP Skills Toolkit
 
-![Claude Code + Blender MCP 架构图](assets/imgs/claude-code-mcp-blender.png)
+![Agent + Blender MCP Architecture](assets/imgs/claude-code-mcp-blender.png)
 
 This repository provides two things together:
 
@@ -14,12 +14,13 @@ It is designed to let agents install first, then build extension workflows consi
 ## One-line prompt for agent to install the official Blender MCP
 
 ```text
-Follow https://raw.githubusercontent.com/psiQAQ/blender_mcp-setup-guide/main/docs/blender_mcp-setup_en.md to install the official Blender MCP (Blender Add-on + blender-mcp server), register it with Claude Code, and verify the connection end-to-end.
+Follow https://raw.githubusercontent.com/psiQAQ/blender_mcp-setup-guide/main/docs/blender_mcp-setup_en.md to install the official Blender MCP (Blender Add-on + blender-mcp server), register it with your agent, and verify the connection end-to-end.
 ```
 
-Besides Claude Code, other agents are also supported. Use each agent's MCP configuration format.
+The same setup pattern also works for other agents. Use each agent's MCP configuration format.
 
-The installation guides include an OpenCode example that directly adds a `blender` MCP server entry to `~/.config/opencode/opencode.json`.
+The installation guides include an OpenCode example that directly adds a `blender` MCP server entry to `~/.config/opencode/opencode.json` (Linux/macOS) or `%USERPROFILE%\\.config\\opencode\\opencode.json` (Windows).
+They also include a Codex example that adds the same server to `.codex/config.toml`.
 
 ## Skill capabilities (brief)
 
@@ -42,11 +43,11 @@ The installation guides include an OpenCode example that directly adds a `blende
 
 ## Install the local skill
 
-- Skill path: `.claude/skills/blender-mcp-skills/`
+- Skill path: `.agents/skills/blender-mcp-skills/`
 - Skill name: `blender-mcp-skills`
 
 ```bash
-npx skills add ./.claude/skills/blender-mcp-skills
+npx skills add ./.agents/skills/blender-mcp-skills
 ```
 
 ## Repository structure (expanded for skill)
@@ -63,7 +64,7 @@ blender_mcp/
 │  ├─ blender_mcp-setup_zh.md
 │  ├─ blender_mcp-remote.md
 │  └─ blender_mcp-remote_zh.md
-├─ .claude/
+├─ .agents/
 │  └─ skills/
 │     └─ blender-mcp-skills/
 │        ├─ SKILL.md

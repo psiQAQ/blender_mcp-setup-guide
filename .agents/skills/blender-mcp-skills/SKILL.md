@@ -13,7 +13,7 @@ This skill provides a reliable workflow for Blender extension add-on development
 Trigger this skill whenever users ask to:
 
 - install Blender MCP components (Blender Add-on + blender-mcp server)
-- fix missing blender-mcp command or missing Claude MCP connection
+- fix missing blender-mcp command or missing agent-side MCP connection
 - create plugin scaffolding
 - create a template
 - create a new add-on
@@ -131,7 +131,7 @@ All internal paths in this skill are relative to the directory containing this `
 
 Do not hard-code agent-specific roots such as:
 
-- `.claude/skills/<skill-name>/`
+- `agent-root/skills/<skill-name>/`
 - `.agents/skills/<skill-name>/`
 - `.opencode/skills/<skill-name>/`
 

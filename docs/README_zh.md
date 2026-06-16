@@ -2,7 +2,7 @@
 
 # Blender MCP Skills Toolkit（中文版）
 
-![Claude Code + Blender MCP 架构图](../assets/imgs/claude-code-mcp-blender.png)
+![Agent + Blender MCP 架构图](../assets/imgs/claude-code-mcp-blender.png)
 
 本仓库同时提供两部分内容：
 
@@ -14,12 +14,13 @@
 ## 给 Agent 的一句话安装 Blender 官方 MCP 的提示词
 
 ```text
-请严格按 https://raw.githubusercontent.com/psiQAQ/blender_mcp-setup-guide/main/docs/blender_mcp-setup_zh.md 完成官方 Blender MCP 安装（Blender Add-on + blender-mcp server），并在 Claude Code 中完成注册与连通性验证。
+请严格按 https://raw.githubusercontent.com/psiQAQ/blender_mcp-setup-guide/main/docs/blender_mcp-setup_zh.md 完成官方 Blender MCP 安装（Blender Add-on + blender-mcp server），并在你的 agent 中完成注册与连通性验证。
 ```
 
-除 Claude Code 外，也支持其他 agent。请按各家 agent 的 MCP 配置格式进行接入。
+同一套安装思路也支持其他 agent。请按各家 agent 的 MCP 配置格式进行接入。
 
-安装教程中已提供 OpenCode 示例：可直接向 `~/.config/opencode/opencode.json` 添加 `blender` 的 MCP 配置。
+安装教程中已提供 OpenCode 示例：可直接向 `~/.config/opencode/opencode.json`（Linux/macOS）或 `%USERPROFILE%\\.config\\opencode\\opencode.json`（Windows）添加 `blender` 的 MCP 配置。
+也提供了 Codex 示例：可通过向 `.codex/config.toml` 添加配置接入同一个 MCP Server。
 
 ## Skills 能力（简述）
 
@@ -41,11 +42,11 @@
 
 ## Skills 安装
 
-- 本仓库技能路径：`./.claude/skills/blender-mcp-skills/`
+- 本仓库技能路径：`./.agents/skills/blender-mcp-skills/`
 - 技能名：`blender-mcp-skills`
 
 ```bash
-npx skills add ./.claude/skills/blender-mcp-skills
+npx skills add ./.agents/skills/blender-mcp-skills
 ```
 
 ## 目录结构（按 skill 展开）
@@ -62,7 +63,7 @@ blender_mcp/
 │  ├─ blender_mcp-setup_en.md               # 本地教程（英文）
 │  ├─ blender_mcp-remote_zh.md              # 远端教程（中文）
 │  └─ blender_mcp-remote.md                 # 远端教程（英文）
-├─ .claude/skills/blender-mcp-skills/
+├─ .agents/skills/blender-mcp-skills/
 │  ├─ SKILL.md                              # 技能入口
 │  ├─ references/                           # 开发思路与规范指导
 │  │  ├─ index.md / template-guide.md

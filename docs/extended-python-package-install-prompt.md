@@ -2,15 +2,15 @@
 
 请先阅读并理解仓库结构，重点检查以下目录和文件：
 
-- `.claude/skills/blender-mcp-skills/SKILL.md`
-- `.claude/skills/blender-mcp-skills/references/template-guide.md`
-- `.claude/skills/blender-mcp-skills/references/extension-workflow.md`
-- `.claude/skills/blender-mcp-skills/references/pitfalls-and-fixes.md`
-- `.claude/skills/blender-mcp-skills/templates/extension_addon/__init__.py`
-- `.claude/skills/blender-mcp-skills/templates/extension_addon/auto_load.py`
-- `.claude/skills/blender-mcp-skills/templates/extension_addon/preferences.py`
-- `.claude/skills/blender-mcp-skills/templates/extension_addon/blender_manifest.toml`
-- `.claude/skills/blender-mcp-skills/templates/extension_addon/scripts/validate_extension.py`
+- `.agents/skills/blender-mcp-skills/SKILL.md`
+- `.agents/skills/blender-mcp-skills/references/template-guide.md`
+- `.agents/skills/blender-mcp-skills/references/extension-workflow.md`
+- `.agents/skills/blender-mcp-skills/references/pitfalls-and-fixes.md`
+- `.agents/skills/blender-mcp-skills/templates/extension_addon/__init__.py`
+- `.agents/skills/blender-mcp-skills/templates/extension_addon/auto_load.py`
+- `.agents/skills/blender-mcp-skills/templates/extension_addon/preferences.py`
+- `.agents/skills/blender-mcp-skills/templates/extension_addon/blender_manifest.toml`
+- `.agents/skills/blender-mcp-skills/templates/extension_addon/scripts/validate_extension.py`
 
 修改目标如下。
 
@@ -18,7 +18,7 @@
 
 在模板目录中新增：
 
-`.claude/skills/blender-mcp-skills/templates/extension_addon/utils/dependency_manager.py`
+`.agents/skills/blender-mcp-skills/templates/extension_addon/utils/dependency_manager.py`
 
 该模块负责：
 
@@ -116,7 +116,7 @@ network = "Install missing Python packages into the extension private dependency
 
 新增文件：
 
-`.claude/skills/blender-mcp-skills/references/dependency-policy.md`
+`.agents/skills/blender-mcp-skills/references/dependency-policy.md`
 
 内容要说明以下规则：
 
