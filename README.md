@@ -47,7 +47,7 @@ They also include a Codex example that adds the same server to `.codex/config.to
 - Skill name: `blender-mcp-skills`
 
 ```bash
-npx skills add ./.agents/skills/blender-mcp-skills
+npx skills add https://github.com/psiQAQ/blender_mcp-setup-guide
 ```
 
 ## Repository structure (expanded for skill)
