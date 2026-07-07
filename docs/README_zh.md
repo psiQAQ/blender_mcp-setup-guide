@@ -46,7 +46,7 @@
 - 技能名：`blender-mcp-skills`
 
 ```bash
-npx skills add ./.agents/skills/blender-mcp-skills
+npx skills add https://github.com/psiQAQ/blender_mcp-setup-guide
 ```
 
 ## 目录结构（按 skill 展开）
