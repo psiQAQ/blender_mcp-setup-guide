@@ -1,0 +1,24 @@
+name: Inspect official upstream
+
+on:
+  schedule:
+    - cron: '23 3 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  inspect:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - run: python -B scripts/upstream_sync.py
+      - uses: actions/upload-artifact@v4
+        with:
+          name: official-upstream-review
+          path: build/upstream-review/
+          if-no-files-found: error

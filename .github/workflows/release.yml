@@ -1,0 +1,141 @@
+name: Publish validated integration
+
+on:
+  workflow_dispatch:
+    inputs:
+      validation_run_id:
+        description: Successful Validate Extension CI run ID for this exact commit
+        type: string
+        required: true
+      release_tag:
+        description: Existing Git tag matching the validated version and commit (for example v1.0.3+integration.1)
+        type: string
+        required: true
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: extension-release
+  cancel-in-progress: false
+
+jobs:
+  publish-assets:
+    runs-on: windows-2022
+    permissions:
+      contents: write
+      actions: read
+      pages: read
+    defaults:
+      run:
+        shell: pwsh
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - run: python -B scripts/ci_setup.py
+      - name: Require the exact successful CI run
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          VALIDATION_RUN_ID: ${{ inputs.validation_run_id }}
+        run: python -B scripts/verify_ci_run.py --run-id $env:VALIDATION_RUN_ID
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: validated-*
+          path: build/validated
+          github-token: ${{ github.token }}
+          run-id: ${{ inputs.validation_run_id }}
+      - id: pages
+        uses: actions/configure-pages@v5
+      - name: Arrange platform artifacts
+        run: |
+          foreach ($platform in @('windows-x64', 'linux-x64', 'macos-arm64')) {
+            Move-Item "build/validated/validated-$platform" "build/validated/$platform"
+          }
+      - name: Upload draft assets, read back every asset and validate the complete index
+        id: assets
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ inputs.release_tag }}
+          PAGES_BASE: ${{ steps.pages.outputs.base_url }}
+        run: '& $env:BLENDER_PYTHON -B scripts/publish_release.py --phase stage --repository $env:GITHUB_REPOSITORY --tag $env:RELEASE_TAG --expected-commit $env:GITHUB_SHA --artifacts build/validated --blender $env:BLENDER --index-output build/release-repository --current-url "$env:PAGES_BASE/publication.json"'
+      - name: Publish the validated Release and read back public downloads
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ inputs.release_tag }}
+          PAGES_BASE: ${{ steps.pages.outputs.base_url }}
+        run: '& $env:BLENDER_PYTHON -B scripts/publish_release.py --phase finalize --repository $env:GITHUB_REPOSITORY --tag $env:RELEASE_TAG --expected-commit $env:GITHUB_SHA --artifacts build/validated --index-output build/release-repository --current-url "$env:PAGES_BASE/publication.json"'
+      - uses: actions/upload-artifact@v4
+        with:
+          name: verified-extension-index
+          path: build/release-repository/
+          if-no-files-found: error
+  deploy-index:
+    needs: publish-assets
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: verified-extension-index
+          path: site
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+      - id: deployment
+        uses: actions/deploy-pages@v4
+  verify-publication:
+    needs: deploy-index
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: windows-x64
+            runner: windows-2022
+          - platform: linux-x64
+            runner: ubuntu-24.04
+          - platform: macos-arm64
+            runner: macos-15
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 25
+    defaults:
+      run:
+        shell: pwsh
+    steps:
+      - uses: actions/checkout@v4
+      - name: Prepare Linux libraries
+        if: runner.os == 'Linux'
+        shell: bash
+        run: sudo apt-get update && sudo apt-get install -y libegl1 libgl1-mesa-dri libxkbcommon0 libxi6 libxrender1 libxxf86vm1
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - run: python -B scripts/ci_setup.py --platform ${{ matrix.platform }}
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: validated-*
+          path: build/validated
+          github-token: ${{ github.token }}
+          run-id: ${{ inputs.validation_run_id }}
+      - name: Arrange platform artifacts
+        run: |
+          foreach ($platform in @('windows-x64', 'linux-x64', 'macos-arm64')) {
+            Move-Item "build/validated/validated-$platform" "build/validated/$platform"
+          }
+      - name: Install from the public index and call the real MCP
+        run: '& $env:BLENDER_PYTHON -B scripts/test_repository.py --blender $env:BLENDER --artifacts build/validated --public-index "https://${{ github.repository_owner }}.github.io/blender_mcp-setup-guide/index.json"'
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: publication-${{ matrix.platform }}
+          path: |
+            build/published-tests.json
+            build/tests/**/blender.log

@@ -1,0 +1,145 @@
+name: Validate Extension
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+  workflow_call:
+
+permissions:
+  contents: read
+
+jobs:
+  native:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: windows-x64
+            runner: windows-2022
+          - platform: linux-x64
+            runner: ubuntu-24.04
+          - platform: macos-arm64
+            runner: macos-15
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 45
+    defaults:
+      run:
+        shell: pwsh
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Prepare Linux GUI libraries
+        if: runner.os == 'Linux'
+        shell: bash
+        run: sudo apt-get update && sudo apt-get install -y xvfb libegl1 libgl1-mesa-dri libxkbcommon0 libxi6 libxrender1 libxxf86vm1
+      - name: Prepare verified Blender 5.1.2
+        run: python -B scripts/ci_setup.py --platform ${{ matrix.platform }}
+      - name: Verify native platform
+        run: '& $env:BLENDER_PYTHON -B -c "import sys; sys.path.insert(0, ''scripts''); from platforms import resolve; assert resolve()[0] == ''${{ matrix.platform }}''"'
+      - name: Unit tests
+        run: '& $env:BLENDER_PYTHON -B scripts/run_checks.py'
+      - name: Generate, build, validate and install two templates
+        run: '& $env:BLENDER_PYTHON -B scripts/test_templates.py --blender $env:BLENDER'
+      - name: Build and validate final integration ZIP
+        run: '& $env:BLENDER_PYTHON -B scripts/build_integration.py --blender $env:BLENDER'
+      - name: Authenticate and exercise real MCP and lifecycle
+        run: |
+          $package = Get-ChildItem build/dist/*.zip | Select-Object -ExpandProperty FullName
+          & $env:BLENDER_PYTHON -B scripts/test_integration.py --blender $env:BLENDER --package $package
+      - name: Install from HTTP index and upgrade with preserved preferences
+        run: |
+          $package = Get-ChildItem build/dist/*.zip | Select-Object -ExpandProperty FullName
+          & $env:BLENDER_PYTHON -B scripts/test_upgrade.py --blender $env:BLENDER --package $package
+      - name: GUI timer, configuration and exit validation
+        run: |
+          $package = Get-ChildItem build/dist/*.zip | Select-Object -ExpandProperty FullName
+          if ($env:RUNNER_OS -eq 'Linux') {
+            $env:LIBGL_ALWAYS_SOFTWARE = '1'
+            xvfb-run -a $env:BLENDER_PYTHON -B scripts/test_gui.py --blender $env:BLENDER --package $package
+          } else {
+            & $env:BLENDER_PYTHON -B scripts/test_gui.py --blender $env:BLENDER --package $package
+          }
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Prepare verified Blender 5.1.0
+        run: python -B scripts/ci_setup.py --platform ${{ matrix.platform }} --minimum
+      - name: Verify the same ZIP on Blender 5.1.0
+        run: |
+          Copy-Item build/integration-tests.json build/current-integration-tests.json
+          $package = Get-ChildItem build/dist/*.zip | Select-Object -ExpandProperty FullName
+          & $env:BLENDER_PYTHON -B scripts/test_integration.py --blender $env:MINIMUM_BLENDER --package $package
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          Move-Item build/integration-tests.json build/minimum-tests.json
+          Move-Item build/current-integration-tests.json build/integration-tests.json
+          & $env:BLENDER_PYTHON -B scripts/collect_reports.py --package $package
+      - name: Upload validated artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: native-${{ matrix.platform }}
+          path: |
+            build/dist/*
+            build/*-tests.json
+          if-no-files-found: error
+      - name: Upload diagnostic logs
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: validation-logs-${{ matrix.platform }}
+          path: |
+            build/*-tests.json
+            build/tests/**/blender.log
+            build/tests/**/service.log
+  repository:
+    needs: native
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: windows-x64
+            runner: windows-2022
+          - platform: linux-x64
+            runner: ubuntu-24.04
+          - platform: macos-arm64
+            runner: macos-15
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 25
+    defaults:
+      run:
+        shell: pwsh
+    steps:
+      - uses: actions/checkout@v4
+      - name: Prepare Linux libraries
+        if: runner.os == 'Linux'
+        shell: bash
+        run: sudo apt-get update && sudo apt-get install -y libegl1 libgl1-mesa-dri libxkbcommon0 libxi6 libxrender1 libxxf86vm1
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - run: python -B scripts/ci_setup.py --platform ${{ matrix.platform }}
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: native-*
+          path: build/native
+      - name: Arrange the complete package set
+        run: |
+          New-Item -ItemType Directory build/collection -Force
+          foreach ($platform in @('windows-x64', 'linux-x64', 'macos-arm64')) {
+            Move-Item "build/native/native-$platform" "build/collection/$platform"
+          }
+      - name: Select, install and upgrade from the unified HTTP index
+        run: '& $env:BLENDER_PYTHON -B scripts/test_repository.py --blender $env:BLENDER --artifacts build/collection'
+      - name: Upload complete validated platform artifacts
+        run: Copy-Item build/repository-tests.json "build/collection/${{ matrix.platform }}/repository-tests.json"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: validated-${{ matrix.platform }}
+          path: build/collection/${{ matrix.platform }}/
+          if-no-files-found: error
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: repository-logs-${{ matrix.platform }}
+          path: build/tests/**/blender.log
