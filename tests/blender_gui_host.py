@@ -4,6 +4,7 @@ import importlib
 import json
 import os
 import socket
+import subprocess
 import sys
 import time
 import tomllib
@@ -87,7 +88,10 @@ def main():
                 window = bpy.context.window_manager.windows[0]
                 with bpy.context.temp_override(window=window):
                     assert bpy.ops.wm.redraw_timer(type="DRAW_WIN_SWAP", iterations=2) == {"FINISHED"}
-                    assert bpy.ops.screen.screenshot(filepath=str(control / "preferences.png")) == {"FINISHED"}
+                    if sys.platform == "linux":
+                        subprocess.run(["import", "-window", "root", str(control / "preferences.png")], check=True, timeout=15)
+                    else:
+                        assert bpy.ops.screen.screenshot(filepath=str(control / "preferences.png")) == {"FINISHED"}
                 image = bpy.data.images.load(str(control / "preferences.png"), check_existing=False)
                 try:
                     samples = image.pixels[:][::128]

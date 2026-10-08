@@ -35,7 +35,7 @@ jobs:
       - name: Prepare Linux GUI libraries
         if: runner.os == 'Linux'
         shell: bash
-        run: sudo apt-get update && sudo apt-get install -y xvfb libegl1 libgl1-mesa-dri libxkbcommon0 libxi6 libxrender1 libxxf86vm1
+        run: sudo apt-get update && sudo apt-get install -y xvfb openbox imagemagick x11-utils libegl1 libgl1-mesa-dri libxkbcommon0 libxi6 libxrender1 libxxf86vm1
       - name: Prepare verified Blender 5.1.2
         run: python -B scripts/ci_setup.py --platform ${{ matrix.platform }}
       - name: Verify native platform
@@ -97,6 +97,8 @@ jobs:
             build/tests/**/blender.log
             build/tests/**/service.log
             build/tests/gui-*/failure.txt
+            build/tests/gui-*/desktop.log
+            build/tests/gui-*/preferences.png
   repository:
     needs: native
     strategy:

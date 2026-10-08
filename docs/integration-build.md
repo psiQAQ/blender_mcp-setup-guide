@@ -39,7 +39,7 @@ $package = 'build/dist/blender_mcp_integration-1.0.3+integration.1-windows-x64.z
 
 测试使用独立 `BLENDER_USER_RESOURCES`，保留用户现有 Blender 配置。使用真实 MCP SDK、最终 ZIP 和 GUI 事件循环；场景操作恢复对象数。升级检查从 HTTP 索引安装前一修订号夹具，再升级至实际候选，验证偏好与凭据保留。
 
-CI 使用 windows-2022、ubuntu-24.04、macos-15 ARM64 原生 runner，hash 固定 Blender 5.1.2，并在 5.1.0 上验证相同 ZIP 的安装、MCP 与生命周期。Linux GUI 使用 Xvfb/Mesa；Windows GUI 使用 [mesa-dist-win](https://github.com/pal1000/mesa-dist-win) 的 hash 固定 26.2.4 llvmpipe，仅部署到 `build/toolchain/` 下的 CI Blender，不包含在安装包中。GUI 报告保存实际图形 renderer。三个产物汇总后，分别从统一索引选择平台、实际安装与升级。全部通过才产生 `validated-<platform>`。
+CI 使用 windows-2022、ubuntu-24.04、macos-15 ARM64 原生 runner，hash 固定 Blender 5.1.2，并在 5.1.0 上验证相同 ZIP 的安装、MCP 与生命周期。Linux GUI 使用 Xvfb/Mesa、Openbox 窗口管理器和 ImageMagick X11 桌面取景；Windows GUI 使用 [mesa-dist-win](https://github.com/pal1000/mesa-dist-win) 的 hash 固定 26.2.4 llvmpipe，仅部署到 `build/toolchain/` 下的 CI Blender，不包含在安装包中。GUI 报告保存实际图形 renderer，截图须包含可见界面。三个产物汇总后，分别从统一索引选择平台、实际安装与升级。全部通过才产生 `validated-<platform>`。
 
 报告绑定平台及 ZIP SHA-256。失败检查写入 Failed，不复用旧 Passed 报告。人工 GUI 操作及三个实际 agent 的验收与自动化测试分开记录。
 
