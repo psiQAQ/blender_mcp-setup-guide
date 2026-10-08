@@ -9,3 +9,5 @@ docs/extension-dev-prompt*.md
 docs/extensions-getting_started.md
 .codex/config.toml
 extensions/
+.agents/skills/*
+!.agents/skills/blender-mcp-skills
