@@ -1,8 +1,8 @@
 # System Adaptation for Commands and Paths
 
-Use this document before running Blender commands or touching add-on files.
+Use this document before operating Blender, installing an Extension, or syncing a development directory. Offline scaffolding and static checks only need the agent's local paths and interpreter.
 
-## 1) Mandatory pre-checks
+## 1) Runtime checks for Blender operations
 
 Check both runtime sides first:
 
@@ -21,7 +21,7 @@ PY
 
 ### 1.2 Check Blender runtime system
 
-Use MCP `execute_blender_code` and run:
+Use MCP `execute_blender_code` for the running target, or run the same query with an explicitly selected local Blender executable and isolated configuration:
 
 ```python
 import platform
@@ -48,7 +48,7 @@ result = {
 
 ### Mode A: Same-system runtime
 
-If agent and Blender are on the same OS runtime, edit files directly in Blender add-on location.
+If agent and Blender are on the same OS runtime, build the source in the project and install its ZIP through Extensions. Sync an installed development directory only when the target mapping is confirmed.
 
 ### Mode B: Cross-system runtime
 
@@ -136,7 +136,7 @@ bpy.ops.preferences.addon_enable(module="your_module")
 
 ## 7) Quick checklist
 
-Before file writes or reload operations:
+Before Blender-host file writes or reload operations:
 
 1. Confirm agent system.
 2. Confirm Blender system.

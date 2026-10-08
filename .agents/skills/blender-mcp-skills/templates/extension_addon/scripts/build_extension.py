@@ -8,6 +8,7 @@ import platform
 import shutil
 import subprocess
 import sys
+import tomllib
 from pathlib import Path
 from typing import Any
 
@@ -216,6 +217,7 @@ def main() -> int:
     parser = argparse.ArgumentParser(description="Validate and build Blender extension with one Python entrypoint.")
     parser.add_argument("--blender", help="Blender executable path. Highest priority for Blender binary resolution.")
     parser.add_argument("--python", dest="user_python", help="Python interpreter for validate/build orchestration.")
+    parser.add_argument("--output-dir", help="Package destination (default: source parent directory).")
     parser.add_argument(
         "--mcp-info-json",
         help="JSON file from Blender MCP info. Supported keys: blender_system, binary_path, binary_path_python, extension_root.",
@@ -324,7 +326,13 @@ def main() -> int:
 
     try:
         _run(validate_cmd, cwd=extension_root)
-        _run([blender_bin, "--command", "extension", "build"], cwd=extension_root)
+        output_dir = Path(args.output_dir).resolve() if args.output_dir else extension_root.parent
+        output_dir.mkdir(parents=True, exist_ok=True)
+        _run([blender_bin, "--command", "extension", "build", "--output-dir", str(output_dir)], cwd=extension_root)
+        with manifest_path.open("rb") as manifest_file:
+            manifest = tomllib.load(manifest_file)
+        package = output_dir / f"{manifest['id']}-{manifest['version']}.zip"
+        _run([blender_bin, "--command", "extension", "validate", str(package)], cwd=extension_root)
     except RuntimeError as exc:
         print(f"ERROR: {exc}", file=sys.stderr)
         print(

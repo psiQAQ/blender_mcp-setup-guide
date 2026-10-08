@@ -1,36 +1,20 @@
-# Blender Extension Add-on Template (4.2+) — autoload-only variant
+# Blender Extension Add-on Template (4.2+)
 
 This template is a modular starter for Blender Extension Add-ons.
 
-It uses `auto_load.py` to discover submodules and register classes in topological order.
+It registers an explicit class list in dependency order and rolls back partial registration on failure.
 
-Class registration is handled by `auto_load.py`. Module-level `register()`/`unregister()` should be used only for non-class side effects (for example Scene property attach/detach).
+The root `__init__.py` owns class registration. Module-level functions attach and remove Scene properties; cleanup runs in reverse order.
 
 ## Folder layout
 
-```text
-extension_addon/
-├─ blender_manifest.toml
-├─ __init__.py
-├─ auto_load.py
-├─ constants.py
-├─ properties.py
-├─ preferences.py
-├─ operators/
-│  ├─ __init__.py
-│  └─ object_ops.py
-├─ panels/
-│  ├─ __init__.py
-│  └─ viewport_panel.py
-├─ utils/
-│  ├─ __init__.py
-│  └─ common.py
-├─ scripts/
-│  ├─ validate_extension.py
-│  ├─ build_extension.py
-│  └─ sync_and_reload.py
-└─ README.md
-```
+| Path | Responsibility |
+| --- | --- |
+| `blender_manifest.toml`, `LICENSE` | Package metadata and license |
+| `__init__.py` | Explicit registration and rollback |
+| `constants.py`, `properties.py`, `preferences.py` | Identifiers and settings |
+| `operators/`, `panels/`, `utils/` | Actions, UI and shared helpers |
+| `scripts/` | Development validation, build and optional sync |
 
 ## When to use this template
 
@@ -44,7 +28,7 @@ Use this template for Blender 4.2+ extension development.
    - `name`
    - `maintainer`
    - `version`
-3. Update `constants.py` and then replace demo class names where needed.
+3. Replace `my_example_extension` and `MY_EXAMPLE_EXTENSION` consistently across source and metadata. The repository generator `scripts/scaffold_extension.py <id> <new-directory>` performs this replacement and supplies the license.
 4. Disable/enable in Blender and verify registration behavior.
 
 ## Build
@@ -52,7 +36,7 @@ Use this template for Blender 4.2+ extension development.
 Run in the extension root directory (where `blender_manifest.toml` is located):
 
 ```bash
-python scripts/build_extension.py
+python scripts/build_extension.py --blender <executable> --output-dir <package-directory>
 ```
 
 ## Scripted validation and build
@@ -88,7 +72,6 @@ Run from the extension root to perform a minimal local verification pass:
 # Python syntax check
 python -m py_compile \
   __init__.py \
-  auto_load.py \
   constants.py \
   preferences.py \
   properties.py \
@@ -133,4 +116,5 @@ Use `--allow-legacy-target` only when intentionally developing a legacy add-on.
 ## Development notes
 
 - For WSL + Windows Blender, target installed extension repo paths, and ensure paths are Blender-host resolvable.
-- Keep module side effects in module `register()`/`unregister()` and let `auto_load.py` handle class registration order.
+- Keep one authoritative explicit class list in the root `__init__.py` and verify rollback and reverse cleanup.
+- Bundle required dependencies as manifest wheels; writable data belongs in `bpy.utils.extension_path_user(...)`.

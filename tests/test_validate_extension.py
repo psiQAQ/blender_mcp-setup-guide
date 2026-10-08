@@ -7,10 +7,11 @@ from pathlib import Path
 
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
-VALIDATOR = REPO_ROOT / ".claude/skills/blender-mcp-skills/templates/extension_addon/scripts/validate_extension.py"
+VALIDATOR = REPO_ROOT / ".agents/skills/blender-mcp-skills/templates/extension_addon/scripts/validate_extension.py"
 
 
 def write_minimal_manifest(extension_root: Path, *, network_permission: bool = False) -> None:
+    (extension_root / "__init__.py").write_text("", encoding="utf-8")
     permissions = (
         '\n[permissions]\nnetwork = "Install missing Python packages into the extension private dependency directory"\n'
         if network_permission
@@ -52,6 +53,30 @@ def run_validator(extension_root: Path) -> subprocess.CompletedProcess[str]:
 
 
 class ValidateExtensionDependencyChecksTest(unittest.TestCase):
+    def test_rejects_missing_schema_and_entry_point(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            extension_root = Path(tmp)
+            write_minimal_manifest(extension_root)
+            manifest_path = extension_root / "blender_manifest.toml"
+            manifest_path.write_text(
+                manifest_path.read_text(encoding="utf-8").replace('schema_version = "1.0.0"', ""),
+                encoding="utf-8",
+            )
+            (extension_root / "__init__.py").unlink()
+            proc = run_validator(extension_root)
+        self.assertEqual(proc.returncode, 1)
+        self.assertIn("schema_version", proc.stdout)
+        self.assertIn("__init__.py", proc.stdout)
+
+    def test_rejects_python_syntax_error(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            extension_root = Path(tmp)
+            write_minimal_manifest(extension_root)
+            (extension_root / "__init__.py").write_text("def broken(\n", encoding="utf-8")
+            proc = run_validator(extension_root)
+        self.assertEqual(proc.returncode, 1)
+        self.assertIn("__init__.py:1", proc.stdout)
+
     def test_warns_for_pip_install_without_target_and_missing_network_permission(self):
         with tempfile.TemporaryDirectory() as tmp:
             extension_root = Path(tmp)

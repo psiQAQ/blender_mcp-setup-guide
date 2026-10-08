@@ -20,6 +20,7 @@ except ModuleNotFoundError:  # pragma: no cover
 
 
 REQUIRED_MANIFEST_KEYS = (
+    "schema_version",
     "id",
     "version",
     "name",
@@ -30,7 +31,7 @@ REQUIRED_MANIFEST_KEYS = (
     "license",
 )
 
-EXTENSION_ID_PATTERN = re.compile(r"^[a-z0-9_]+$")
+EXTENSION_ID_PATTERN = re.compile(r"^[a-z][a-z0-9_]*$")
 SEMVER_PATTERN = re.compile(r"^\d+\.\d+\.\d+$")
 EXCLUDED_SCAN_DIRS = {"deps", "wheels", "scripts", ".venv", "venv", "__pycache__"}
 COMMON_TOP_LEVEL_THIRD_PARTY_IMPORTS = {"requests", "yaml", "numpy", "cv2", "PIL", "scipy", "torch", "open3d"}
@@ -268,6 +269,9 @@ def main() -> int:
     warns: list[str] = []
     manifest: dict = {}
 
+    if not (extension_root / "__init__.py").is_file():
+        errors.append("__init__.py not found in add-on extension root.")
+
     if not manifest_path.exists():
         errors.append("blender_manifest.toml not found in extension root.")
     else:
@@ -281,10 +285,13 @@ def main() -> int:
         for key in missing:
             errors.append(f"missing required manifest key: {key}")
 
+        if "schema_version" in manifest and manifest["schema_version"] != "1.0.0":
+            errors.append("schema_version must be '1.0.0'.")
+
         extension_id = manifest.get("id")
         if isinstance(extension_id, str):
             if not EXTENSION_ID_PATTERN.fullmatch(extension_id):
-                errors.append("manifest id should use lowercase letters, digits, and underscores only.")
+                errors.append("manifest id must start with a lowercase letter and contain lowercase letters, digits, or underscores.")
         else:
             errors.append("manifest id must be a string.")
 
@@ -326,6 +333,12 @@ def main() -> int:
                         continue
                     if not wheel_path.exists():
                         errors.append(f"wheel path does not exist: {wheel}")
+
+    for path in _iter_addon_python_files(extension_root):
+        try:
+            ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
+        except SyntaxError as exc:
+            errors.append(f"{path.relative_to(extension_root)}:{exc.lineno}: {exc.msg}")
 
     project_modules = _collect_project_modules(extension_root)
     warns.extend(_scan_absolute_import_warnings(extension_root, project_modules))

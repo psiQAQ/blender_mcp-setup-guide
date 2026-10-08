@@ -11,14 +11,14 @@
 **Symptom:** `hasattr(bpy.types, "MyPropertyGroup")` returns `False` even after registration.
 
 **Fix:**
-- use `try/except ValueError` for class registration
+- use explicit registration state and roll back completed registrations on failure
 - validate PropertyGroup through attached scene property
 
 ## 3) Wrong module key for self-disable
 
 **Symptom:** add-on cannot disable itself with display name.
 
-**Fix:** use module name from `self.__class__.__module__.split(".")[0]`.
+**Fix:** use the full root package namespace (`bl_ext.<repo>.<id>`), preserved by root `__package__`.
 
 ## 4) `global` declaration order error
 
@@ -55,29 +55,29 @@
 - unregister old handlers before register
 - deduplicate handlers by function identity/name before append
 
-## 9) Private path removal does not unload modules
+## 9) Dependency conflicts in a sidecar
 
-**Symptom:** disabling the add-on removes `deps/site-packages` from `sys.path`, but previously imported packages still appear usable.
+**Symptom:** Blender's bundled packages override the service's locked dependencies.
 
-**Fix:** remember that removing a path does not remove already loaded entries from `sys.modules`; restart Blender or unload specific modules only when you fully understand the side effects.
+**Fix:** launch the independent service with `-I -S -B`, then explicitly initialize its bundled runtime and `.pth` files.
 
-## 10) Top-level optional imports break the install button
+## 10) Missing optional dependencies break enable
 
-**Symptom:** a missing package causes add-on enable to fail, so users cannot open Preferences to install it.
+**Symptom:** a package for an optional capability prevents the whole Extension from enabling.
 
 **Fix:** do not import optional third-party packages at module top level; import them inside `execute()` or the function that needs them.
 
-## 11) `auto_load.py` scans dependency directories
+## 11) Module discovery scans dependency directories
 
 **Symptom:** reload imports packages from `deps/site-packages` as if they were add-on modules.
 
-**Fix:** exclude `deps`, `wheels`, `.venv`, `venv`, `scripts`, and `__pycache__` from recursive module discovery.
+**Fix:** default to explicit class/module lists. If discovery is needed, exclude dependency and development directories.
 
 ## 12) Network install happens during register
 
 **Symptom:** enabling the add-on unexpectedly downloads packages.
 
-**Fix:** never install in `register()` or import-time code; only install after an explicit user action in Preferences.
+**Fix:** bundle dependencies at build time as wheels, or as an isolated service runtime.
 
 ## 13) Binary packages fail inside Blender Python
 

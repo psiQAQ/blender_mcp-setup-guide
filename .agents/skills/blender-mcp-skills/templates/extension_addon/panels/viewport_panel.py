@@ -4,7 +4,7 @@ from ..constants import OPERATOR_RUN_ID, PANEL_CATEGORY, PANEL_ID
 from ..utils.common import get_extension_settings
 
 
-class EXAMPLE_PT_panel(bpy.types.Panel):
+class MY_EXAMPLE_EXTENSION_PT_panel(bpy.types.Panel):
     bl_idname = PANEL_ID
     bl_label = "Extension Demo"
     bl_space_type = "VIEW_3D"

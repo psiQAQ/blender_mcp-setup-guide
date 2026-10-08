@@ -20,7 +20,7 @@ Use only this template:
 
 - `templates/extension_addon/`
 
-Registration flow is autoload-only (`auto_load.py`).
+Registration uses explicit class lists, rollback on failure, and reverse cleanup.
 
 ## Version policy
 
@@ -38,7 +38,7 @@ Do not add legacy add-on compatibility branches in the default flow.
 
 ## Build and install (extension-native, required before delivery)
 
-1. Run `python scripts/build_extension.py` in extension root.
+1. Run `python scripts/build_extension.py --blender <executable> --output-dir <directory>` in the Extension root. It validates the source and final ZIP.
 2. Install generated zip into extension repo (prefer `user_default`) using Blender extension install flow.
 3. Confirm extension is enabled under key `bl_ext.<repo_module>.<extension_id>`.
 
@@ -75,7 +75,7 @@ When the extension has build artifacts or generated outputs, run build scripts b
 
 Recommended order:
 
-1. Query Blender runtime facts through MCP (`binary_path`, `binary_path_python`, Blender runtime system) and confirm the extension root containing `blender_manifest.toml`.
+1. Obtain runtime facts through MCP or the selected local Blender executable and confirm the Extension root containing `blender_manifest.toml`.
 2. Review manifest fields against `./manifest-fields.md` when metadata was edited.
 3. Run unified Python build entrypoint (`scripts/build_extension.py`) which calls `scripts/validate_extension.py` first.
 4. Sync changed files to Blender target directory.
@@ -127,16 +127,16 @@ The exact installed extension directory should be discovered from Blender extens
 ## Dependency install policy
 
 - Silent auto-install is forbidden.
-- Users may install missing packages by clicking a button in `AddonPreferences`.
-- Installs must target the extension-private `deps/site-packages` directory.
-- Install commands must use `pip install --target`.
+- Required dependencies are bundled as manifest wheels.
+- Writable data uses `bpy.utils.extension_path_user(...)`.
+- Independent services initialize their own locked runtime without changing Blender's module search path.
 - Do not install packages into Blender bundled Python global `site-packages`.
 - Do not hide network installs in `register()` or add-on enable flow.
 - The helper only syncs files and prints reload hints; it does not install dependencies.
 
 ## CI release reference (extension-native)
 
-Use this as a minimal GitHub Actions reference for extension package builds.
+The repository's `.github/workflows/ci.yml` validates unit tests, generated templates, and the integrated package. `release.yml` consumes validated artifacts. For a standalone project, adapt this minimal reference by supplying a compatible Blender executable:
 
 ```yaml
 name: extension-release

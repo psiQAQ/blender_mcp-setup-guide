@@ -1,6 +1,6 @@
 # blender_manifest.toml Field Reference (Extension docs aligned, 4.2+ workflow)
 
-This reference summarizes `blender_manifest.toml` fields based on `docs/extensions-getting_started.md` (official Blender manual excerpt).
+This reference summarizes the [official manifest documentation](https://docs.blender.org/manual/en/latest/advanced/extensions/getting_started.html). Final packages must pass Blender's official `extension validate`.
 
 ## Required fields
 
@@ -49,4 +49,5 @@ Do not declare internal values such as:
 
 - Do not keep empty placeholders (`""`, `[]`) for optional fields; omit them instead.
 - Keep wheel paths inside extension root.
+- Permission explanations are at most 64 characters and have no trailing punctuation.
 - For network features, verify `bpy.app.online_access` at runtime.

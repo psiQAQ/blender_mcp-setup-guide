@@ -22,22 +22,19 @@ Trigger this skill whenever users ask to:
 - debug register/unregister/reload lifecycle issues
 - manage private Python dependencies for Blender extensions
 
-## Blender MCP gate (minimal)
+## Route by operation
 
-Before extension development, run checks in this exact order:
-
-1. `blender-mcp --help` must run successfully.
-2. Run one Blender MCP query and fetch these fields together:
+Template generation and static checks work offline. Before operating a live Blender through MCP, run one query and fetch these fields together:
 
    - Blender version (`bpy.app.version_string` or `bpy.app.version`)
    - Blender executable path (`bpy.app.binary_path`)
    - Runtime system (`platform.system()`)
 
-If version is lower than 4.2, stop and explain that the default template targets the Blender Extension system for 4.2+ workflows.
+If the target Blender version is lower than 4.2, explain that the default template requires the Extension system in 4.2+.
 
 If version is 4.2 or newer, continue. Prefer testing on the user's active Blender version rather than forcing a fixed 5.1+ baseline.
 
-No other gate checks are required.
+For isolated local builds and tests, an explicitly selected Blender executable supplies the runtime facts without requiring a live MCP connection. The integrated MCP product has its own compatibility range in its manifest.
 
 Setup guide source note:
 
@@ -48,7 +45,7 @@ Setup guide (raw URL):
 
 - Local setup (EN): `https://raw.githubusercontent.com/psiQAQ/blender_mcp-setup-guide/main/docs/blender_mcp-setup_en.md`
 
-After installation, re-run the two checks above. Only continue add-on development after both pass.
+After MCP installation, verify an actual client session and scene-reading tool call.
 
 ## First questions to ask
 
@@ -80,7 +77,7 @@ Detailed install steps and examples:
 
 - Keep one local template:
   - `templates/extension_addon/`
-- Registration strategy is autoload-only (`auto_load.py` topology registration).
+- Registration uses explicit class lists, rollback on failure, and reverse cleanup. Consider dependency-aware autoload only when a larger project's class relationships justify it.
 - Keep template source code in template directories.
 - Do not inline full template source code inside `SKILL.md`.
 
@@ -88,12 +85,12 @@ Detailed install steps and examples:
 
 Read `references/dependency-policy.md` before adding third-party Python packages to an extension.
 
-- Do not run `pip install` without `--target`.
-- Do not install into Blender bundled Python global `site-packages`.
-- Do not import optional third-party packages at module top level.
-- Do not install dependencies silently during import, `register()`, or add-on enable flow.
-- Default to showing dependency status in `AddonPreferences` and installing only after a user clicks a button.
-- The Tsinghua PyPI mirror may be the default, but users must be able to disable it.
+- Bundle required dependencies as manifest wheels; import them directly.
+- Keep the default template free of third-party dependencies and runtime installers.
+- Optional capabilities report missing packages when invoked.
+- Store writable data with `bpy.utils.extension_path_user(...)`.
+- Internet operations respect `bpy.app.online_access` and declared permissions.
+- The integrated MCP service loads prebuilt dependencies only in its independent Python process.
 - Recommend an external Python environment for heavy dependencies such as `torch`, `opencv-python`, `scipy`, `open3d`, and CUDA packages.
 
 ## System operation rule (mandatory)
@@ -109,7 +106,7 @@ That document defines:
 - how to choose same-system vs cross-system path strategy
 - how to handle WSL-mounted Windows paths (such as `/mnt/c/...`) when applicable
 
-For build operations, always query runtime facts through MCP first and validate before execution:
+For build operations, obtain and validate these facts through MCP or the explicitly selected local Blender:
 
 - Blender executable location (`bpy.app.binary_path`)
 - Blender bundled Python (`bpy.app.binary_path_python` when available)
@@ -152,10 +149,10 @@ Use module name (not display name).
 
 ## Safety rules
 
-1. Prefer `try/except ValueError` for class registration safety.
-2. Prefer `try/except (ValueError, RuntimeError)` for class unregistration safety.
+1. Record successful class registrations, roll them back on failure, and re-raise the original error.
+2. Unregister owned properties and classes in reverse order; report cleanup failures.
 3. Check `hasattr(bpy.types.Scene, "...")` before deleting scene properties.
-4. Clear submodule cache in `sys.modules` before re-import when reloading.
+4. Disable first, then clear only the target package's submodules before re-import when source reload is needed.
 5. Validate unregister state through `bpy.types` and preferences map, not only `bpy.ops` proxy checks.
 
 ## Reference navigation

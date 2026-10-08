@@ -4,7 +4,7 @@ from ..constants import OPERATOR_RUN_ID
 from ..utils.common import get_extension_settings
 
 
-class EXAMPLE_OT_run(bpy.types.Operator):
+class MY_EXAMPLE_EXTENSION_OT_run(bpy.types.Operator):
     bl_idname = OPERATOR_RUN_ID
     bl_label = "Run Example"
     bl_description = "Run a minimal extension operator"
