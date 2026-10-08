@@ -8,6 +8,7 @@ import subprocess
 import urllib.error
 import urllib.parse
 import urllib.request
+import zipfile
 from pathlib import Path
 
 from prepare_release import validate_collection
@@ -54,6 +55,25 @@ def find_release(repository, tag, token):
         if len(releases) < 100:
             return None
         page += 1
+
+
+def prepare_release_assets(collection, artifacts, output, version):
+    """Keep installers visible and preserve validated records in one reproducible archive."""
+    output.mkdir(parents=True, exist_ok=True)
+    evidence = output / f"blender_mcp_integration-{version}-evidence.zip"
+    assets, entries = [], []
+    for identifier, (package, checksum, provenance) in collection.items():
+        assets.extend((package, checksum))
+        entries.append((provenance.name, provenance))
+        entries.extend((f"{identifier}-{report.name}", report)
+                       for report in sorted((artifacts / identifier).glob("*-tests.json")))
+    with zipfile.ZipFile(evidence, "w", compression=zipfile.ZIP_STORED) as archive:
+        for name, path in sorted(entries):
+            info = zipfile.ZipInfo(name, date_time=(1980, 1, 1, 0, 0, 0))
+            info.create_system = 3
+            info.external_attr = 0o100644 << 16
+            archive.writestr(info, path.read_bytes())
+    return [*assets, evidence]
 
 
 def publish_assets(repository, tag, expected_commit, assets, notes, marker, token, finalize=True):
@@ -130,20 +150,12 @@ def main():
         raise ValueError("Release tag must match the validated integration version")
     token = os.environ["GH_TOKEN"]
     verify_tag(args.repository, args.tag, args.expected_commit, token)
-    assets = []
     asset_directory = ROOT / "build/release-assets"
-    asset_directory.mkdir(parents=True, exist_ok=True)
     import hashlib
-    import shutil
     package_hashes = {identifier: digest(item[0]) for identifier, item in collection.items()}
     set_hash = hashlib.sha256(json.dumps(package_hashes, sort_keys=True).encode()).hexdigest()
     marker = f"<!-- blender-mcp-integration {args.expected_commit} {version} {set_hash} -->"
-    for identifier, item in collection.items():
-        assets.extend(item)
-        for report in sorted((args.artifacts / identifier).glob("*-tests.json")):
-            destination = asset_directory / f"{identifier}-{report.name}"
-            shutil.copyfile(report, destination)
-            assets.append(destination)
+    assets = prepare_release_assets(collection, args.artifacts, asset_directory, version)
     notes = ROOT / "build/release-notes.md"
     notes.parent.mkdir(parents=True, exist_ok=True)
     notes.write_text(
@@ -152,6 +164,8 @@ def main():
         f"Official upstream: {source['tag']} ({source['commit']}).\n\n"
         "Validated final ZIP: two generated templates, authenticated MCP scene calls, lifecycle, "
         "HTTP repository upgrade and GUI timer checks. Human GUI and client acceptance remains separate.\n\n"
+        "Install the ZIP matching your platform. The evidence ZIP contains provenance and validation reports; "
+        "it is for auditing and is not a Blender extension.\n\n"
         f"{marker}\n", encoding="utf-8",
     )
     current = read_current(args.current_url)

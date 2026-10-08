@@ -53,6 +53,8 @@ CI 使用 windows-2022、ubuntu-24.04、macos-15 ARM64 原生 runner，hash 固�
 
 工作流复用三个已验证产物，核对来源、标签、完整平台集合和所有报告；先上传 draft Release 并逐资产鉴权回读大小/hash，再验证三个条目的官方 Extensions 索引。全部通过后公开正式 Release，回读公开下载，部署 Pages。三个原生 runner 随后从公开索引实际安装并调用 MCP。
 
+Release 下载附件为三个平台安装 ZIP、三个 `.sha256` 和一个 `blender_mcp_integration-<version>-evidence.zip`。证据包按原始字节保存三个平台的来源记录及七类验证报告；使用固定文件顺序、时间戳和权限生成，支持字节一致的恢复上传。安装与更新仅使用平台安装 ZIP，证据包供审计，不作为 Blender 扩展安装。
+
 相同版本资产不可变；缺少平台、错误 ABI、错误报告、版本回退或不同内容直接失败。同源 draft 可恢复补传缺失资产；已公开 Release 保留字节一致的资产，Pages 部署可单独重试。版本排序显式比较官方版本和集成修订号。
 
 下载入口为 [GitHub Releases](https://github.com/psiQAQ/blender_mcp-setup-guide/releases)，更新索引为 [index.json](https://psiQAQ.github.io/blender_mcp-setup-guide/index.json)。用户在 Blender 中添加索引即可选择对应平台并更新；联网安装需启用 Allow Online Access。

@@ -16,6 +16,6 @@ HTTP 与桥接仅监听同机 loopback，分别检查凭据；HTTP 同时检查 
 
 构建按本机系统、架构和 CPython ABI 验证平台配置。依赖从固定 wheels 构建，校验来源版本、SHA-256 和最终 ZIP；不使用用户已安装的依赖或系统全局 site-packages。
 
-一个 Release 包含三个平台 ZIP、校验文件、来源和报告。统一 Extensions 索引包含同一 ID/版本的三个互斥平台条目。publication.json 记录完整平台资产集合；同版本的单个平台资产也不可替换。
+一个 Release 包含三个平台安装 ZIP、各自的校验文件和一个证据 ZIP。证据 ZIP 保存三个平台的原始来源 JSON 及验证报告，仅供审计。统一 Extensions 索引包含同一 ID/版本的三个互斥平台条目。publication.json 记录完整平台资产集合；同版本的单个平台资产也不可替换。
 
 发布复用同一提交的原生 CI 产物。所有平台、报告和来源通过核对后，draft 资产逐一回读，验证完整索引，再公开 Release 并部署 Pages。公开索引安装由三个原生 runner 验证。人工 GUI/客户端验收与自动化 CI 分开记录。

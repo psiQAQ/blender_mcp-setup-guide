@@ -1,13 +1,14 @@
 import sys
 import tempfile
 import unittest
+import zipfile
 from pathlib import Path
 from unittest.mock import patch
 
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
-from publish_release import find_release, publish_assets
+from publish_release import find_release, prepare_release_assets, publish_assets
 
 
 class PublishReleaseTests(unittest.TestCase):
@@ -33,6 +34,37 @@ class PublishReleaseTests(unittest.TestCase):
     def publish(self):
         return publish_assets("owner/repo", "v1.0.3+integration.1", self.commit,
                               self.assets, self.notes, self.marker, "test-token")
+
+    def test_evidence_archive_preserves_all_platform_records_and_rebuilds_identically(self):
+        directory = self.notes.parent
+        collection, expected = {}, {}
+        installers = []
+        for identifier in ("windows-x64", "linux-x64", "macos-arm64"):
+            platform = directory / identifier
+            platform.mkdir()
+            package = platform / f"package-{identifier}.zip"
+            checksum = platform / f"package-{identifier}.zip.sha256"
+            provenance = platform / f"provenance-{identifier}.json"
+            for path in (package, checksum, provenance):
+                path.write_bytes(path.name.encode())
+            collection[identifier] = (package, checksum, provenance)
+            installers.extend((package, checksum))
+            expected[provenance.name] = provenance.read_bytes()
+            for name in ("unit", "template", "integration", "upgrade", "gui", "minimum", "repository"):
+                report = platform / f"{name}-tests.json"
+                report.write_bytes(f"{identifier} {name}\r\n".encode())
+                expected[f"{identifier}-{report.name}"] = report.read_bytes()
+        assets = prepare_release_assets(collection, directory, directory / "first", "1.0.3+integration.1")
+        self.assertEqual(assets[:-1], installers)
+        self.assertEqual(len(assets), 7)
+        self.assertTrue(assets[-1].name.endswith("-evidence.zip"))
+        with zipfile.ZipFile(assets[-1]) as archive:
+            self.assertIsNone(archive.testzip())
+            self.assertEqual(len(archive.namelist()), 24)
+            self.assertEqual({name: archive.read(name) for name in archive.namelist()}, expected)
+        reversed_collection = dict(reversed(list(collection.items())))
+        rebuilt = prepare_release_assets(reversed_collection, directory, directory / "second", "1.0.3+integration.1")
+        self.assertEqual(assets[-1].read_bytes(), rebuilt[-1].read_bytes())
 
     def test_partial_owned_draft_only_uploads_missing_assets_then_publishes(self):
         events = []
