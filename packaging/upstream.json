@@ -9,5 +9,6 @@
   "blender_max": "5.3.0",
   "source_ref": "main",
   "channel": "preview",
-  "preview_revision": 1
+  "preview_revision": 1,
+  "stable_baseline_tag": "v1.0.3"
 }
