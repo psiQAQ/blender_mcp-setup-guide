@@ -57,20 +57,41 @@ def windows_user_sid():
         kernel.CloseHandle(token)
 
 
-def windows_dacl(path):
+def _windows_descriptor_text(pointer):
     from ctypes import wintypes
 
     kernel, security = _windows_api()
-    size = wintypes.DWORD()
-    security.GetFileSecurityW(str(path), 4, None, 0, ctypes.byref(size))
-    buffer = ctypes.create_string_buffer(size.value)
-    _require_windows(security.GetFileSecurityW(str(path), 4, buffer, size, ctypes.byref(size)))
     text = wintypes.LPWSTR()
-    _require_windows(security.ConvertSecurityDescriptorToStringSecurityDescriptorW(buffer, 1, 4, ctypes.byref(text), None))
+    _require_windows(security.ConvertSecurityDescriptorToStringSecurityDescriptorW(pointer, 1, 4, ctypes.byref(text), None))
     try:
         return text.value
     finally:
         kernel.LocalFree(text)
+
+
+def windows_dacl(path):
+    from ctypes import wintypes
+
+    _, security = _windows_api()
+    size = wintypes.DWORD()
+    security.GetFileSecurityW(str(path), 4, None, 0, ctypes.byref(size))
+    buffer = ctypes.create_string_buffer(size.value)
+    _require_windows(security.GetFileSecurityW(str(path), 4, buffer, size, ctypes.byref(size)))
+    return _windows_descriptor_text(buffer)
+
+
+def normalize_windows_dacl(descriptor):
+    """Canonicalize SID aliases; retain protection and every ACE permission."""
+    kernel, security = _windows_api()
+    pointer = ctypes.c_void_p()
+    _require_windows(security.ConvertStringSecurityDescriptorToSecurityDescriptorW(descriptor, 1, ctypes.byref(pointer), None))
+    try:
+        canonical = _windows_descriptor_text(pointer)
+    finally:
+        kernel.LocalFree(pointer)
+    flags, entries = canonical.split("(", 1)
+    # AI records prior auto-inheritance; P still prevents parent ACL inheritance.
+    return flags.replace("AI", "") + "(" + entries
 
 
 def protect(path, directory=False):
@@ -94,8 +115,9 @@ def protect(path, directory=False):
         _require_windows(security.SetFileSecurityW(str(path), 4 | 0x80000000, pointer))
     finally:
         kernel.LocalFree(pointer)
-    if windows_dacl(path) != descriptor:
-        raise PermissionError(f"Private credential DACL verification failed: {path}")
+    actual = windows_dacl(path)
+    if normalize_windows_dacl(actual) != normalize_windows_dacl(descriptor):
+        raise PermissionError(f"Private credential DACL verification failed: {path}; expected {descriptor}, received {actual}")
 
 
 def private_directory(path):

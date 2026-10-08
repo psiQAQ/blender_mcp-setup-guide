@@ -89,11 +89,11 @@ def main():
     run = current_work("upgrade")
     web = run / "http"
     web.mkdir(parents=True)
-    old = web / "previous-integration.zip"
-    baseline = previous_release(args.package, old, args.baselines, args.previous_package, args.fixture)
     package = web / args.package.name
     shutil.copyfile(args.package, package)
     initialize_client_runtime(package, run / "client")
+    old = web / "previous-integration.zip"
+    baseline = previous_release(args.package, old, args.baselines, args.previous_package, args.fixture)
     server = http.server.ThreadingHTTPServer(("127.0.0.1", 0), functools.partial(QuietHandler, directory=str(web)))
     worker = threading.Thread(target=server.serve_forever, daemon=True)
     worker.start()
@@ -142,6 +142,7 @@ def main():
             raise RuntimeError("Package changed during upgrade validation")
         report = {"status": "Passed", "package_sha256": package_hash, "index_install": "Passed", "revision_upgrade": f"{old_record['extension_version']} → {new_record['extension_version']}",
                   "baseline": baseline,
+                  "https_download_certificate_verification": "Not Run" if args.previous_package or args.fixture else "Passed", "certificate_source": "package-private certifi",
                   "preferences_and_credential_preserved": "Passed", "old_process_stopped": "Passed",
                   "published_archive_readback": "Passed", "checksum_mismatch_rejected": "Passed",
                   "details": details, "log": str(run / "blender.log")}

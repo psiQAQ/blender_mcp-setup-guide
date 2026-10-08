@@ -14,7 +14,7 @@ import platforms
 import test_repository
 from test_upgrade import previous_fixture, previous_release
 from upstream_sync import inspect
-from integration_build_runtime.private_files import persistent_token, private_directory, windows_dacl, windows_user_sid, write_private
+from integration_build_runtime.private_files import normalize_windows_dacl, persistent_token, private_directory, windows_dacl, windows_user_sid, write_private
 
 
 class HardeningTests(unittest.TestCase):
@@ -36,13 +36,20 @@ class HardeningTests(unittest.TestCase):
         self.assertEqual(list(directory.glob("*.pending")), [])
         if os.name == "nt":
             sid = windows_user_sid()
-            self.assertEqual(windows_dacl(directory), f"D:P(A;OICI;FA;;;SY)(A;OICI;FA;;;BA)(A;OICI;FA;;;{sid})")
+            self.assertEqual(normalize_windows_dacl(windows_dacl(directory)), normalize_windows_dacl(f"D:P(A;OICI;FA;;;SY)(A;OICI;FA;;;BA)(A;OICI;FA;;;{sid})"))
             for path in (token_path, config):
-                self.assertEqual(windows_dacl(path), f"D:P(A;;FA;;;SY)(A;;FA;;;BA)(A;;FA;;;{sid})")
+                self.assertEqual(normalize_windows_dacl(windows_dacl(path)), normalize_windows_dacl(f"D:P(A;;FA;;;SY)(A;;FA;;;BA)(A;;FA;;;{sid})"))
         else:
             self.assertEqual(directory.stat().st_mode & 0o777, 0o700)
             for path in (token_path, config):
                 self.assertEqual(path.stat().st_mode & 0o777, 0o600)
+
+    @unittest.skipUnless(os.name == "nt", "Windows security descriptors")
+    def test_windows_acl_aliases_preserve_protection_and_permissions(self):
+        expected = normalize_windows_dacl("D:P(A;;FA;;;SY)")
+        self.assertEqual(normalize_windows_dacl("D:PAI(A;;FA;;;S-1-5-18)"), expected)
+        for changed in ("D:(A;;FA;;;SY)", "D:P(A;;FR;;;SY)", "D:P(A;;FA;;;SY)(A;;FA;;;WD)", "D:P(A;ID;FA;;;SY)"):
+            self.assertNotEqual(normalize_windows_dacl(changed), expected)
 
     def test_failed_public_install_replaces_old_passed_report(self):
         build = self.directory / "build/latest"
