@@ -1,5 +1,6 @@
 import atexit
 import tomllib
+import traceback
 from pathlib import Path
 
 import bpy
@@ -47,8 +48,9 @@ def _poll_service():
         SERVICE.poll()
         if _bridge is not None:
             _bridge.poll()
-    except (ServiceError, OSError) as error:
-        LAST_ERROR = str(error)
+    except Exception as error:
+        traceback.print_exc()
+        LAST_ERROR = f"{type(error).__name__}: {error}"
         try:
             stop_service()
         except Exception as cleanup_error:
@@ -70,7 +72,7 @@ def start_service():
     prefs = bpy.context.preferences.addons[__package__].preferences
     require_free_port(prefs.bridge_port)
     try:
-        SERVICE.start(service_directory(), prefs.http_port, prefs.bridge_port, bpy.app.python_args)
+        SERVICE.start(service_directory(), prefs.http_port, prefs.bridge_port, bpy.app.python_args, bpy.app.binary_path)
         bridge._integration_token = SERVICE.bridge_token
         bridge.start("127.0.0.1", prefs.bridge_port)
         _bridge = bridge

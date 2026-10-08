@@ -13,6 +13,9 @@ import urllib.error
 import urllib.request
 from pathlib import Path
 
+from .private_files import persistent_token, private_directory, protect, write_private
+from .process_control import stop_process
+
 
 class ServiceError(RuntimeError):
     pass
@@ -92,22 +95,22 @@ class Service:
         self.started_at = 0.0
         self.session = ""
 
-    def start(self, directory, port, bridge_port, python_args=()):
+    def start(self, directory, port, bridge_port, python_args=(), blender_path=None):
         check_runtime()
         if self.process is not None or self.log_handle is not None or self.config_path is not None:
             raise ServiceError("Finish cleaning up the current service before starting it again")
         if port == bridge_port:
             raise ServiceError("HTTP and bridge ports must differ")
         require_free_port(port)
-        self.directory = Path(directory)
-        self.directory.mkdir(parents=True, exist_ok=True)
+        if blender_path is None or not Path(blender_path).is_file():
+            raise ServiceError("Service startup requires the host Blender executable path")
+        self.directory = private_directory(directory)
+        for path in self.directory.iterdir():
+            if path.name.startswith("session-") and path.suffix == ".json" or path.name == "client-config.txt":
+                protect(path)
         self.port = port
         token_path = self.directory / "http-token.txt"
-        if token_path.exists():
-            self.token = token_path.read_text(encoding="utf-8").strip()
-        else:
-            self.token = secrets.token_urlsafe(32)
-            token_path.write_text(self.token, encoding="utf-8")
+        self.token = persistent_token(token_path)
         if not re.fullmatch(r"[A-Za-z0-9_-]{32,}", self.token):
             raise ServiceError("Invalid HTTP token file; remove it and start again")
         self.bridge_token = secrets.token_urlsafe(32)
@@ -119,7 +122,7 @@ class Service:
             "token": self.token, "bridge_token": self.bridge_token,
             "session": session, "parent_pid": os.getpid(),
         }
-        self.config_path.write_text(json.dumps(configuration), encoding="utf-8")
+        write_private(self.config_path, json.dumps(configuration))
         self.log_handle = (self.directory / "service.log").open("a", encoding="utf-8")
         isolation_args = list(python_args)
         if "-I" not in isolation_args:
@@ -129,10 +132,11 @@ class Service:
         environment["BLENDER_MCP_HOST"] = "127.0.0.1"
         environment["BLENDER_MCP_PORT"] = str(bridge_port)
         environment["BLENDER_MCP_TOKEN"] = self.bridge_token
+        environment["BLENDER_PATH"] = str(Path(blender_path).resolve())
         try:
             self.process = subprocess.Popen(
                 command, stdin=subprocess.DEVNULL, stdout=self.log_handle, stderr=subprocess.STDOUT,
-                env=environment, **process_options(),
+                env=environment, start_new_session=os.name != "nt", **process_options(),
             )
         except OSError as error:
             try:
@@ -176,13 +180,7 @@ class Service:
         errors = []
         if self.process is not None:
             try:
-                if self.process.poll() is None:
-                    self.process.terminate()
-                    try:
-                        self.process.wait(timeout=5)
-                    except subprocess.TimeoutExpired:
-                        self.process.kill()
-                        self.process.wait(timeout=5)
+                stop_process(self.process)
                 self.process = None
             except (OSError, subprocess.TimeoutExpired) as error:
                 errors.append(error)

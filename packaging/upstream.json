@@ -9,6 +9,7 @@
   "blender_max": "5.3.0",
   "source_ref": "main",
   "channel": "preview",
-  "preview_revision": 1,
-  "stable_baseline_tag": "v1.0.3"
+  "preview_revision": 2,
+  "stable_baseline_tag": "v1.0.3",
+  "stable_baseline_commit": "2cea8d566dde07fbac28a61d698909d69724e853"
 }

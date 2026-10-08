@@ -4,6 +4,7 @@ from pathlib import Path
 import bpy
 
 from .runtime import ServiceError
+from .private_files import write_private
 
 
 def integration():
@@ -50,11 +51,11 @@ class BLMCP_INTEGRATION_OT_copy_configuration(bpy.types.Operator):
         preferences = context.preferences.addons[__package__].preferences
         try:
             content = addon.SERVICE.configuration(preferences.client)
+            write_private(Path(addon.service_directory()) / "client-config.txt", content)
         except (ServiceError, OSError) as error:
             self.report({"ERROR"}, str(error))
             return {"CANCELLED"}
         context.window_manager.clipboard = content
-        (Path(addon.service_directory()) / "client-config.txt").write_text(content, encoding="utf-8")
         self.report({"INFO"}, "Configuration copied and saved in the extension user directory")
         return {"FINISHED"}
 

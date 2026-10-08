@@ -22,6 +22,8 @@ def main():
     bpy.context.preferences.view.show_splash = False
     package, directory, http_port, bridge_port = sys.argv[sys.argv.index("--") + 1:]
     control = Path(directory)
+    blend_file = control / "cli-test.blend"
+    bpy.ops.wm.save_as_mainfile(filepath=str(blend_file))
     assert not bpy.app.background
     assert bpy.ops.extensions.package_install_files(filepath=package, repo="user_default", enable_on_install=True) == {"FINISHED"}
     name = "bl_ext.user_default.blender_mcp_integration"
@@ -77,6 +79,7 @@ def main():
                 write_json(control / "service.json", {
                     "http_port": prefs.http_port, "bridge_port": prefs.bridge_port,
                     "token": addon.SERVICE.token, "pid": addon.SERVICE.process.pid,
+                    "blend_file": str(blend_file),
                 })
                 graphics = {"renderer": gpu.platform.renderer_get(), "vendor": gpu.platform.vendor_get(), "version": gpu.platform.version_get()}
                 if os.environ.get("GALLIUM_DRIVER") == "llvmpipe":

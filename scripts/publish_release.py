@@ -111,8 +111,16 @@ def publish_assets(repository, tag, expected_commit, assets, notes, marker, toke
         if existing is None:
             raise ValueError("Created draft Release was not returned by the authenticated API")
     require_release_source(existing)
-    if set(asset["name"] for asset in existing["assets"]) - {path.name for path in assets}:
+    version = tag.removeprefix("v")
+    receipt_pattern = re.compile(r"blender_mcp_integration-" + re.escape(version) + r"-publication-[1-9][0-9]*\.zip")
+    extra = [asset for asset in existing["assets"] if asset["name"] not in {path.name for path in assets}]
+    if any(existing["draft"] or not receipt_pattern.fullmatch(asset["name"]) for asset in extra):
         raise ValueError("The matching Release contains unexpected assets")
+    for asset in extra:
+        checksum = asset.get("digest", "")
+        if not re.fullmatch(r"sha256:[0-9a-f]{64}", checksum):
+            raise ValueError("Publication receipt asset is missing its immutable digest")
+        verify_download(f"{base}/{urllib.parse.quote(asset['name'], safe='')}", checksum[7:], asset["size"])
     present = {asset["name"] for asset in existing["assets"]}
     for path in assets:
         if path.name in present:

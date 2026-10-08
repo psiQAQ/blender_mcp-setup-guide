@@ -43,6 +43,8 @@ def main():
     prefs.autostart = False
     prefs.http_port = int(http_port)
     prefs.bridge_port = int(bridge_port)
+    blend_file = control / "cli-test.blend"
+    bpy.ops.wm.save_as_mainfile(filepath=str(blend_file))
     addon.start_service()
 
     def publish():
@@ -50,6 +52,8 @@ def main():
             "http_port": prefs.http_port, "bridge_port": prefs.bridge_port,
             "token": addon.SERVICE.token, "pid": addon.SERVICE.process.pid,
             "log": str(addon.SERVICE.directory / "service.log"),
+            "blend_file": str(blend_file),
+            "host_binary": bpy.app.binary_path,
         })
 
     try:
@@ -67,6 +71,22 @@ def main():
                 command_file.unlink()
                 if action == "parent-exit":
                     os._exit(0)
+                elif action == "stop-start":
+                    addon.stop_service()
+                    addon.start_service()
+                elif action == "timer-exception":
+                    bridge = addon._bridge
+                    original_poll = bridge.poll
+                    def unexpected_poll_error():
+                        raise ValueError("Injected unexpected bridge failure")
+                    bridge.poll = unexpected_poll_error
+                    try:
+                        assert addon._poll_service() is None
+                        assert "ValueError: Injected unexpected bridge failure" in addon.LAST_ERROR
+                        assert addon.SERVICE.process is None and addon._bridge is None
+                    finally:
+                        bridge.poll = original_poll
+                    addon.start_service()
                 elif action == "upgrade":
                     assert repo is not None
                     before = json.loads((Path(addon.__file__).parent / "provenance.json").read_text())

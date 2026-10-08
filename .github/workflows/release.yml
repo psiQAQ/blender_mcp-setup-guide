@@ -176,3 +176,37 @@ jobs:
           path: |
             build/published-tests.json
             build/tests/**/blender.log
+          if-no-files-found: error
+  archive-publication:
+    needs: [verify-publication, publish-assets]
+    runs-on: ubuntu-24.04
+    permissions:
+      actions: read
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: publication-*
+          path: build/publication-reports
+      - uses: actions/download-artifact@v4
+        with:
+          name: verified-extension-index
+          path: build/release-site
+      - name: Archive verified public installations as an immutable Release receipt
+        env:
+          GH_TOKEN: ${{ github.token }}
+          CHANNEL_PATH: ${{ needs.publish-assets.outputs.channel_path }}
+        run: |
+          publication="build/release-site/publication.json"
+          if [ -n "$CHANNEL_PATH" ]; then publication="build/release-site/$CHANNEL_PATH/publication.json"; fi
+          python -B scripts/publication_receipt.py --publication "$publication" --reports build/publication-reports --output build/publication-receipts --repository "$GITHUB_REPOSITORY" --commit "$GITHUB_SHA" --run-id "$GITHUB_RUN_ID" --upload
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: publication-receipt
+          path: build/publication-receipts/*.zip
+          if-no-files-found: error

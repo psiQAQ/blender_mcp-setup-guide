@@ -56,6 +56,31 @@ def patch_bridge(vendor):
     )
     connection = vendor / "blmcp/tools_helpers/connection.py"
     checked_replace(connection, '        "type": "execute",\n', '        "type": "execute",\n        "token": os.environ["BLENDER_MCP_TOKEN"],\n')
+    deferred = vendor / "bridge/deferred_tool.py"
+    checked_replace(
+        deferred,
+        '        # Validate JSON serializability when strict_json is set.\n'
+        '        if dc.strict_json:\n'
+        '            try:\n'
+        '                json.dumps(result)\n'
+        '            except (TypeError, ValueError) as ex:\n'
+        '                _send_and_close(dc, {\n'
+        '                    "status": "error",\n'
+        '                    "message": "Deferred result is not JSON-serializable: {:s}".format(str(ex)),\n'
+        '                })\n'
+        '                did_work = True\n'
+        '                continue\n',
+        '        # Every deferred response crosses the JSON transport boundary.\n'
+        '        try:\n'
+        '            json.dumps(result)\n'
+        '        except (TypeError, ValueError, RecursionError) as ex:\n'
+        '            _send_and_close(dc, {\n'
+        '                "status": "error",\n'
+        '                "message": "Deferred result is not JSON-serializable: {:s}".format(str(ex)),\n'
+        '            })\n'
+        '            did_work = True\n'
+        '            continue\n',
+    )
 
 
 def acquire_upstream(lock, requested):
@@ -138,7 +163,7 @@ def build(args):
             if module.name != "__init__.py":
                 shutil.copyfile(module, bridge / module.name)
         shutil.copytree(source / "mcp/blmcp", vendor / "blmcp", ignore=shutil.ignore_patterns("__pycache__"))
-        original_hashes = {str(path.relative_to(vendor)): digest(path) for path in (bridge / "mcp_to_blender_server.py", vendor / "blmcp/tools_helpers/connection.py")}
+        original_hashes = {str(path.relative_to(vendor)): digest(path) for path in (bridge / "mcp_to_blender_server.py", bridge / "deferred_tool.py", vendor / "blmcp/tools_helpers/connection.py")}
         patch_bridge(vendor)
         runtime = vendor / "runtime"
         run([args.python, "-m", "pip", "--isolated", "install", "--quiet", "--no-index", "--find-links", locked_wheels,

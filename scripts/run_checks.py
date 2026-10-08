@@ -20,6 +20,7 @@ def main():
     report = {
         "status": "Passed" if result.wasSuccessful() else "Failed",
         "tests": result.testsRun, "failures": len(result.failures), "errors": len(result.errors),
+        "skipped": len(result.skipped),
     }
     (ROOT / "build/unit-tests.json").write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
     return 0 if result.wasSuccessful() else 1
