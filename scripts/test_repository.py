@@ -67,10 +67,11 @@ def main():
                 import shutil
                 before = json.loads((run / "repository/publication.json").read_text())["extension_version"]
                 after = json.loads((run / "candidate/publication.json").read_text())["extension_version"]
-                (control / "expected-upgrade.json").write_text(json.dumps({"before": before, "after": after}))
+                from check_reports import write_json
+                write_json(control / "expected-upgrade.json", {"before": before, "after": after})
                 for path in (run / "candidate").iterdir():
                     shutil.copyfile(path, run / "repository" / path.name)
-                (control / "action.json").write_text(json.dumps({"action": "upgrade"}))
+                write_json(control / "action.json", {"action": "upgrade"})
                 wait_file(control / "action-result.json", process, timeout=90)
                 assert json.loads((control / "action-result.json").read_text())["status"] == "Passed"
                 details = asyncio.run(check_session(json.loads((control / "service.json").read_text())))

@@ -14,6 +14,9 @@ from pathlib import Path
 import bpy
 import gpu
 
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
+from check_reports import write_json
+
 
 def main():
     bpy.context.preferences.view.show_splash = False
@@ -47,7 +50,7 @@ def main():
                         if os.name != "nt":
                             probe.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
                         probe.bind(("127.0.0.1", port))
-                (control / "finished.json").write_text(json.dumps({"status": "Passed", "timers_classes_ports_cleanup": "Passed"}))
+                write_json(control / "finished.json", {"status": "Passed", "timers_classes_ports_cleanup": "Passed"})
                 bpy.ops.wm.quit_blender()
                 return None
             if pending and addon.SERVICE.state == "Running":
@@ -71,10 +74,10 @@ def main():
                     area.tag_redraw()
                     capture = True
                     capture_ready = time.monotonic() + 0.5
-                (control / "service.json").write_text(json.dumps({
+                write_json(control / "service.json", {
                     "http_port": prefs.http_port, "bridge_port": prefs.bridge_port,
                     "token": addon.SERVICE.token, "pid": addon.SERVICE.process.pid,
-                }))
+                })
                 graphics = {"renderer": gpu.platform.renderer_get(), "vendor": gpu.platform.vendor_get(), "version": gpu.platform.version_get()}
                 if os.environ.get("GALLIUM_DRIVER") == "llvmpipe":
                     assert "llvmpipe" in graphics["renderer"].lower(), graphics
@@ -82,7 +85,7 @@ def main():
                 if pending == "initial":
                     initial_report = report
                 else:
-                    (control / f"{pending}.json").write_text(json.dumps(report))
+                    write_json(control / f"{pending}.json", report)
                 pending = ""
             elif capture and time.monotonic() >= capture_ready:
                 window = bpy.context.window_manager.windows[0]
@@ -98,7 +101,7 @@ def main():
                     assert max(samples) - min(samples) > 0.1, "GUI screenshot contains no visible interface"
                 finally:
                     bpy.data.images.remove(image)
-                (control / "initial.json").write_text(json.dumps(initial_report))
+                write_json(control / "initial.json", initial_report)
                 capture = False
             if pending and time.monotonic() > deadline:
                 raise TimeoutError(f"GUI automatic service start failed: {addon.LAST_ERROR}")

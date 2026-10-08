@@ -13,7 +13,7 @@ import time
 import zipfile
 from pathlib import Path
 
-from check_reports import run_check
+from check_reports import run_check, write_json
 from publication import digest, prepare_repository, verify_download
 from test_integration import ROOT, check_session, free_port, initialize_client_runtime, wait_file
 from platforms import process_options, resolve
@@ -84,7 +84,7 @@ def main():
         raise AssertionError("Altered published checksum was accepted")
     control = run / "control"
     control.mkdir()
-    (control / "expected-upgrade.json").write_text(json.dumps({"before": old_record["extension_version"], "after": new_record["extension_version"]}))
+    write_json(control / "expected-upgrade.json", {"before": old_record["extension_version"], "after": new_record["extension_version"]})
     environment = os.environ.copy()
     environment["BLENDER_USER_RESOURCES"] = str(run / "profile")
     environment["PYTHONDONTWRITEBYTECODE"] = "1"
@@ -101,7 +101,7 @@ def main():
         asyncio.run(check_session(connection))
         for name in ("index.json", "publication.json"):
             shutil.copyfile(web / "candidate" / name, web / "repository" / name)
-        (control / "action.json").write_text(json.dumps({"action": "upgrade"}), encoding="utf-8")
+        write_json(control / "action.json", {"action": "upgrade"})
         wait_file(control / "action-result.json", process, timeout=90)
         assert json.loads((control / "action-result.json").read_text())["status"] == "Passed"
         after = json.loads((control / "service.json").read_text())

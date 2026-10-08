@@ -10,6 +10,9 @@ from pathlib import Path
 
 import bpy
 
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
+from check_reports import write_json
+
 
 def main():
     arguments = sys.argv[sys.argv.index("--") + 1:]
@@ -43,11 +46,11 @@ def main():
     addon.start_service()
 
     def publish():
-        (control / "service.json").write_text(json.dumps({
+        write_json(control / "service.json", {
             "http_port": prefs.http_port, "bridge_port": prefs.bridge_port,
             "token": addon.SERVICE.token, "pid": addon.SERVICE.process.pid,
             "log": str(addon.SERVICE.directory / "service.log"),
-        }), encoding="utf-8")
+        })
 
     try:
         deadline = time.monotonic() + 30
@@ -150,7 +153,7 @@ def main():
                     addon._bridge.poll()
                     time.sleep(0.02)
                 publish()
-                (control / "action-result.json").write_text(json.dumps({"action": action, "status": "Passed"}), encoding="utf-8")
+                write_json(control / "action-result.json", {"action": action, "status": "Passed"})
             addon.SERVICE.poll()
             addon._bridge.poll_blocking(timeout=0.02)
     finally:
