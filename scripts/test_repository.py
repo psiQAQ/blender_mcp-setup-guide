@@ -9,6 +9,7 @@ import os
 import subprocess
 import threading
 import time
+import urllib.request
 from pathlib import Path
 
 from platforms import ROOT, process_options, resolve
@@ -29,9 +30,12 @@ def main():
     run = ROOT / "build/tests" / f"repository-{time.time_ns()}"
     run.mkdir(parents=True)
     initialize_client_runtime(package, run / "client")
+    request = urllib.request.Request("https://github.com/psiQAQ/blender_mcp-setup-guide/releases", headers={"User-Agent": "BlenderMCPIntegrationCI"})
+    with urllib.request.urlopen(request, timeout=30) as response:
+        assert response.status == 200
+        response.read(1)
     server = None
     if args.public_index:
-        import urllib.request
         with urllib.request.urlopen(args.public_index, timeout=30) as response:
             index = json.load(response)
         items = [item for item in index["data"] if item["platforms"] == [identifier]]
@@ -73,7 +77,7 @@ def main():
             (control / "stop").touch()
             process.wait(timeout=15)
             assert process.returncode == 0
-            report = {"status": "Passed", "platform": identifier, "package_sha256": digest(package), "index_platform_selection": "Passed", "details": details, "log": str(run / "blender.log")}
+            report = {"status": "Passed", "platform": identifier, "package_sha256": digest(package), "index_platform_selection": "Passed", "https_download_certificate_verification": "Passed", "certificate_source": "package-private certifi", "details": details, "log": str(run / "blender.log")}
             name = "published" if args.public_index else "repository"
             (ROOT / "build" / f"{name}-tests.json").write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
             print(json.dumps(report, indent=2))

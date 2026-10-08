@@ -45,6 +45,8 @@ CI 使用 windows-2022、ubuntu-24.04、macos-15 ARM64 原生 runner，hash 固�
 
 `packaging/` 的 JSON/TXT 锁文件统一使用 LF，确保三个系统计算相同的来源 hash。CI 最后在 Windows 汇总核验三个最终 ZIP、七类报告及干净提交，使用与发布相同的完整资产检查。
 
+独立测试客户端使用最终 ZIP 中已锁定的私有 certifi 根证书，为 Blender 配套 Python 设置 `SSL_CERT_FILE`；三平台均实际验证 GitHub HTTPS 下载站点。公开索引安装测试保留 TLS 证书校验。
+
 ## 正式发布
 
 将 Pages 来源设置为 GitHub Actions。为完全通过 CI 的同一干净提交创建 `v1.0.3+integration.1` 标签，手动触发 `release.yml`，指定该提交的成功 CI run ID 和标签。

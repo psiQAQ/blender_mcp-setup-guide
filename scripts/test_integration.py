@@ -45,6 +45,10 @@ def initialize_client_runtime(package, directory):
     runtime = Path(directory) / "_vendor/runtime"
     sys.path.insert(0, str(runtime))
     site.addsitedir(str(runtime))
+    import certifi
+    certificate = Path(certifi.where()).resolve()
+    assert certificate.is_relative_to(runtime.resolve()), "Client certificates must come from the private package runtime"
+    os.environ["SSL_CERT_FILE"] = str(certificate)
 
 
 def wait_file(path, process, timeout=45):
