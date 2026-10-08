@@ -2,6 +2,8 @@
 
 import argparse
 import json
+import platform
+import sys
 from pathlib import Path
 
 from platforms import ROOT, resolve
@@ -9,7 +11,7 @@ from publication import digest
 
 
 def collect(package):
-    identifier, _ = resolve()
+    identifier, target = resolve()
     package_hash = digest(package)
     for name in ("unit", "template", "integration", "upgrade", "gui", "minimum"):
         path = ROOT / "build" / f"{name}-tests.json"
@@ -19,6 +21,11 @@ def collect(package):
         if name not in {"unit", "template"} and report.get("package_sha256") != package_hash:
             raise ValueError(f"Validation report refers to another ZIP: {name}")
         report.update(platform=identifier, package_sha256=package_hash)
+        report["environment"] = {"python": sys.version, "system": platform.system(), "architecture": platform.machine()}
+        if name not in {"unit", "template"}:
+            expected = target["minimum_blender" if name == "minimum" else "blender"]["version"]
+            if report["details"]["blender"].split()[0] != expected or not report["details"]["python"].startswith("3.13."):
+                raise ValueError(f"Validation used the wrong Blender/Python environment: {name}")
         path.write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
 
 

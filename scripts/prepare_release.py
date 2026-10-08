@@ -27,6 +27,10 @@ def validate_artifacts(artifacts, expected_commit=None, identifier=None):
             raise ValueError(f"Validation report refers to another platform: {name}")
         if report.get("package_sha256") != package_hash:
             raise ValueError(f"Validation report refers to another ZIP: {name}")
+        if name not in {"unit-tests", "template-tests"}:
+            expected = target["minimum_blender" if name == "minimum-tests" else "blender"]["version"]
+            if report.get("details", {}).get("blender", "").split(" ")[0] != expected or not report.get("details", {}).get("python", "").startswith("3.13."):
+                raise ValueError(f"Validation report used the wrong Blender/Python environment: {name}")
     checksum = package.with_name(package.name + ".sha256")
     if checksum.read_text().split()[0] != digest(package):
         raise ValueError("Validated artifact checksum differs")
@@ -78,8 +82,8 @@ def main():
     for path in (checksum, provenance, *sorted(args.artifacts.glob("*-tests.json"))):
         shutil.copyfile(path, args.output / path.name)
     (args.output / "release-notes.md").write_text(
-        f"Blender MCP Integrated {version}: Windows x64 / Blender 5.1.x.\n\n"
-        f"Official upstream: {record['tag']} ({record['commit']}).\n\n"
+        f"Blender MCP Integrated {version}: Windows x64 / {record['blender_min']} <= Blender < {record['blender_max']}.\n\n"
+        f"Official upstream: {record.get('source_ref', record['tag'])} ({record['commit']}).\n\n"
         "Validated final ZIP: templates, authenticated MCP scene calls, lifecycle, HTTP repository upgrade and GUI timers. "
         "Human GUI and client acceptance is recorded separately.\n", encoding="utf-8",
     )

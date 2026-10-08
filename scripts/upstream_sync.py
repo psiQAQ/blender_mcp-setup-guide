@@ -1,7 +1,6 @@
-"""Inspect Blender Lab stable Releases and emit a reviewable pinned-source proposal."""
+"""Report official main updates and stable tags without changing or publishing sources."""
 
 import argparse
-import difflib
 import json
 import re
 import subprocess
@@ -51,28 +50,27 @@ def main():
     pinned = json.loads(previous_text)
     release = latest_stable(fetch_releases())
     commit = resolve_tag(pinned["repository"], release["tag_name"])
-    changed = (release["tag_name"], commit) != (pinned["tag"], pinned["commit"])
+    main = subprocess.check_output(["git", "ls-remote", pinned["repository"], "refs/heads/main"], text=True).split()[0]
+    baseline = pinned.get("stable_baseline_tag", pinned.get("tag"))
+    stable_changed = release["tag_name"] != baseline
+    main_changed = pinned.get("source_ref") == "main" and main != pinned["commit"]
+    changed = stable_changed or main_changed
     if release["tag_name"] == pinned["tag"] and commit != pinned["commit"]:
         raise ValueError("The pinned official tag moved; investigate before updating")
-    proposal = {**pinned, "version": release["tag_name"][1:], "tag": release["tag_name"], "commit": commit}
-    if changed:
-        proposal["integration_revision"] = 1
     args.output.mkdir(parents=True, exist_ok=True)
-    proposed_text = json.dumps(proposal, indent=2) + "\n"
-    (args.output / "upstream.json").write_text(proposed_text, encoding="utf-8")
-    patch = "".join(difflib.unified_diff(previous_text.splitlines(True), proposed_text.splitlines(True),
-                                       fromfile="a/packaging/upstream.json", tofile="b/packaging/upstream.json"))
-    (args.output / "upstream.patch").write_text(patch, encoding="utf-8")
     report = {"changed": changed, "current": pinned["tag"], "stable": release["tag_name"], "commit": commit,
+              "main_commit": main, "main_changed": main_changed, "new_stable_tag": stable_changed,
               "official_release": release["html_url"], "published_at": release["published_at"]}
     (args.output / "release.json").write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
     (args.output / "review.md").write_text(
-        f"# Official upstream review\n\nPinned: {pinned['tag']} / {pinned['commit']}\n\n"
+        f"# Official upstream review\n\nPinned: {pinned.get('source_ref', pinned['tag'])} / {pinned['commit']}\n\n"
+        f"Official main: {main}; update available: {main_changed}\n\n"
         f"Stable Release: [{release['tag_name']}]({release['html_url']}) / {commit}\n\n"
         f"Source change: {'available' if changed else 'none'}\n\n"
-        "Before accepting a source update, review the official bridge and tools diff, refresh both requirements and wheel locks, "
-        "recheck Blender/Python compatibility, then run the complete final-ZIP validation and upgrade suite. "
-        "The proposal does not modify tracked files or publish a release.\n", encoding="utf-8",
+        "Review source changes, pin the submodule commit, check Blender/Python compatibility and existing dependency locks, "
+        "then rerun all native final-ZIP validation and upgrade tests. A new official stable tag is required for promotion "
+        "of the 5.2 snapshot to stable; publish only through a manual workflow dispatch after compatibility review. "
+        "This inspection changes no tracked files and publishes nothing.\n", encoding="utf-8",
     )
     print(json.dumps(report, indent=2))
 

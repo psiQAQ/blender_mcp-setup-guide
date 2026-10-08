@@ -26,26 +26,29 @@ class QuietHandler(http.server.SimpleHTTPRequestHandler):
 
 def previous_fixture(package, destination):
     with zipfile.ZipFile(package) as source, zipfile.ZipFile(destination, "w", zipfile.ZIP_DEFLATED) as target:
+        record = json.loads(source.read("provenance.json"))
+        current_version = record["extension_version"]
+        if record.get("channel") == "preview":
+            if record["preview_revision"] > 1:
+                record["preview_revision"] -= 1
+            else:
+                parts = list(map(int, record["version"].split(".")))
+                if parts[2] < 1:
+                    raise ValueError("First-preview upgrade fixture requires a previous patch version")
+                parts[2] -= 1
+                record["version"] = ".".join(map(str, parts))
+        elif record["integration_revision"] < 1:
+            raise ValueError("Upgrade fixture needs integration_revision >= 1")
+        else:
+            record["integration_revision"] -= 1
+        from publication import extension_version
+        record["extension_version"] = extension_version(record)
         for item in source.infolist():
             content = source.read(item.filename)
             if item.filename == "provenance.json":
-                record = json.loads(content)
-                revision = record["integration_revision"]
-                if record.get("channel") == "preview":
-                    record["integration_revision"] = revision - 1
-                    from publication import extension_version
-                    record["extension_version"] = extension_version(record)
-                elif revision < 1:
-                    raise ValueError("Upgrade fixture needs integration_revision >= 1")
-                else:
-                    record["integration_revision"] = revision - 1
-                    record["extension_version"] = f"{record['version']}+integration.{revision - 1}"
                 content = json.dumps(record).encode()
             elif item.filename == "blender_manifest.toml":
-                import tomllib
-                manifest = tomllib.loads(content.decode())
-                base, revision = manifest["version"].rsplit(".", 1)
-                content = content.replace(manifest["version"].encode(), f"{base}.{int(revision) - 1}".encode())
+                content = content.replace(current_version.encode(), record["extension_version"].encode())
             target.writestr(item, content)
 
 
