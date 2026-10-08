@@ -28,9 +28,11 @@ def main():
     deadline = time.monotonic() + 45
     pending = "initial"
     capture = False
+    capture_ready = 0.0
+    initial_report = None
 
     def drive():
-        nonlocal addon, prefs, pending, deadline, capture
+        nonlocal addon, prefs, pending, deadline, capture, capture_ready, initial_report
         try:
             if (control / "stop").exists():
                 process = addon.SERVICE.process
@@ -67,6 +69,7 @@ def main():
                     area.type = "PREFERENCES"
                     area.tag_redraw()
                     capture = True
+                    capture_ready = time.monotonic() + 0.5
                 (control / "service.json").write_text(json.dumps({
                     "http_port": prefs.http_port, "bridge_port": prefs.bridge_port,
                     "token": addon.SERVICE.token, "pid": addon.SERVICE.process.pid,
@@ -74,12 +77,24 @@ def main():
                 graphics = {"renderer": gpu.platform.renderer_get(), "vendor": gpu.platform.vendor_get(), "version": gpu.platform.version_get()}
                 if os.environ.get("GALLIUM_DRIVER") == "llvmpipe":
                     assert "llvmpipe" in graphics["renderer"].lower(), graphics
-                (control / f"{pending}.json").write_text(json.dumps({"status": "Passed", "graphics": graphics}))
+                report = {"status": "Passed", "graphics": graphics}
+                if pending == "initial":
+                    initial_report = report
+                else:
+                    (control / f"{pending}.json").write_text(json.dumps(report))
                 pending = ""
-            elif capture:
+            elif capture and time.monotonic() >= capture_ready:
                 window = bpy.context.window_manager.windows[0]
                 with bpy.context.temp_override(window=window):
+                    assert bpy.ops.wm.redraw_timer(type="DRAW_WIN_SWAP", iterations=2) == {"FINISHED"}
                     assert bpy.ops.screen.screenshot(filepath=str(control / "preferences.png")) == {"FINISHED"}
+                image = bpy.data.images.load(str(control / "preferences.png"), check_existing=False)
+                try:
+                    samples = image.pixels[:][::128]
+                    assert max(samples) - min(samples) > 0.1, "GUI screenshot contains no visible interface"
+                finally:
+                    bpy.data.images.remove(image)
+                (control / "initial.json").write_text(json.dumps(initial_report))
                 capture = False
             if pending and time.monotonic() > deadline:
                 raise TimeoutError(f"GUI automatic service start failed: {addon.LAST_ERROR}")
