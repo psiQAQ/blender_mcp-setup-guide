@@ -2,6 +2,8 @@
 
 # Blender MCP Integrated and Skills
 
+**[Download & install](https://notes.psiqaq.cn/blender_mcp-setup-guide/en/)** · [中文下载页](https://notes.psiqaq.cn/blender_mcp-setup-guide/) · [All releases](https://github.com/psiQAQ/blender_mcp-setup-guide/releases)
+
 ```mermaid
 flowchart LR
     Agent[MCP client] -->|Authenticated local HTTP| Server[Bundled MCP service]
@@ -81,11 +83,14 @@ npx skills add https://github.com/psiQAQ/blender_mcp-setup-guide
 | `src/blender_mcp_integration/` | Extension UI and isolated service lifecycle |
 | `packaging/` | Pinned upstream, Blender toolchain and dependency inputs |
 | `scripts/` | Scaffold, build, test and release preparation |
+| `web/` | Bilingual release website template, styles and scene illustration |
 | `.github/workflows/` | CI, manually triggered release and upstream inspection |
 | `.agents/skills/blender-mcp-skills/` | Skill, reference docs and generic template |
 | `tests/` | Unit checks and actual Blender hosts |
 | `docs/` | Setup, design and validation evidence |
 | `submodules/` | Reference implementations |
+
+The release website uses validated publication records for its download links. See [website maintenance](docs/release-site.md) for rendering and Pages deployment.
 
 ## Extension dependency policy
 

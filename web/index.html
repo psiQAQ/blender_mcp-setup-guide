@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="$lang">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <meta name="description" content="$description">
+  <meta name="theme-color" content="#10171b">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Blender MCP Integrated · $page_title">
+  <meta property="og:description" content="$description">
+  <meta property="og:url" content="$canonical">
+  <title>Blender MCP Integrated · $page_title</title>
+  <link rel="canonical" href="$canonical">
+  <link rel="alternate" hreflang="zh-Hans" href="$canonical_zh">
+  <link rel="alternate" hreflang="en" href="$canonical_en">
+  <link rel="icon" href="$asset_base/mark.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="$asset_base/site.css">
+  <script src="$asset_base/site.js" defer></script>
+</head>
+<body data-initial-channel="$initial_channel" data-copy-success="$copy_success" data-copy-failure="$copy_failure">
+  <a class="skip-link" href="#main">$skip</a>
+  <header class="site-header">
+    <div class="container header-inner">
+      <a class="brand" href="$home_url" aria-label="Blender MCP Integrated">
+        <img src="$asset_base/mark.svg" width="34" height="34" alt="">
+        <span>Blender MCP <small>Integrated</small></span>
+      </a>
+      <nav aria-label="$navigation">
+        <a href="#about">$nav_about</a><a href="#downloads">$nav_download</a><a href="#install">$nav_install</a><a href="#faq">$nav_faq</a><a href="#resources">$nav_skill</a>
+      </nav>
+      <div class="header-actions"><a class="language" href="$language_url" lang="$other_lang" hreflang="$other_lang">$language_label</a><a class="github-link" href="$repository">GitHub <span aria-hidden="true">↗</span></a></div>
+    </div>
+  </header>
+
+  <main id="main">
+    <section class="hero container" aria-labelledby="hero-heading">
+      <div class="hero-copy">
+        <p class="product-note">$community_label</p>
+        <h1 id="hero-heading">$hero_title</h1>
+        <p class="hero-description">$hero_description</p>
+        <div class="hero-actions"><a class="button primary" href="#downloads">$choose_download</a><a class="button secondary" href="#install">$quick_start</a></div>
+        <p class="hero-platforms">Windows x64 <span>·</span> Linux x64 <span>·</span> macOS Apple Silicon</p>
+      </div>
+      <figure class="scene-frame">
+        <div class="scene-topbar"><span>Blender MCP Integrated</span><span>$scene_label</span></div>
+        <img class="scene-image" src="$asset_base/agent-blender.png" width="1448" height="1086" alt="$scene_alt" fetchpriority="high">
+        <figcaption class="scene-caption">$scene_caption</figcaption>
+      </figure>
+      <ul class="hero-facts"><li>$stat_zip</li><li>$stat_platforms</li><li>$stat_runtime</li></ul>
+    </section>
+
+    <section id="about" class="section container" aria-labelledby="about-heading">
+      <div class="section-heading"><h2 id="about-heading">$about_title</h2><p>$about_description</p></div>
+      <div class="feature-grid">
+        <article class="feature-card"><svg class="feature-icon" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" aria-hidden="true"><path d="m12 2 9 5v10l-9 5-9-5V7zM3 7l9 5 9-5M12 12v10M7 4.8l9 5"/></svg><h3>$integration_heading</h3><p>$integration_text</p><a class="text-link" href="$design_url">$architecture_link</a></article>
+        <article class="feature-card"><svg class="feature-icon" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="3" width="20" height="15" rx="2"/><path d="m10 7 5 3.5-5 3.5zM8 22h8M12 18v4"/></svg><h3>$service_heading</h3><p>$service_text</p><a class="text-link" href="$setup_url">$full_guide</a></article>
+        <article class="feature-card"><svg class="feature-icon" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><circle cx="5" cy="12" r="3"/><circle cx="19" cy="5" r="3"/><circle cx="19" cy="19" r="3"/><path d="m7.7 10.5 8.6-4M7.7 13.5l8.6 4"/></svg><h3>$agent_heading</h3><p>$agent_text</p><span class="client-list">Codex / Claude Code / OpenCode</span></article>
+      </div>
+      <div class="upstream-note"><h3>$origin_heading</h3><p>$origin_text</p><div class="source-links"><a class="text-link" href="$upstream">$official_source <span aria-hidden="true">↗</span></a><a class="text-link" href="$official_project_url">$official_project_label <span aria-hidden="true">↗</span></a></div></div>
+      <div class="comparison-section">
+      <h3 id="comparison-heading">$comparison_heading</h3>
+      <p id="comparison-description" class="comparison-description">$comparison_title</p>
+      <details class="official-setup"><summary>$official_setup_heading</summary><div class="official-setup-content"><p>$official_extension_step <a href="https://lab.blender.org/">https://lab.blender.org/</a></p><p>$official_tool_step</p><pre><code>$official_commands</code></pre><p>$official_client_step</p><dl class="stdio-settings"><div><dt>command</dt><dd><code>blender-mcp</code></dd></div><div><dt>BLENDER_MCP_HOST</dt><dd><code>localhost</code></dd></div><div><dt>BLENDER_MCP_PORT</dt><dd><code>9876</code></dd></div></dl><p>$official_setup_note <a class="text-link" href="$official_readme_url">$official_readme_label <span aria-hidden="true">↗</span></a></p></div></details>
+      <p id="comparison-scroll-hint" class="table-hint">$comparison_hint</p>
+      <div class="comparison-wrap" role="region" aria-labelledby="comparison-heading" aria-describedby="comparison-description comparison-scroll-hint" tabindex="0"><table class="comparison" aria-labelledby="comparison-heading" aria-describedby="comparison-description"><thead><tr><th scope="col">$comparison_item</th><th scope="col">$comparison_original</th><th scope="col">$comparison_integrated</th></tr></thead><tbody>$comparison_rows</tbody></table></div>
+      <aside class="offline-benefits" aria-labelledby="offline-heading"><h4 id="offline-heading">$offline_heading</h4><p>$offline_advantages</p><p class="offline-scope">$offline_scope</p></aside>
+      <div class="runtime-comparison"><h4 id="runtime-heading">$runtime_heading</h4><p class="diagram-note">$runtime_note <a href="https://github.com/tt-a1i/archify">Archify <span aria-hidden="true">↗</span></a></p><div class="runtime-diagrams" aria-labelledby="runtime-heading">$runtime_diagrams</div></div>
+      <div class="mcp-tools" aria-labelledby="mcp-tools-heading"><h4 id="mcp-tools-heading">$tools_heading</h4><p class="tools-description">$tools_description</p><div class="mcp-tool-list">$mcp_tool_cards</div><p class="section-note"><a href="$tools_source_url">$tools_source_label <span aria-hidden="true">↗</span></a></p></div>
+      <p class="section-note">$original_note <a href="$stdio_url">$original_guide <span aria-hidden="true">↗</span></a></p>
+      </div>
+    </section>
+
+    <section id="downloads" class="downloads-section" aria-labelledby="downloads-heading">
+      <div class="container">
+        <div class="section-heading"><h2 id="downloads-heading">$downloads_title</h2><p>$downloads_description</p></div>
+        <div class="channel-selector" hidden aria-label="$channel_label">$channel_buttons</div>
+        <div class="release-panels">$release_panels</div>
+        <div class="compatibility-note"><span aria-hidden="true">ⓘ</span><p>$compatibility_note</p></div>
+        <div class="download-footer"><span>$history_note</span><a class="text-link" href="$repository/releases">$all_releases <span aria-hidden="true">↗</span></a></div>
+      </div>
+    </section>
+
+    <section id="install" class="section container" aria-labelledby="install-heading">
+      <div class="section-heading"><h2 id="install-heading">$install_title</h2><p>$install_description</p></div>
+      <div class="installation-layout">
+        <ol class="install-steps">$install_steps</ol>
+        <aside class="first-prompt" aria-labelledby="prompt-heading"><h3 id="prompt-heading">$prompt_heading</h3><blockquote>$first_prompt</blockquote><p>$prompt_note</p><a class="text-link" href="$setup_url">$full_guide</a></aside>
+      </div>
+    </section>
+
+    <section id="faq" class="section faq-section" aria-labelledby="faq-heading">
+      <div class="container faq-layout"><div class="section-heading"><h2 id="faq-heading">$faq_heading</h2><p>$faq_description</p></div><div class="faq">$faq_items</div></div>
+    </section>
+
+    <section id="resources" class="section container resources-section" aria-labelledby="resources-heading">
+      <div class="section-heading"><h2 id="resources-heading">$resources_title</h2><p>$skill_description</p></div>
+      <div class="skill-layout"><div><h3>$skill_heading</h3><ul class="skill-benefits">$skill_benefits</ul><div class="source-links"><a class="text-link" href="$skill_url">$skill_source_label <span aria-hidden="true">↗</span></a><a class="text-link" href="$template_url">$template_source_label <span aria-hidden="true">↗</span></a></div></div><aside class="skill-install"><h3>$skill_install_heading</h3><pre><code>npx skills add https://github.com/psiQAQ/blender_mcp-setup-guide --skill blender-mcp-skills</code></pre><p>$skill_install_note</p><a class="text-link" href="$template_guide_url">$template_guide_label <span aria-hidden="true">↗</span></a></aside></div>
+      <div class="skill-references"><h3>$skill_references_heading</h3><p>$skill_references_note</p><ul>$skill_references</ul></div>
+    </section>
+  </main>
+  <footer class="site-footer"><div class="container footer-inner"><div class="footer-brand">Blender MCP <span>Integrated</span><p>$footer_note</p></div><div class="footer-links"><a href="$upstream">Blender Lab MCP ↗</a><a href="$repository">GitHub ↗</a><a href="$repository/blob/main/LICENSE">GPL-3.0-or-later ↗</a></div></div></footer>
+  <p id="copy-status" class="sr-only" role="status" aria-live="polite"></p>
+</body>
+</html>

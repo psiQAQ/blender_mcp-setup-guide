@@ -1,0 +1,110 @@
+--- a/archify/renderers/architecture/render-architecture.mjs
++++ b/archify/renderers/architecture/render-architecture.mjs
+@@ -39,10 +39,10 @@
+ } from '../shared/geometry.mjs';
+ 
+ const componentTextFit = {
+-  sublabelPreferred: 9,
+-  sublabelMinimum: 6,
+-  tagPreferred: 7,
+-  tagMinimum: 6,
++  sublabelPreferred: 15,
++  sublabelMinimum: 14,
++  tagPreferred: 14,
++  tagMinimum: 13,
+ };
+ 
+ const __dirname = path.dirname(fileURLToPath(import.meta.url));
+@@ -67,8 +67,8 @@
+   boundaryExtraBottom: 20,
+   boundaryLabelBaseline: 18,
+   boundaryLabelClearance: 4,
+-  boundaryLabelFontPreferred: 9,
+-  boundaryLabelFontMinimum: 6,
++  boundaryLabelFontPreferred: 18,
++  boundaryLabelFontMinimum: 16,
+   boundaryLabelMaskHeight: 16,
+   boundaryLabelRailGap: 2,
+   boundaryLabelFrameInset: 4,
+@@ -160,8 +160,8 @@
+ }
+ 
+ function connectionLabelBoxAt(conn, [lx, ly]) {
+-  const width = Math.max(30, textUnits(conn.label) * 4.8 + 10);
+-  return { x: lx - width / 2, y: ly - 10, width, height: 14, lx, ly };
++  const width = Math.max(30, textUnits(conn.label) * 8.4 + 12);
++  return { x: lx - width / 2, y: ly - 18, width, height: 24, lx, ly };
+ }
+ 
+ function connectionLabelRects() {
+@@ -289,9 +289,9 @@
+     const bottom = boundary.y + boundary.height;
+     // Profile-less schema-v1 inputs keep their legacy boundary geometry. A
+     // quality profile opts into the stricter title-composition contract and
+-    // may expand the frame to contain an adapted title rail.
++    // aligns the frame top with the resolved title rail.
+     const y = enforcesBoundaryTitleComposition
+-      ? Math.min(boundary.y, title.y - layout.boundaryLabelFrameInset)
++      ? title.y - layout.boundaryLabelFrameInset
+       : boundary.y;
+     return {
+       ...boundary,
+@@ -457,7 +457,7 @@
+     if (c.x < 0 || c.y < 0 || c.x + c.width > viewBox[0] || c.y + c.height > viewBox[1]) {
+       problems.push(`Component "${c.id}" falls outside the viewBox ${viewBox[0]}x${viewBox[1]} — adjust pos/size or set a larger meta.viewBox.`);
+     }
+-    const estLabelW = textUnits(c.label) * 6.6;
++    const estLabelW = textUnits(c.label) * 10.8;
+     if (estLabelW > c.width + 8) {
+       problems.push(`Label "${c.label}" (~${Math.round(estLabelW)}px) is wider than component "${c.id}" (${c.width}px) — shorten the label or widen size.`);
+     }
+@@ -816,7 +816,7 @@
+     x: Math.round(rect.x),
+     y: Math.round(rect.y),
+     width: Math.round(rect.width),
+-    height: 14,
++    height: 24,
+     labelAt: [Math.round(rect.lx), Math.round(rect.ly)],
+   }));
+   return {
+@@ -873,8 +873,7 @@
+   const box = connectionLabelBox(conn);
+   if (!box) return '';
+   return `        <g data-detail="context" ${focusEdgeAttrs(conn.from, conn.to, conn.label, index, conn.id)}>
+-          <rect x="${box.x}" y="${box.y}" width="${box.width}" height="${box.height}" rx="3" class="c-mask"/>
+-          <text x="${box.lx}" y="${box.ly}" class="${edgeLabelAccent(conn.variant)}" font-size="8" text-anchor="middle">${esc(conn.label)}</text>
++          <text x="${box.lx}" y="${box.ly}" class="${edgeLabelAccent(conn.variant)}" font-size="14" text-anchor="middle">${esc(conn.label)}</text>
+         </g>`;
+ }
+ 
+@@ -883,15 +882,15 @@
+   const accent = componentText[c.type] || 't-muted';
+   const cx = c.cx;
+   const hasSub = c.sublabel != null && c.sublabel !== '';
+-  const labelY = hasSub ? c.y + c.height / 2 - 2 : c.y + c.height / 2 + 4;
++  const labelY = hasSub ? c.y + c.height / 2 - 17 : c.y + c.height / 2 + 4;
+   const sub = hasSub
+-    ? `\n        <text data-detail="context" x="${cx}" y="${c.y + c.height / 2 + 14}" class="t-muted" font-size="${fittedNodeFontSize(c.sublabel, c.width, componentTextFit.sublabelPreferred, componentTextFit.sublabelMinimum)}" text-anchor="middle">${esc(c.sublabel)}</text>`
++    ? `\n        <text data-detail="context" x="${cx}" y="${c.y + c.height / 2 + 8}" class="t-muted" font-size="${fittedNodeFontSize(c.sublabel, c.width, componentTextFit.sublabelPreferred, componentTextFit.sublabelMinimum)}" text-anchor="middle">${esc(c.sublabel)}</text>`
+     : '';
+   const tag = c.tag
+-    ? `\n        <text data-detail="fine" x="${cx}" y="${c.y + c.height - 8}" class="${accent}" font-size="${fittedNodeFontSize(c.tag, c.width, componentTextFit.tagPreferred, componentTextFit.tagMinimum)}" text-anchor="middle">${esc(c.tag)}</text>`
++    ? `\n        <text data-detail="context" x="${cx}" y="${c.y + c.height - 23}" class="${accent}" font-size="${fittedNodeFontSize(c.tag, c.width, componentTextFit.tagPreferred, componentTextFit.tagMinimum)}" text-anchor="middle">${esc(c.tag)}</text>`
+     : '';
+   const brand = renderBrandMark(c, { x: c.x + c.width - 22, y: c.y + 6 });
+-  const labelFontSize = fittedNodeFontSize(c.label, brandLabelFitWidth(c, c.width), 11, 8);
++  const labelFontSize = fittedNodeFontSize(c.label, brandLabelFitWidth(c, c.width), 20, 18);
+   const passport = { kind: c.type, sublabel: c.sublabel, tag: c.tag, context: componentContext(c), ...brandMetadataFor(c) };
+   return `        <g ${focusNodeAttrs(c.id, c.label, passport, arch.meta.locale)}>
+           ${focusNodeTitle(c.label, passport)}
+--- a/archify/renderers/architecture/labels.mjs
++++ b/archify/renderers/architecture/labels.mjs
+@@ -49,7 +49,7 @@
+     && !overlapsLabel(rect, index, 2) && !masksRoute(rect)
+   );
+   const rectAt = (label, lx, ly) => ({
+-    ...label, lx, ly, x: lx - label.width / 2, y: ly - 10,
++    ...label, lx, ly, x: lx - label.width / 2, y: ly - 18,
+   });
+   // An opted-in grid layout runs parallel lines through shared gaps. Rank
+   // every position along all of the label's own segments: beside the line

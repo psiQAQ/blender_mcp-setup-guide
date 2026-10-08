@@ -1,0 +1,334 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Official Extension + stdio: installation and runtime",
+    "locale": "en",
+    "quality_profile": "showcase",
+    "output": "build/visual-refresh/aligned-diagrams/stdio-en/stdio.en.html",
+    "repository": {
+      "url": "https://github.com/psiQAQ/blender_mcp-setup-guide.git",
+      "revision": "7f281466d9ef01a957f872906c0bc468198a0635",
+      "provider": "github",
+      "link_mode": "web"
+    },
+    "legend": {
+      "entries": {
+        "frontend": {
+          "label": "Agent client"
+        },
+        "backend": {
+          "label": "Runtime components"
+        },
+        "database": {
+          "label": "Files and dependencies"
+        }
+      }
+    },
+    "viewBox": [
+      1000,
+      720
+    ]
+  },
+  "components": [
+    {
+      "id": "agent-client",
+      "type": "frontend",
+      "label": "Agent / MCP client",
+      "sublabel": "Codex / Claude Code / OpenCode",
+      "tag": "Process: client",
+      "pos": [
+        60,
+        286
+      ],
+      "size": [
+        300,
+        108
+      ],
+      "sources": [
+        {
+          "path": "docs/blender_mcp-stdio-setup_zh.md",
+          "line": 5,
+          "end_line": 12
+        }
+      ]
+    },
+    {
+      "id": "client-config",
+      "type": "database",
+      "label": "Client MCP configuration",
+      "sublabel": "command: blender-mcp + env",
+      "tag": "Location: client settings directory",
+      "pos": [
+        60,
+        110
+      ],
+      "size": [
+        300,
+        108
+      ],
+      "sources": [
+        {
+          "path": "docs/blender_mcp-stdio-setup_zh.md",
+          "line": 63,
+          "end_line": 82
+        }
+      ]
+    },
+    {
+      "id": "mcp-service",
+      "type": "backend",
+      "label": "blender-mcp",
+      "sublabel": "Separate Python process",
+      "tag": "External Python · uv tool environment",
+      "pos": [
+        550,
+        286
+      ],
+      "size": [
+        330,
+        108
+      ],
+      "sources": [
+        {
+          "path": "docs/blender_mcp-stdio-setup_zh.md",
+          "line": 5,
+          "end_line": 5
+        },
+        {
+          "path": "docs/blender_mcp-stdio-setup_zh.md",
+          "line": 35,
+          "end_line": 52
+        }
+      ]
+    },
+    {
+      "id": "tool-runtime",
+      "type": "database",
+      "label": "Tools, dependencies and docs",
+      "sublabel": "blmcp + MCP SDK + Python deps",
+      "tag": "uv tool dir / uv tool dir --bin",
+      "pos": [
+        550,
+        110
+      ],
+      "size": [
+        330,
+        108
+      ],
+      "sources": [
+        {
+          "path": "docs/blender_mcp-stdio-setup_zh.md",
+          "line": 35,
+          "end_line": 52
+        }
+      ]
+    },
+    {
+      "id": "blender-bridge",
+      "type": "backend",
+      "label": "Official MCP Extension",
+      "sublabel": "Blender process · enabled bridge",
+      "tag": "Extensions / mcp",
+      "pos": [
+        550,
+        520
+      ],
+      "size": [
+        330,
+        108
+      ],
+      "sources": [
+        {
+          "path": "docs/blender_mcp-stdio-setup_zh.md",
+          "line": 15,
+          "end_line": 22
+        }
+      ]
+    },
+    {
+      "id": "blender-scene",
+      "type": "backend",
+      "label": "bpy / current scene",
+      "sublabel": "Blender process · bpy execution",
+      "tag": "Location: Blender installation",
+      "pos": [
+        60,
+        520
+      ],
+      "size": [
+        300,
+        108
+      ],
+      "sources": [
+        {
+          "path": "docs/integration-design.md",
+          "line": 9,
+          "end_line": 9
+        },
+        {
+          "path": "src/blender_mcp_integration/__init__.py",
+          "line": 62,
+          "end_line": 79
+        }
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Agent + user configuration",
+      "wraps": [
+        "agent-client",
+        "client-config"
+      ],
+      "pad": 30
+    },
+    {
+      "kind": "region",
+      "label": "Separate uv tools installation",
+      "wraps": [
+        "mcp-service",
+        "tool-runtime"
+      ],
+      "pad": 34
+    },
+    {
+      "kind": "region",
+      "label": "Official Extension",
+      "wraps": [
+        "blender-bridge"
+      ],
+      "pad": 34
+    },
+    {
+      "kind": "region",
+      "label": "Blender host · Python / bpy",
+      "wraps": [
+        "blender-scene"
+      ],
+      "pad": 34
+    }
+  ],
+  "connections": [
+    {
+      "id": "mcp-request",
+      "from": "agent-client",
+      "to": "mcp-service",
+      "label": "MCP request · stdin",
+      "variant": "emphasis"
+    },
+    {
+      "id": "mcp-result",
+      "from": "mcp-service",
+      "to": "agent-client",
+      "label": "Tool result · stdout",
+      "variant": "default",
+      "fromSide": "top",
+      "toSide": "top",
+      "labelAt": [
+        450,
+        250
+      ]
+    },
+    {
+      "id": "load-client-settings",
+      "from": "client-config",
+      "to": "agent-client",
+      "label": "Read MCP settings",
+      "variant": "default",
+      "labelDx": -90,
+      "labelDy": 40
+    },
+    {
+      "id": "load-tools",
+      "from": "mcp-service",
+      "to": "tool-runtime",
+      "label": "Load tools + deps",
+      "variant": "default",
+      "labelDx": -100,
+      "labelDy": -30
+    },
+    {
+      "id": "bridge-request",
+      "from": "mcp-service",
+      "to": "blender-bridge",
+      "label": "TCP :9876 · code",
+      "variant": "emphasis",
+      "labelAt": [
+        824,
+        445
+      ]
+    },
+    {
+      "id": "bridge-result",
+      "from": "blender-bridge",
+      "to": "mcp-service",
+      "label": "TCP · JSON/image",
+      "variant": "default",
+      "fromSide": "right",
+      "toSide": "right",
+      "labelAt": [
+        824,
+        478
+      ]
+    },
+    {
+      "id": "execute-scene-code",
+      "from": "blender-bridge",
+      "to": "blender-scene",
+      "label": "Execute Python / bpy",
+      "variant": "emphasis"
+    },
+    {
+      "id": "scene-result",
+      "from": "blender-scene",
+      "to": "blender-bridge",
+      "label": "Scene result",
+      "variant": "default",
+      "fromSide": "bottom",
+      "toSide": "bottom"
+    },
+    {
+      "id": "process-control",
+      "from": "agent-client",
+      "to": "mcp-service",
+      "label": "Start / stop service",
+      "variant": "dashed"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Interfaces and requests",
+      "items": [
+        "The agent uses stdio; the MCP service connects to the running Blender TCP bridge.",
+        "The TCP bridge defaults to localhost:9876; arrows distinguish requests and returned results."
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Who controls the service?",
+      "items": [
+        "The client launches and manages the independent MCP service via command; the TCP bridge is started inside Blender.",
+        "Blender's bridge controls operate the bridge, not the client's stdio process."
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Installation locations and processes",
+      "items": [
+        "Background frames mark installation areas; node subtitles identify processes. One package may supply code for separate processes.",
+        "Tools and dependencies live in the uv environment; the Extension lives in Blender's user repository. They are installed separately."
+      ]
+    },
+    {
+      "dot": "slate",
+      "title": "Local configuration",
+      "items": [
+        "The client and Blender run in the same native OS on one computer; use the actual configured ports and paths.",
+        "The client stores the MCP command and bridge host / port; uv tool dir reports the actual tool directory."
+      ]
+    }
+  ]
+}

@@ -2,6 +2,8 @@
 
 # Blender MCP 集成安装与开发技能
 
+**[下载与安装](https://notes.psiqaq.cn/blender_mcp-setup-guide/)** · [English website](https://notes.psiqaq.cn/blender_mcp-setup-guide/en/) · [所有发行版](https://github.com/psiQAQ/blender_mcp-setup-guide/releases)
+
 ```mermaid
 flowchart LR
     Agent[MCP 客户端] -->|本机 HTTP + 凭据| Server[随包 MCP 服务]
@@ -63,6 +65,7 @@ flowchart LR
 - 官方 stdio：[中文](blender_mcp-stdio-setup_zh.md) / [English](blender_mcp-stdio-setup_en.md)
 - 集成架构：[`integration-design.md`](integration-design.md)
 - 构建与发布：[`integration-build.md`](integration-build.md)
+- 下载站点维护：[`release-site.md`](release-site.md)
 
 ## Skills 安装
 
