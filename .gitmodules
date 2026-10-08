@@ -19,3 +19,6 @@
 [submodule "submodules/BlenderTemplate"]
 	path = submodules/BlenderTemplate
 	url = https://github.com/ux3d/BlenderTemplate
+[submodule "submodules/blender_mcp"]
+	path = submodules/blender_mcp
+	url = https://projects.blender.org/lab/blender_mcp.git

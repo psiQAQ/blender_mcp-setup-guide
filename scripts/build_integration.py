@@ -57,14 +57,20 @@ def patch_bridge(vendor):
 
 
 def acquire_upstream(lock, requested):
-    source = requested or ROOT / "build/upstream" / lock["commit"]
-    if not source.exists():
-        source.parent.mkdir(parents=True, exist_ok=True)
-        run(["git", "clone", "--depth", "1", "--branch", lock["tag"], lock["repository"], source])
+    source = requested or ROOT / "submodules/blender_mcp"
+    if not (source / ".git").exists():
+        raise RuntimeError("Initialize the pinned official submodule: git submodule update --init submodules/blender_mcp")
+    if requested is None:
+        entry = subprocess.check_output(["git", "-C", str(ROOT), "ls-tree", "HEAD", "submodules/blender_mcp"], text=True).split()
+        if len(entry) < 3 or entry[:3] != ["160000", "commit", lock["commit"]]:
+            raise RuntimeError("Committed submodule pointer differs from packaging/upstream.json")
     actual = subprocess.check_output(["git", "-C", str(source), "rev-parse", "HEAD"], text=True).strip()
     dirty = subprocess.check_output(["git", "-C", str(source), "status", "--porcelain"], text=True).strip()
     if actual != lock["commit"] or dirty:
         raise RuntimeError("Upstream checkout must be clean and match packaging/upstream.json")
+    origin = subprocess.check_output(["git", "-C", str(source), "remote", "get-url", "origin"], text=True).strip()
+    if origin.removesuffix(".git") != lock["repository"].removesuffix(".git"):
+        raise RuntimeError("Upstream origin differs from the locked official repository")
     return source
 
 
