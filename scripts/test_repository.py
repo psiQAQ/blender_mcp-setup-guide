@@ -26,6 +26,16 @@ def parse_arguments(argv=None):
     return parser.parse_args(argv)
 
 
+def select_package(index, platform, blender_version):
+    """Accept an aggregate or channel index using Blender's exclusive maximum."""
+    from pages_site import version_tuple
+    items = [item for item in index["data"] if platform in item["platforms"]
+             and version_tuple(item["blender_version_min"]) <= blender_version < version_tuple(item["blender_version_max"])]
+    if len(items) != 1:
+        raise ValueError("Index must select exactly one compatible platform package")
+    return items[0]
+
+
 def main(args):
     identifier, _ = resolve()
     packages = {path.name: next((path / "dist").glob("*.zip")) for path in args.artifacts.iterdir() if path.is_dir() and (path / "dist").exists()}
@@ -41,9 +51,13 @@ def main(args):
     if args.public_index:
         with urllib.request.urlopen(args.public_index, timeout=30) as response:
             index = json.load(response)
-        items = [item for item in index["data"] if item["platforms"] == [identifier]]
-        assert len(items) == 1 and len(index["data"]) == 3
-        verify_download(items[0]["archive_url"], digest(package), package.stat().st_size)
+        probe = subprocess.check_output([str(args.blender), '--background', '--factory-startup', '--python-expr',
+            "import bpy,json; print('HOST_VERSION='+json.dumps(list(bpy.app.version)))"], text=True)
+        blender_version = tuple(json.loads(next(line.removeprefix('HOST_VERSION=') for line in probe.splitlines() if line.startswith('HOST_VERSION='))))
+        item = select_package(index, identifier, blender_version)
+        if (item['archive_hash'], item['archive_size']) != ('sha256:' + digest(package), package.stat().st_size):
+            raise ValueError('Selected public package differs from the validated candidate')
+        verify_download(item["archive_url"], digest(package), package.stat().st_size)
         url = args.public_index
     else:
         old = {}

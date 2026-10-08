@@ -168,7 +168,7 @@ jobs:
       - name: Verify retained indexes and assets after deployment
         env:
           PAGES_BASE: ${{ needs.publish-assets.outputs.base_url }}
-        run: python -B scripts/pages_site.py --base-url $env:PAGES_BASE --site build/release-site
+        run: python -B scripts/pages_site.py --base-url $env:PAGES_BASE --site build/release-site --deployed
       - uses: actions/upload-artifact@v4
         if: always()
         with:

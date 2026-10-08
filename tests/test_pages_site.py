@@ -7,7 +7,7 @@ from unittest.mock import patch
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
-from pages_site import compose, refresh, validate_index, verify_retained
+from pages_site import compose, refresh, validate_index, verify_retained, unified_index
 
 
 class PagesSiteTests(unittest.TestCase):
@@ -38,12 +38,13 @@ class PagesSiteTests(unittest.TestCase):
             with patch("pages_site.read_bytes", side_effect=fetch), patch("pages_site.verify_download") as readback:
                 compose("https://example.com", candidate, directory / "site")
                 for name in ("index.json", "publication.json"):
-                    self.assertEqual((directory / "site" / name).read_bytes(), stable[name])
+                    self.assertEqual((directory / "site/blender-5.1/stable" / name).read_bytes(), stable[name])
+                self.assertEqual(len(json.loads((directory / "site/index.json").read_bytes())["data"]), 6)
                 self.assertIn("选择版本下载", (directory / "site/index.html").read_text(encoding="utf-8"))
                 self.assertTrue((directory / "site/assets/site.css").exists())
                 self.assertTrue((directory / "site/blender-5.2/preview/en/index.html").exists())
                 verify_retained("https://example.com", directory / "site")
-                self.assertEqual(readback.call_count, 6)
+                self.assertEqual(readback.call_count, 9)
             with patch("pages_site.read_bytes", return_value=b"changed"):
                 with self.assertRaisesRegex(ValueError, "Retained channel changed"):
                     verify_retained("https://example.com", directory / "site")
@@ -58,10 +59,47 @@ class PagesSiteTests(unittest.TestCase):
                 self.assertEqual(downloads.call_count, 6)
                 self.assertEqual(len(preserved), 4)
                 self.assertFalse(any(name.endswith(".html") for name in preserved))
-                for path in preserved:
-                    self.assertEqual((site / path).read_bytes(), contents[path])
+                for path, entry in preserved.items():
+                    self.assertEqual((site / path).read_bytes(), contents[entry["source"]])
                 verify_retained("https://example.com/project", site)
                 self.assertEqual(downloads.call_count, 12)
+                public = {str(path.relative_to(site)).replace('\\', '/'): path.read_bytes() for path in site.rglob('*.json')}
+                with patch('pages_site.read_bytes', side_effect=lambda base, path, optional=False: public.get(path)):
+                    verify_retained("https://example.com/project", site, deployed=True)
+                    public['index.json'] = stable['index.json']
+                    with self.assertRaisesRegex(ValueError, 'unified index'):
+                        verify_retained("https://example.com/project", site, deployed=True)
+
+    def test_subsequent_refresh_uses_canonical_channels(self):
+        stable, preview = self.channel(""), self.channel("blender-5.2/preview")
+        contents = {"blender-5.1/stable/" + key: value for key, value in stable.items()}
+        contents.update({"blender-5.2/preview/" + key: value for key, value in preview.items()})
+        contents['index.json'] = b'invalid legacy data must not be read'
+        with tempfile.TemporaryDirectory() as temporary:
+            with patch('pages_site.read_bytes', side_effect=lambda base, path, optional=False: contents.get(path)), patch('pages_site.verify_download'):
+                site = Path(temporary) / 'site'
+                refresh('https://example.com', site)
+                self.assertEqual(len(json.loads((site / 'index.json').read_bytes())['data']), 6)
+
+    def test_stable_preferred_per_line_and_preview_remains_independent(self):
+        stable = json.loads(self.channel('blender-5.2/stable')['index.json'])
+        preview = json.loads(self.channel('blender-5.2/preview')['index.json'])
+        older = json.loads(self.channel('')['index.json'])
+        result = unified_index({'blender-5.2/stable': stable, 'blender-5.2/preview': preview, '': older})
+        self.assertEqual(len(result['data']), 6)
+        self.assertTrue(all('dev.' not in item['version'] for item in result['data']))
+        self.assertIn('dev.', preview['data'][0]['version'])
+
+    def test_overlapping_blender_ranges_are_rejected(self):
+        stable = json.loads(self.channel('')['index.json'])
+        preview = json.loads(self.channel('blender-5.2/preview')['index.json'])
+        stable['data'][0]['blender_version_max'] = '5.3.0'
+        with self.assertRaisesRegex(ValueError, 'overlapping'):
+            unified_index({'': stable, 'blender-5.2/preview': preview})
+
+    def test_unsupported_index_format_is_rejected(self):
+        with self.assertRaisesRegex(ValueError, 'format'):
+            unified_index({'': {'version': 'v2', 'data': []}})
 
     def test_missing_optional_channel_cannot_hide_an_orphan_index(self):
         stable = self.channel("")

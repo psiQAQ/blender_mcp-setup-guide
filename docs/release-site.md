@@ -18,11 +18,11 @@
 2. `pages_site.py --refresh` 获取现存渠道的原始 JSON，核对版本、平台、兼容范围及 ZIP 的大小与 SHA-256，再渲染新页面。
 3. 部署前重新读取线上不可变记录与安装包；不一致或网络获取失败即停止，不以示例版本或空下载入口代替。
 4. 上传静态站点并部署到现有 `github-pages` 环境。渠道 JSON 与本轮保存的校验元数据另外作为 `release-site-verification` artifact 保存 7 天。
-5. 使用构建时检出的同一个 `main` 提交，在部署后重新验证渠道 JSON 与公开下载。此步骤只消费本次网站工作流生成的元数据。
+5. 使用构建时检出的同一个 `main` 提交，以 `--deployed` 重新验证目标通道、根统一索引与公开下载。此步骤只消费本次网站工作流生成的元数据。
 
 网站刷新与包发布共用 `extension-release` 并发组，且不取消正在执行的任务，避免两个部署同时覆盖渠道。网站工作流没有 Release 写权限，不创建、上传或替换安装包，也不需要下载 Blender 或执行三平台重建。现有 `Validate Extension` 工作流的推送触发范围由其自身配置独立决定。
 
-尚未发布的可选渠道可以缺席；已发布渠道的无效 JSON、缺失索引、校验不符和下载失败必须报错。根目录的 Blender 5.1 stable 索引及 5.2 preview/stable 子路径仍由既有渠道规则管理。页面应从记录生成下载链接与版本信息，按 Blender 版本和平台展示，不将两个渠道合并成一个“最新版”。
+尚未发布的可选渠道可以缺席；已发布渠道的无效 JSON、缺失索引、校验不符和下载失败必须报错。根目录 `index.json` 是 Blender v1 统一索引，自动匹配 Blender 版本和系统平台。同一 Blender 发布线优先稳定版；没有稳定版时采用预览版。当前包含 5.1 stable 与 5.2 preview 的六个平台条目。独立通道为 `blender-5.1/stable/index.json`、`blender-5.2/preview/index.json` 和可选的 `blender-5.2/stable/index.json`；独立预览索引支持主动选择预览版。各单通道保留三个条目与原始字节，下载 URL、版本、大小和 SHA-256 保持一致。首次构建从旧根索引迁移 5.1，后续使用各通道索引与发布记录生成根索引；根 `publication.json` 继续镜像 5.1 发布记录。重叠的兼容范围会阻止构建。
 
 ## 本地预览与校验
 
@@ -51,7 +51,7 @@ python -m http.server 8000 --directory build/release-site-preview
 - `web/agent-blender.png` 是通过内置 imagegen 生成的 Agent → MCP → Blender 请求与结果返回示意，并非真实客户端运行截图；`web/mark.svg` 是本集成项目的独立标记。图像提示词与生成来源保存在本地 `build/visual-refresh/runtime-skill/image-generation.json`。
 - `scripts/pages_render.py` 保存中英文文案，生成首页、`en/` 与已发布渠道的中英文页面。每个页面都包含全部真实下载链接，禁用 JavaScript 后仍可使用。
 - 版本、下载 URL、大小和 SHA-256 从验证通过的发布记录取得。历史 5.1 记录缺少的通道与 Blender 范围只在展示层使用兼容默认值，不回写 JSON。
-- 外观文件可重新生成。`index.json`、`publication.json` 和安装 ZIP 保持各自的不可变校验边界。
+- 外观文件可重新生成。单通道 `index.json`、`publication.json` 和安装 ZIP 保持各自的不可变校验边界；根索引随通道选择规则重新生成。
 - CSS、脚本、PNG 与 SVG 均为站内资源，不依赖外部字体、分析服务、CDN 或浏览器端 GitHub API。
 
 页面按 Hero、功能与安装方式对比、渠道下载、四步安装、FAQ 和 Extension 开发技能专区组织。顶部导航在“常见问题”后提供“Extension 开发 Skill”入口，在滚动时保持可见；比较表在自己的容器内横向滚动。官方安装方法默认折叠，代码示例从官方来源安装且不固定版本；FAQ 与安装折叠区使用原生 `details/summary`。

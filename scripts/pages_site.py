@@ -18,6 +18,40 @@ CHANNELS = ("", "blender-5.2/preview", "blender-5.2/stable")
 IMMUTABLE_FILES = ("index.json", "publication.json")
 
 
+def channel_directory(path):
+    """Keep the legacy 5.1 channel key while giving it a canonical URL."""
+    return path or "blender-5.1/stable"
+
+
+def version_tuple(value):
+    return tuple(int(part) for part in value.split("."))
+
+
+def unified_index(channels):
+    """Select stable before preview within each Blender line, then reject overlap."""
+    selected = {}
+    for path, index in channels.items():
+        if index.get("version", "v1") != "v1":
+            raise ValueError("Unsupported Blender index format")
+        line, channel = channel_directory(path).split("/")
+        if line not in selected or channel == "stable":
+            selected[line] = (channel, index)
+    data, blocklist = [], []
+    for line in sorted(selected):
+        index = selected[line][1]
+        data.extend(index["data"])
+        for blocked in index.get("blocklist", []):
+            if blocked not in blocklist:
+                blocklist.append(blocked)
+    for position, left in enumerate(data):
+        for right in data[position + 1:]:
+            if left.get("id") != right.get("id") or not set(left["platforms"]) & set(right["platforms"]):
+                continue
+            if max(version_tuple(left["blender_version_min"]), version_tuple(right["blender_version_min"])) < min(version_tuple(left["blender_version_max"]), version_tuple(right["blender_version_max"])):
+                raise ValueError("Unified index has overlapping Blender compatibility")
+    return {"version": "v1", "blocklist": blocklist, "data": data}
+
+
 def read_bytes(base, relative, optional=False):
     url = f"{base.rstrip('/')}/{relative}"
     if urllib.parse.urlsplit(url).scheme != "https":
@@ -55,14 +89,20 @@ def validate_index(index_bytes, publication_bytes, path):
 
 def retain_channel(base, output, path, preserved, optional=False):
     """Retain install metadata byte-for-byte; HTML and assets are regenerated."""
-    prefix = path + "/" if path else ""
-    metadata = read_bytes(base, prefix + "publication.json", optional=optional)
+    prefix = channel_directory(path) + "/"
+    source_prefix = prefix
+    metadata = read_bytes(base, prefix + "publication.json", optional=True)
+    if metadata is None and not path:
+        if read_bytes(base, prefix + "index.json", optional=True) is not None:
+            raise ValueError("Published channel has an index but no publication record")
+        source_prefix = ""
+        metadata = read_bytes(base, "publication.json", optional=optional)
     if metadata is None:
         # A channel must be entirely absent, never half-published.
         if read_bytes(base, prefix + "index.json", optional=True) is not None:
             raise ValueError(f"Published channel has an index but no publication record: {path}")
         return None
-    index = read_bytes(base, prefix + "index.json")
+    index = read_bytes(base, source_prefix + "index.json")
     record = validate_index(index, metadata, path)
     for package in record["packages"].values():
         verify_download(package["archive_url"], package["sha256"], package["size"])
@@ -70,17 +110,22 @@ def retain_channel(base, output, path, preserved, optional=False):
         destination = output / prefix / name
         destination.parent.mkdir(parents=True, exist_ok=True)
         destination.write_bytes(content)
-        preserved[prefix + name] = hashlib.sha256(content).hexdigest()
+        preserved[prefix + name] = {"sha256": hashlib.sha256(content).hexdigest(), "source": source_prefix + name}
     return record
 
 
 def finish_site(base, output, preserved):
-    records = {}
+    records, channels = {}, {}
     for path in CHANNELS:
-        directory = output / path
+        directory = output / channel_directory(path)
         if (directory / "publication.json").exists():
             records[path] = validate_index((directory / "index.json").read_bytes(),
                                            (directory / "publication.json").read_bytes(), path)
+            channels[path] = json.loads((directory / "index.json").read_bytes())
+    aggregate = unified_index(channels)
+    (output / "index.json").write_text(json.dumps(aggregate, indent=2) + "\n", encoding="utf-8", newline="\n")
+    if "" in records:
+        shutil.copyfile(output / channel_directory("") / "publication.json", output / "publication.json")
     render_site(output, records, base)
     (output / "preserved-channels.json").write_text(json.dumps(preserved, indent=2) + "\n", encoding="utf-8")
 
@@ -91,7 +136,7 @@ def refresh(base, output):
         raise FileExistsError("Use a new composed site directory")
     preserved = {}
     for path in CHANNELS:
-        retain_channel(base, output, path, preserved, optional=bool(path))
+        retain_channel(base, output, path, preserved, optional=True)
     finish_site(base, output, preserved)
     return preserved
 
@@ -107,24 +152,37 @@ def compose(base, candidate, output):
         if other == path:
             continue
         retain_channel(base, output, other, preserved, optional=bool(other) or not path)
-    shutil.copytree(candidate, output / path, dirs_exist_ok=True)
+    shutil.copytree(candidate, output / channel_directory(path), dirs_exist_ok=True)
     finish_site(base, output, preserved)
     return preserved
 
 
-def verify_retained(base, site):
+def verify_retained(base, site, deployed=False):
     saved = json.loads((site / "preserved-channels.json").read_text())
-    for name, expected in saved.items():
-        if name not in {f"{path}/" + filename if path else filename for path in CHANNELS for filename in IMMUTABLE_FILES}:
+    for name, entry in saved.items():
+        if name not in {f"{channel_directory(path)}/" + filename for path in CHANNELS for filename in IMMUTABLE_FILES}:
             raise ValueError(f"Unexpected retained metadata path: {name}")
-        if hashlib.sha256(read_bytes(base, name)).hexdigest() != expected:
+        source = name if deployed else entry["source"]
+        if hashlib.sha256(read_bytes(base, source)).hexdigest() != entry["sha256"]:
             raise ValueError(f"Retained channel changed: {name}")
+    channels = {}
     for path in CHANNELS:
-        prefix = path + "/" if path else ""
-        if prefix + "publication.json" in saved:
-            record = validate_index(read_bytes(base, prefix + "index.json"), read_bytes(base, prefix + "publication.json"), path)
+        prefix = channel_directory(path) + "/"
+        if (site / prefix / "publication.json").exists() or prefix + "publication.json" in saved:
+            def content(name):
+                if deployed:
+                    return read_bytes(base, prefix + name)
+                return (site / prefix / name).read_bytes()
+            index, publication = content("index.json"), content("publication.json")
+            record = validate_index(index, publication, path)
+            channels[path] = json.loads(index)
             for package in record["packages"].values():
                 verify_download(package["archive_url"], package["sha256"], package["size"])
+    if deployed:
+        if json.loads(read_bytes(base, "index.json")) != unified_index(channels):
+            raise ValueError("Public unified index differs from channel records")
+        if "" in channels and read_bytes(base, "publication.json") != read_bytes(base, "blender-5.1/stable/publication.json"):
+            raise ValueError("Legacy publication record differs from 5.1 stable")
     print(json.dumps({"status": "Passed", "retained_files": saved}, indent=2))
 
 
@@ -135,13 +193,14 @@ def main():
     operation.add_argument("--candidate", type=Path)
     operation.add_argument("--refresh", action="store_true", help="Refresh presentation from existing verified public channels")
     parser.add_argument("--site", type=Path, required=True)
+    parser.add_argument("--deployed", action="store_true", help="Verify destination channels and the public unified index")
     args = parser.parse_args()
     if args.refresh:
         refresh(args.base_url, args.site)
     elif args.candidate:
         compose(args.base_url, args.candidate, args.site)
     else:
-        verify_retained(args.base_url, args.site)
+        verify_retained(args.base_url, args.site, args.deployed)
 
 
 if __name__ == "__main__":

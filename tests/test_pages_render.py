@@ -83,7 +83,9 @@ class PagesRenderTests(unittest.TestCase):
             render_site(site, self.records(), "https://example.com/project")
             source = (site / "blender-5.2/preview/index.html").read_text(encoding="utf-8")
             self.assertIn('data-initial-channel="release-blender-5-2-preview"', source)
-            self.assertIn('value="https://example.com/project/blender-5.2/preview/index.json"', source)
+            self.assertIn('value="https://example.com/project/index.json"', source)
+            self.assertIn('href="https://example.com/project/blender-5.2/preview/index.json"', source)
+            self.assertIn('href="https://example.com/project/blender-5.1/stable/index.json"', source)
 
     def test_future_stable_channel_is_separate_from_preview(self):
         records = self.records()
