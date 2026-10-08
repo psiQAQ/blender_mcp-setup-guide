@@ -52,7 +52,7 @@ jobs:
       - uses: actions/download-artifact@v4
         with:
           pattern: validated-*
-          path: build/validated
+          path: build/latest/validated
           github-token: ${{ github.token }}
           run-id: ${{ inputs.validation_run_id }}
       - id: pages
@@ -66,7 +66,7 @@ jobs:
       - name: Arrange platform artifacts
         run: |
           foreach ($platform in @('windows-x64', 'linux-x64', 'macos-arm64')) {
-            Move-Item "build/validated/validated-$platform" "build/validated/$platform"
+            Move-Item "build/latest/validated/validated-$platform" "build/latest/validated/$platform"
           }
       - name: Upload draft assets, read back every asset and validate the complete index
         id: assets
@@ -75,11 +75,11 @@ jobs:
           RELEASE_TAG: ${{ inputs.release_tag }}
           PAGES_BASE: ${{ steps.pages.outputs.base_url }}
           RELEASE_CHANNEL: ${{ inputs.channel }}
-        run: '& $env:BLENDER_PYTHON -B scripts/publish_release.py --phase stage --channel $env:RELEASE_CHANNEL --repository $env:GITHUB_REPOSITORY --tag $env:RELEASE_TAG --expected-commit $env:GITHUB_SHA --artifacts build/validated --blender $env:BLENDER --index-output build/release-repository --current-url "$env:PAGES_BASE$env:CHANNEL_PATH/publication.json"'
+        run: '& $env:BLENDER_PYTHON -B scripts/publish_release.py --phase stage --channel $env:RELEASE_CHANNEL --repository $env:GITHUB_REPOSITORY --tag $env:RELEASE_TAG --expected-commit $env:GITHUB_SHA --artifacts build/latest/validated --blender $env:BLENDER --index-output build/latest/release-repository --current-url "$env:PAGES_BASE$env:CHANNEL_PATH/publication.json"'
       - name: Compose the full site and verify retained channel assets
         env:
           PAGES_BASE: ${{ steps.pages.outputs.base_url }}
-        run: python -B scripts/pages_site.py --base-url $env:PAGES_BASE --candidate build/release-repository --site build/release-site
+        run: python -B scripts/pages_site.py --base-url $env:PAGES_BASE --candidate build/latest/release-repository --site build/latest/site
       - name: Publish the validated Release and read back public downloads
         env:
           GH_TOKEN: ${{ github.token }}
@@ -87,13 +87,13 @@ jobs:
           PAGES_BASE: ${{ steps.pages.outputs.base_url }}
           RELEASE_CHANNEL: ${{ inputs.channel }}
         run: |
-          python -B scripts/pages_site.py --base-url $env:PAGES_BASE --site build/release-site
+          python -B scripts/pages_site.py --base-url $env:PAGES_BASE --site build/latest/site
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-          & $env:BLENDER_PYTHON -B scripts/publish_release.py --phase finalize --channel $env:RELEASE_CHANNEL --repository $env:GITHUB_REPOSITORY --tag $env:RELEASE_TAG --expected-commit $env:GITHUB_SHA --artifacts build/validated --index-output build/release-repository --current-url "$env:PAGES_BASE$env:CHANNEL_PATH/publication.json"
+          & $env:BLENDER_PYTHON -B scripts/publish_release.py --phase finalize --channel $env:RELEASE_CHANNEL --repository $env:GITHUB_REPOSITORY --tag $env:RELEASE_TAG --expected-commit $env:GITHUB_SHA --artifacts build/latest/validated --index-output build/latest/release-repository --current-url "$env:PAGES_BASE$env:CHANNEL_PATH/publication.json"
       - uses: actions/upload-artifact@v4
         with:
           name: verified-extension-index
-          path: build/release-site/
+          path: build/latest/site/
           if-no-files-found: error
   deploy-index:
     needs: publish-assets
@@ -145,13 +145,13 @@ jobs:
       - uses: actions/download-artifact@v4
         with:
           pattern: validated-*
-          path: build/validated
+          path: build/latest/validated
           github-token: ${{ github.token }}
           run-id: ${{ inputs.validation_run_id }}
       - name: Arrange platform artifacts
         run: |
           foreach ($platform in @('windows-x64', 'linux-x64', 'macos-arm64')) {
-            Move-Item "build/validated/validated-$platform" "build/validated/$platform"
+            Move-Item "build/latest/validated/validated-$platform" "build/latest/validated/$platform"
           }
       - name: Install from the public index and call the real MCP
         env:
@@ -160,22 +160,22 @@ jobs:
         run: |
           $indexUrl = "$env:PAGES_BASE/index.json"
           if ($env:CHANNEL_PATH) { $indexUrl = "$env:PAGES_BASE/$env:CHANNEL_PATH/index.json" }
-          & $env:BLENDER_PYTHON -B scripts/test_repository.py --blender $env:BLENDER --artifacts build/validated --public-index $indexUrl
+          & $env:BLENDER_PYTHON -B scripts/test_repository.py --blender $env:BLENDER --artifacts build/latest/validated --public-index $indexUrl
       - uses: actions/download-artifact@v4
         with:
           name: verified-extension-index
-          path: build/release-site
+          path: build/latest/site
       - name: Verify retained indexes and assets after deployment
         env:
           PAGES_BASE: ${{ needs.publish-assets.outputs.base_url }}
-        run: python -B scripts/pages_site.py --base-url $env:PAGES_BASE --site build/release-site --deployed
+        run: python -B scripts/pages_site.py --base-url $env:PAGES_BASE --site build/latest/site --deployed
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: publication-${{ matrix.platform }}
           path: |
-            build/published-tests.json
-            build/tests/**/blender.log
+            build/latest/published-tests.json
+            build/latest/evidence/**/blender.log
           if-no-files-found: error
   archive-publication:
     needs: [verify-publication, publish-assets]
@@ -191,22 +191,22 @@ jobs:
       - uses: actions/download-artifact@v4
         with:
           pattern: publication-*
-          path: build/publication-reports
+          path: build/latest/publication-reports
       - uses: actions/download-artifact@v4
         with:
           name: verified-extension-index
-          path: build/release-site
+          path: build/latest/site
       - name: Archive verified public installations as an immutable Release receipt
         env:
           GH_TOKEN: ${{ github.token }}
           CHANNEL_PATH: ${{ needs.publish-assets.outputs.channel_path }}
         run: |
-          publication="build/release-site/publication.json"
-          if [ -n "$CHANNEL_PATH" ]; then publication="build/release-site/$CHANNEL_PATH/publication.json"; fi
-          python -B scripts/publication_receipt.py --publication "$publication" --reports build/publication-reports --output build/publication-receipts --repository "$GITHUB_REPOSITORY" --commit "$GITHUB_SHA" --run-id "$GITHUB_RUN_ID" --upload
+          publication="build/latest/site/publication.json"
+          if [ -n "$CHANNEL_PATH" ]; then publication="build/latest/site/$CHANNEL_PATH/publication.json"; fi
+          python -B scripts/publication_receipt.py --publication "$publication" --reports build/latest/publication-reports --output build/latest/publication-receipts --repository "$GITHUB_REPOSITORY" --commit "$GITHUB_SHA" --run-id "$GITHUB_RUN_ID" --upload
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: publication-receipt
-          path: build/publication-receipts/*.zip
+          path: build/latest/publication-receipts/*.zip
           if-no-files-found: error

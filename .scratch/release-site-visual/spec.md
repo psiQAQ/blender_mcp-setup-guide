@@ -22,7 +22,7 @@ npx --yes skills@1.7.1 add https://github.com/anthropics/skills/tree/683bc88e56f
 
 固定提交的 [package.json](https://github.com/arthelokyo/astrowind/blob/14e1a691f80548dcc36370847b1a02c0d0b12821/package.json) 和 [package-lock.json](https://github.com/arthelokyo/astrowind/blob/14e1a691f80548dcc36370847b1a02c0d0b12821/package-lock.json) 已核对：模板版本 `1.0.0-beta.66`，锁文件格式 3；11 项生产依赖和 29 项开发依赖的声明与锁定版本一致，直接包具有 HTTPS npm registry 地址和 SHA-512 integrity。主要锁定版本为 Astro `7.3.1`、Tailwind CSS `4.3.3`、TypeScript `5.9.3`、Sharp `0.35.4`。
 
-`engines.node` 要求 `>=22.22.3`，本机 Node `v24.19.0` 满足；`.nvmrc` 仅声明主版本 `22`，未来若构建原模板应同时遵守完整的 engines 要求。模板采用 MIT 许可证。参考来源与文件摘要见 [references.lock.json](references.lock.json)。
+`engines.node` 要求 `>=22.22.3`，本机 Node `v24.19.0` 满足；`.nvmrc` 仅声明主版本 `22`，未来若构建原模板应同时遵守完整的 engines 要求。模板采用 MIT 许可证。参考来源与文件摘要见 [固定来源](../../docs/references/website-sources.lock.json)。
 
 本阶段借鉴布局、留白、内容层次和交互结构。页面继续使用现有本机字体回退、本地 CSS/JS/SVG 与 Python 构建。模板依赖保持在参考记录中；网站依赖无需变更。若后续移植模板源码，保留对应版权及许可证；完整模板安装、构建和依赖公告审计另行记录。
 
@@ -80,7 +80,7 @@ npx --yes skills@1.7.1 add https://github.com/anthropics/skills/tree/683bc88e56f
 
 图表布局阶段的 11 项网页测试与八种宽度、两种语言、两种渠道共 32 种浏览器组合 Passed，包含用户的 916px 和 700px 视口；禁用 JavaScript 的四个页面及真实剪贴板检查 Passed，见 `build/visual-refresh/aligned-diagrams-page/report.json`。四个原图的真实新标签页打开与放大交互检查 Passed，见同目录的 `interaction-report.json`。生成主图的提示词、来源与项目路径保存在 `build/visual-refresh/runtime-skill/image-generation.json`。
 
-[Archify、导航与工具实施任务](issues/03-archify-runtime-diagrams.md)使用固定提交的 Archify 生成两套中英文原图与 SVG 预览。背景框表达安装区域，节点说明运行进程；请求、结果与控制线独立标注。五个导航入口包含 Extension 开发 Skill。图下列出六个常用 MCP 工具，名称、参数和示例语法在 5.1 与 5.2 的真实上游源码中核对。来源记录保存在 `references.lock.json`，许可随产物交付。网站构建继续复制本地资产，项目依赖保持一致。
+[Archify、导航与工具实施任务](issues/03-archify-runtime-diagrams.md)使用固定提交的 Archify 生成两套中英文原图与 SVG 预览。背景框表达安装区域，节点说明运行进程；请求、结果与控制线独立标注。五个导航入口包含 Extension 开发 Skill。图下列出六个常用 MCP 工具，名称、参数和示例语法在 5.1 与 5.2 的真实上游源码中核对。来源记录保存在 `docs/references/website-sources.lock.json`，许可随产物交付。网站构建继续复制本地资产，项目依赖保持一致。
 
 [图表可读性任务](issues/04-compact-diagrams.md)增大节点、安装位置与接口文字，并减少卡片间距；四张原图和 SVG 同步更新。固定 Archify 的局部可读性补丁随源码保存，文字测量边界与字号同步调整，安装位置在默认原图中可见。
 
@@ -88,4 +88,4 @@ npx --yes skills@1.7.1 add https://github.com/anthropics/skills/tree/683bc88e56f
 
 [工具折叠任务](issues/06-collapsed-mcp-tools.md)将六个工具改为一行一个的原生 details/summary，默认关闭，展开后显示原有工具名称、用途、参数和提示语。各条目独立操作，支持鼠标、Enter、Space 和禁用 JavaScript。当前 11 项网页测试及 1440/914/390/320px × 两种语言 × 两种渠道共 16 组操作检查 Passed，四个禁用 JavaScript 页面 Passed；工具参数与已核对的上游注册内容一致，页面无横向溢出。实际页面截图由智能体检查，证据见 `build/visual-refresh/collapsed-tools/report.json`。
 
-[安装背景框顶部任务](issues/07-aligned-installation-frame.md)让 showcase 背景框顶部跟随标题栏，标题栏与框顶部的间距为 4 SVG 单位，左右空间独立保留。四份图表规格保持原始字节，Archify 的四个 gate 均 Passed；中英文 HTTP 在 1057px 的实际预览与默认原图检查 Passed，916px 四图布局检查 Passed。证据为 `build/visual-refresh/frame-top/report.json`，补丁来源及 SHA-256 同步到 `references.lock.json`。
+[安装背景框顶部任务](issues/07-aligned-installation-frame.md)让 showcase 背景框顶部跟随标题栏，标题栏与框顶部的间距为 4 SVG 单位，左右空间独立保留。四份图表规格保持原始字节，Archify 的四个 gate 均 Passed；中英文 HTTP 在 1057px 的实际预览与默认原图检查 Passed，916px 四图布局检查 Passed。证据为 `build/visual-refresh/frame-top/report.json`，补丁来源及 SHA-256 同步到 `docs/references/website-sources.lock.json`。

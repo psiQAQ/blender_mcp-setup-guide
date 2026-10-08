@@ -17,6 +17,8 @@ from pathlib import Path
 from upstream_source import release_channel, channel_path
 
 
+from build_cache import cached_task, current_work
+
 ROOT = Path(__file__).resolve().parents[1]
 
 
@@ -97,6 +99,7 @@ def verify_download(url, expected_hash, expected_size, allow_local_http=False, h
         raise ValueError("Published archive size or SHA-256 differs from the validated ZIP")
 
 
+@cached_task("index")
 def prepare_repository(blender, package, output, archive_url=None, current=None, allow_local_http=False):
     package, output = Path(package).resolve(), Path(output).resolve()
     if output.exists():
@@ -122,7 +125,7 @@ def prepare_repository(blender, package, output, archive_url=None, current=None,
     subprocess.run([str(blender), "--command", "extension", "validate", str(package)], check=True)
     if archive_url:
         verify_download(archive_url, candidate["sha256"], candidate["size"], allow_local_http)
-    work = ROOT / "build/work"
+    work = current_work("index") / "work"
     work.mkdir(parents=True, exist_ok=True)
     with tempfile.TemporaryDirectory(prefix="index-", dir=work) as temporary:
         stage = Path(temporary) / "repository"

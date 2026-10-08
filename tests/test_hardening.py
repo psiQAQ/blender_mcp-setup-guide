@@ -45,11 +45,11 @@ class HardeningTests(unittest.TestCase):
                 self.assertEqual(path.stat().st_mode & 0o777, 0o600)
 
     def test_failed_public_install_replaces_old_passed_report(self):
-        build = self.directory / "build"
-        build.mkdir()
+        build = self.directory / "build/latest"
+        build.mkdir(parents=True)
         report = build / "published-tests.json"
         report.write_text('{"status": "Passed"}')
-        with patch.object(check_reports, "ROOT", self.directory), patch.object(test_repository, "main", side_effect=RuntimeError("Install failed")):
+        with patch.object(check_reports, "LATEST", build), patch("build_cache.LATEST", build), patch("build_cache.BUILD", self.directory / "build"), patch.object(test_repository, "main", side_effect=RuntimeError("Install failed")):
             with self.assertRaisesRegex(RuntimeError, "Install failed"):
                 test_repository.run(["--blender", "unused", "--artifacts", "unused", "--public-index", "https://example.invalid/index.json"])
         result = json.loads(report.read_text())

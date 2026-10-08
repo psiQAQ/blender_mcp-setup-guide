@@ -18,6 +18,8 @@ from publication import extension_version
 from upstream_source import verify_source
 
 
+from build_cache import LATEST, current_work, pinned_input, task_directory, promote, mark
+
 ROOT = Path(__file__).resolve().parents[1]
 LOCK_PATH = ROOT / "packaging/upstream.json"
 REQUIREMENTS = ROOT / "packaging/requirements-windows-cp313.txt"
@@ -30,10 +32,16 @@ def digest(path):
 
 
 def run(command, **kwargs):
-    temporary = ROOT / "build/tool-temp"
+    temporary = current_work("build") / "tool-temp"
     temporary.mkdir(parents=True, exist_ok=True)
-    kwargs.setdefault("env", {**os.environ, "TMP": str(temporary), "TEMP": str(temporary)})
-    subprocess.run([str(value) for value in command], check=True, **kwargs)
+    kwargs.setdefault("env", {**os.environ, "TMP": str(temporary), "TEMP": str(temporary),
+                              'BLENDER_USER_RESOURCES': str(current_work('build') / 'profile')})
+    with (current_work('build') / 'blender.log').open('a', encoding='utf-8') as log:
+        log.write(json.dumps([str(value) for value in command]) + '\n')
+        log.flush()
+        kwargs.setdefault('stdout', log)
+        kwargs.setdefault('stderr', subprocess.STDOUT)
+        subprocess.run([str(value) for value in command], check=True, **kwargs)
 
 
 def checked_replace(path, before, after):
@@ -120,13 +128,13 @@ def check_build_runtime(python, lock, target):
         raise RuntimeError(f"Build requires {target['system']} {target['machine']} CPython {lock['python']}; detected {result}")
 
 
-def build(args):
+def build_in_work(args):
     lock = json.loads(LOCK_PATH.read_text(encoding="utf-8"))
     identifier, target = resolve(args.platform)
     lock["platform"] = identifier
     requirements = ROOT / "packaging" / target["requirements"]
     wheel_lock = ROOT / "packaging" / target["wheel_lock"]
-    args.wheelhouse = args.wheelhouse or ROOT / "build/wheels" / identifier
+    args.wheelhouse = args.wheelhouse or pinned_input("wheels", identifier, digest(wheel_lock))
     check_build_runtime(args.python, lock, target)
     version = extension_version(lock)
     source = acquire_upstream(lock, args.upstream)
@@ -137,10 +145,10 @@ def build(args):
     args.wheelhouse.mkdir(parents=True, exist_ok=True)
     if not args.offline:
         run([args.python, "-m", "pip", "download", "--quiet", "--only-binary=:all:", "--no-deps", "--require-hashes",
-             "-r", requirements, "--dest", args.wheelhouse, "--cache-dir", ROOT / "build/pip-cache",
+             "-r", requirements, "--dest", args.wheelhouse, "--no-cache-dir",
              "--index-url", "https://pypi.org/simple"])
     wheels = verify_wheels(args.wheelhouse, wheel_lock)
-    work = ROOT / "build/work"
+    work = current_work("build") / "work"
     work.mkdir(parents=True, exist_ok=True)
     args.output.mkdir(parents=True, exist_ok=True)
     with tempfile.TemporaryDirectory(prefix="integration-", dir=work) as temporary:
@@ -200,8 +208,36 @@ def build(args):
             raise RuntimeError("Build contains development files")
     (args.output / f"{package.name}.sha256").write_text(f"{digest(package)}  {package.name}\n", encoding="utf-8")
     (args.output / f"provenance-{identifier}.json").write_text(json.dumps(provenance, indent=2) + "\n", encoding="utf-8")
-    print(package)
     return package
+
+
+def build(args):
+    import copy
+    output = args.output.resolve()
+    with task_directory('build') as temporary:
+        staged = copy.copy(args)
+        staged.output = temporary / 'dist'
+        try:
+            package = build_in_work(staged)
+            if output.is_relative_to(LATEST.resolve()):
+                promote(staged.output, output)
+            else:
+                if output.exists():
+                    raise FileExistsError(f'Use a new external output directory: {output}')
+                shutil.copytree(staged.output, output)
+            package = output / package.name
+            current_hash = digest(package)
+            for report in LATEST.glob('*-tests.json'):
+                value = json.loads(report.read_text(encoding='utf-8'))
+                if value.get('package_sha256') not in (None, current_hash):
+                    value.update(status='Not Run', reason='Report belongs to a previous candidate package')
+                    report.write_text(json.dumps(value, indent=2) + '\n', encoding='utf-8', newline='\n')
+            mark('dist', 'Passed', package_sha256=current_hash, path=str(package))
+            print(package)
+            return package
+        except Exception as error:
+            mark('dist', 'Failed', error=str(error))
+            raise
 
 
 def main():
@@ -211,7 +247,7 @@ def main():
     parser.add_argument("--upstream", type=Path)
     parser.add_argument("--platform", choices=("windows-x64", "linux-x64", "macos-arm64"))
     parser.add_argument("--wheelhouse", type=Path)
-    parser.add_argument("--output", default=ROOT / "build/dist", type=Path)
+    parser.add_argument("--output", default=LATEST / "dist", type=Path)
     parser.add_argument("--offline", action="store_true")
     build(parser.parse_args())
 

@@ -12,6 +12,8 @@ from scaffold_extension import scaffold
 from check_reports import run_check
 
 
+from build_cache import LATEST, current_work
+
 ROOT = Path(__file__).resolve().parents[1]
 
 
@@ -19,7 +21,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--blender", required=True, type=Path)
     args = parser.parse_args()
-    run = ROOT / "build/tests" / f"templates-{time.time_ns()}"
+    run = current_work("template")
     packages = []
     for identifier in ("template_alpha", "template_beta"):
         source = run / identifier
@@ -39,7 +41,7 @@ def main():
     line = next(line for line in result.stdout.splitlines() if line.startswith("TEMPLATE_RESULT="))
     report = json.loads(line.partition("=")[2])
     report["log"] = str(run / "blender.log")
-    (ROOT / "build/template-tests.json").write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
+    (LATEST / "template-tests.json").write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
     print(json.dumps(report, indent=2))
 
 

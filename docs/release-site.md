@@ -26,13 +26,13 @@
 
 ## 本地预览与校验
 
-在仓库根目录执行。输出目录必须尚不存在；命令会读取并验证公开安装包，但不会部署网站。
+在仓库根目录执行。默认输出为 `build/latest/site`，完整生成后替换旧网站；命令会读取并验证公开安装包。指定外部输出时要求目录尚不存在。
 
 ```bash
 python -B scripts/run_checks.py
-python -B scripts/pages_site.py --base-url https://notes.psiqaq.cn/blender_mcp-setup-guide --refresh --site build/release-site-preview
-python -B scripts/pages_site.py --base-url https://notes.psiqaq.cn/blender_mcp-setup-guide --site build/release-site-preview
-python -m http.server 8000 --directory build/release-site-preview
+python -B scripts/pages_site.py --base-url https://notes.psiqaq.cn/blender_mcp-setup-guide --refresh --site build/latest/site
+python -B scripts/pages_site.py --base-url https://notes.psiqaq.cn/blender_mcp-setup-guide --site build/latest/site
+python -m http.server 8000 --directory build/latest/site
 ```
 
 检查首页和已发布渠道页的移动端排版、版本切换、安装步骤、下载链接及键盘操作。版本、文件大小和校验值应与 JSON 一致。失败时先检查 Actions 日志中的具体渠道或下载地址；修复后重新运行网站工作流。不要用跳过校验的方式发布。
@@ -48,7 +48,7 @@ python -m http.server 8000 --directory build/release-site-preview
 ## 页面文件与兼容约定
 
 - `web/index.html` 定义语义化页面结构；`web/site.css` 提供响应式布局；`web/site.js` 仅增强版本切换与复制索引。
-- `web/agent-blender.png` 是通过内置 imagegen 生成的 Agent → MCP → Blender 请求与结果返回示意，并非真实客户端运行截图；`web/mark.svg` 是本集成项目的独立标记。图像提示词与生成来源保存在本地 `build/visual-refresh/runtime-skill/image-generation.json`。
+- `web/agent-blender.png` 是通过内置 imagegen 生成的 Agent → MCP → Blender 请求与结果返回示意，并非真实客户端运行截图；`web/mark.svg` 是本集成项目的独立标记。图像提示词与生成来源保存在本地 `docs/references/hero-image-generation.json`。
 - `scripts/pages_render.py` 保存中英文文案，生成首页、`en/` 与已发布渠道的中英文页面。每个页面都包含全部真实下载链接，禁用 JavaScript 后仍可使用。
 - 版本、下载 URL、大小和 SHA-256 从验证通过的发布记录取得。历史 5.1 记录缺少的通道与 Blender 范围只在展示层使用兼容默认值，不回写 JSON。
 - 外观文件可重新生成。单通道 `index.json`、`publication.json` 和安装 ZIP 保持各自的不可变校验边界；根索引随通道选择规则重新生成。
@@ -68,31 +68,10 @@ python -m http.server 8000 --directory build/release-site-preview
 
 ## 更新运行图
 
-绘图工具基于 [Archify v3.0.1](https://github.com/tt-a1i/archify/tree/2ab3cae7ac2c2a55d7386ca789d03c4fcd31816c)，固定提交为 `2ab3cae7ac2c2a55d7386ca789d03c4fcd31816c`。原始源码位于已忽略的 `build/visual-refresh/archify-source/`。工作副本应用 `web/diagrams/archify-readability.patch`：增大节点、区域和接口字号，居中节点文字，移除流程线标签底色并同步文字测量边界，让安装位置在默认 READ 视图显示。showcase 背景框顶部跟随标题栏，左右空间按安装区域的 padding 保留，避免标题上方因宽侧边距出现空白。补丁只修改 Architecture 渲染器及标签定位，没有依赖变更。来源和补丁 SHA-256 记录在视觉规格的 `references.lock.json` 中。
+绘图工具基于 [Archify v3.0.1](https://github.com/tt-a1i/archify/tree/2ab3cae7ac2c2a55d7386ca789d03c4fcd31816c)，固定提交为 `2ab3cae7ac2c2a55d7386ca789d03c4fcd31816c`。原始源码位于已忽略的 `build/latest/inputs/archify/2ab3cae7ac2c2a55d7386ca789d03c4fcd31816c/`。工作副本应用 `web/diagrams/archify-readability.patch`：增大节点、区域和接口字号，居中节点文字，移除流程线标签底色并同步文字测量边界，让安装位置在默认 READ 视图显示。showcase 背景框顶部跟随标题栏，左右空间按安装区域的 padding 保留，避免标题上方因宽侧边距出现空白。补丁只修改 Architecture 渲染器及标签定位，没有依赖变更。来源和补丁 SHA-256 记录在 `docs/references/website-sources.lock.json` 中。
 
-首次创建工作副本时，在仓库根目录运行以下命令；已有副本直接使用，不重复复制或应用补丁。生成使用已有 Node 与 Chromium 浏览器，网站日常构建直接复制已检查的产物。
+修改 web/diagrams/{stdio,http}.{zh,en}.json 时，核对 meta.repository 与 sources 指向的已提交代码。使用 scripts/render_diagrams.py 完成四图的 showcase finalize：脚本核验固定补丁，在临时目录建立唯一工作副本，通过后把原图与 gate 记录替换到 build/latest/diagrams，结束后清理工作副本。
 
-```powershell
-New-Item -ItemType Directory -Path build/visual-refresh/aligned-diagrams -Force
-Copy-Item -LiteralPath build/visual-refresh/archify-source/archify `
-  -Destination build/visual-refresh/aligned-diagrams/archify -Recurse
-git apply --directory=build/visual-refresh/aligned-diagrams `
-  --ignore-space-change web/diagrams/archify-readability.patch
-```
-
-修改 `web/diagrams/{stdio,http}.{zh,en}.json` 时，核对 `meta.repository` 的提交与 `sources` 指向的已提交代码；不要把未提交文件当作旧提交证据。修改候选后，从仓库根目录运行完整的 showcase finalize，并为新版本选用新的证据目录。例如：
-
-```powershell
-$diagramCandidate = 'web/diagrams/stdio.zh.json'
-$diagramOutput = (Get-Content -Raw -Encoding UTF8 $diagramCandidate | ConvertFrom-Json).meta.output
-$diagramEvidence = 'build/visual-refresh/aligned-diagrams/stdio-zh/review-next'
-node build/visual-refresh/aligned-diagrams/archify/bin/archify.mjs `
-  finalize architecture $diagramCandidate $diagramOutput `
-  --repo-root . --quality showcase --out-dir $diagramEvidence --json
-```
-
-浏览器不在默认位置时，将 `ARCHIFY_CHROME` 指向本机 Chromium 浏览器，例如 Windows 的 Edge。生成进程的 `TEMP` / `TMP` 应指向独立的项目临时目录；本轮使用 `build/visual-refresh/aligned-diagrams/tool-temp/`，且通过 `ARCHIFY_UPDATE_CHECK_DISABLED=1` 关闭可选更新查询。
-
-四个 gate 全部通过后，将完整 HTML 复制到 `web/diagrams/`，在原图的导出菜单选择 **SVG · 深色 / SVG · Dark**，保存对应 SVG，再重新生成并检查网页。检查请求、返回和控制线，以及背景框是否包含正确组件；自动校验和截图检查分别记录。
+将通过全部 gate 的 HTML 复制到 web/diagrams/，运行 node scripts/export_diagrams.cjs 使用原生深色 SVG 导出，再重新生成网站并运行 node scripts/test_pages.cjs 检查双语索引复制、版本切换、手机布局与固定导航。浏览器路径使用 ARCHIFY_CHROME 或 BROWSER_BINARY；Playwright 路径使用 PLAYWRIGHT_MODULE。这些入口复用已安装工具。
 
 原图保留 Archify 的交互与本地字体。MIT 版权及许可见 `web/diagrams/LICENSE.archify.txt`，内嵌 JetBrains Mono 的 OFL-1.1 许可见 `JetBrainsMono-OFL.txt`，来源见 `NOTICE.txt`。这些文件随图表一起复制，图表不使用第三方品牌标志。

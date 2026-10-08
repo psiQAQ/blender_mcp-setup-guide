@@ -6,6 +6,8 @@ import platform
 import sys
 from pathlib import Path
 
+from build_cache import LATEST
+
 from platforms import ROOT, resolve
 from publication import digest
 
@@ -14,7 +16,7 @@ def collect(package):
     identifier, target = resolve()
     package_hash = digest(package)
     for name in ("unit", "template", "integration", "upgrade", "gui", "minimum"):
-        path = ROOT / "build" / f"{name}-tests.json"
+        path = LATEST / f"{name}-tests.json"
         report = json.loads(path.read_text(encoding="utf-8"))
         if report["status"] != "Passed":
             raise ValueError(f"Required validation did not pass: {name}")

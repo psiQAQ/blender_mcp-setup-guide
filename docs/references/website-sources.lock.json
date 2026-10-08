@@ -44,12 +44,12 @@
     "embedded_font_license": "OFL-1.1",
     "usage": "checked-html-and-native-svg-export",
     "dependency_installation": "none",
-    "source_directory": "build/visual-refresh/archify-source",
+    "source_directory": "build/latest/inputs/archify/2ab3cae7ac2c2a55d7386ca789d03c4fcd31816c",
     "local_patch": {
       "path": "web/diagrams/archify-readability.patch",
       "sha256": "59c082d1736f6a266605733c900f7339687cc33799c4af42af9ef72405d44b29",
       "purpose": "larger architecture and installation typography, centered node text, transparent edge labels with matching measurement bounds, and visible default installation locations; frame tops aligned with resolved title rails",
-      "working_directory": "build/visual-refresh/aligned-diagrams/archify",
+      "working_directory": "build/.working/archify/archify",
       "dependency_changes": "none"
     }
   }

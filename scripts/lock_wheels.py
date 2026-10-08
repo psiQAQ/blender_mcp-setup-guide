@@ -7,6 +7,8 @@ from pathlib import Path
 from platforms import resolve
 
 
+from build_cache import LATEST, file_digest
+
 ROOT = Path(__file__).resolve().parents[1]
 
 
@@ -17,7 +19,7 @@ def main():
     parser.add_argument("--output", type=Path)
     args = parser.parse_args()
     identifier, target = resolve(args.platform)
-    args.wheelhouse = args.wheelhouse or ROOT / "build/wheels" / identifier
+    args.wheelhouse = args.wheelhouse or LATEST / "inputs/wheels" / identifier / file_digest(ROOT / 'packaging' / target['wheel_lock'])
     args.output = args.output or ROOT / "packaging" / target["wheel_lock"]
     requirements = (ROOT / "packaging" / target["requirements"]).read_text(encoding="utf-8")
     wheels = []

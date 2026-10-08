@@ -23,7 +23,7 @@ blender_python='/path/to/blender/python/bin/python3.13'
 
 `--platform` 可选；默认检测本机。指定的平台与解释器系统、架构、CPython 3.13 不一致时拒绝构建。平台配置、官方 Blender URL/hash 和依赖锁路径来自 `packaging/platforms.json`。Windows 为 40 个 wheels，Linux/macOS 为 39 个；pywin32 只用于 Windows。5.1 来源为 v1.0.3 / `2cea8d566dde07fbac28a61d698909d69724e853`；5.2 来源为 main / `dbbf836ad4b1025f14a2b3b504c43903f39e0b04`，上游服务器版本为 1.0.2。构建验证已提交的子模块指针、干净源码与原远端，不自动拉取浮动 main。
 
-当前 5.2 候选构建输出为 `build/dist/blender_mcp_integration-1.0.2-dev.2+integration.1-<platform>.zip`、对应 `.sha256` 与 `provenance-<platform>.json`。版本来自 `packaging/upstream.json`。来源包含渠道、main/tag 引用、预发布序号、子模块指针、仓库提交和 dirty 状态、依赖版本、wheel hash 与桥接补丁 hash。旧稳定记录缺少渠道字段时按 5.1 stable 解析。ZIP 通过官方 `extension validate`，保留依赖数据与许可证；发布仍要求干净提交。
+当前 5.2 候选构建输出为 `build/latest/dist/blender_mcp_integration-1.0.2-dev.2+integration.1-<platform>.zip`、对应 `.sha256` 与 `provenance-<platform>.json`。版本来自 `packaging/upstream.json`。来源包含渠道、main/tag 引用、预发布序号、子模块指针、仓库提交和 dirty 状态、依赖版本、wheel hash 与桥接补丁 hash。旧稳定记录缺少渠道字段时按 5.1 stable 解析。ZIP 通过官方 `extension validate`，保留依赖数据与许可证；发布仍要求干净提交。
 
 已核验的官方源码和 wheel 缓存可通过 `--upstream <目录> --wheelhouse <目录> --offline` 复用。构建不得从已安装插件目录复制依赖。更新依赖时，三个平台同步核对版本及独立 wheel hash。
 
@@ -32,7 +32,7 @@ blender_python='/path/to/blender/python/bin/python3.13'
 ```powershell
 & $blenderPython -B scripts/run_checks.py
 & $blenderPython -B scripts/test_templates.py --blender $blender
-$package = 'build/dist/blender_mcp_integration-1.0.2-dev.2+integration.1-windows-x64.zip'
+$package = 'build/latest/dist/blender_mcp_integration-1.0.2-dev.2+integration.1-windows-x64.zip'
 & $blenderPython -B scripts/test_integration.py --blender $blender --package $package
 & $blenderPython -B scripts/test_upgrade.py --blender $blender --package $package
 & $blenderPython -B scripts/test_gui.py --blender $blender --package $package
@@ -60,7 +60,7 @@ Release 首次公开附件为三个平台安装 ZIP、三个 `.sha256` 和一个
 
 相同版本资产不可变；缺少平台、渠道错配、错误 ABI、错误或陈旧报告、版本回退或内容替换直接失败。同源 draft 可恢复补传缺失资产；Pages 部署可单独重试。后续 preview 内容变化递增 `preview_revision`，版本排序依次比较源码版本、正式/预发布、`dev.N` 与集成修订号。
 
-下载入口为 [GitHub Releases](https://github.com/psiQAQ/blender_mcp-setup-guide/releases)。[根索引](https://notes.psiqaq.cn/blender_mcp-setup-guide/index.json)继续提供 5.1 stable；[5.2 preview 索引](https://notes.psiqaq.cn/blender_mcp-setup-guide/blender-5.2/preview/index.json)独立发布。未来 5.2 stable 使用 `/blender-5.2/stable/index.json`。联网安装需启用 Allow Online Access。
+下载入口为 [GitHub Releases](https://github.com/psiQAQ/blender_mcp-setup-guide/releases)。[根索引](https://notes.psiqaq.cn/blender_mcp-setup-guide/index.json)按 Blender 版本与平台自动匹配，稳定版优先；[5.1 stable 索引](https://notes.psiqaq.cn/blender_mcp-setup-guide/blender-5.1/stable/index.json)和[5.2 preview 索引](https://notes.psiqaq.cn/blender_mcp-setup-guide/blender-5.2/preview/index.json)独立发布。未来 5.2 stable 使用 `/blender-5.2/stable/index.json`。联网安装需启用 Allow Online Access。
 
 ## 模板与上游维护
 

@@ -1,5 +1,9 @@
 # Repository instructions
 
+## Build cache
+
+本地只保留 `build/latest/` 中最新一套完整成果与当前锁定输入；运行环境放在 `build/.working/`，结束后清理。修改构建、测试、网站入口或整理缓存前，读取 `docs/agents/build-cache.md`。失败保留最新诊断，并准确标记旧成果的来源和状态。
+
 ## Agent skills
 
 ### Issue tracker

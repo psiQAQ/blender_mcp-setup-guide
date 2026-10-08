@@ -22,6 +22,8 @@ from publication import digest
 from platforms import process_options
 
 
+from build_cache import LATEST, current_work
+
 ROOT = Path(__file__).resolve().parents[1]
 
 
@@ -261,10 +263,10 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--blender", required=True, type=Path)
     parser.add_argument("--package", required=True, type=Path)
+    parser.add_argument('--minimum', action='store_true', help='Keep minimum-version evidence separate from the current host')
     args = parser.parse_args()
     package_hash = digest(args.package)
-    run = ROOT / "build/tests" / f"integration-{time.time_ns()}"
-    run.mkdir(parents=True)
+    run = current_work("integration")
     initialize_client_runtime(args.package, run / "client")
     http_port, bridge_port = free_port(), free_port()
     environment = os.environ.copy()
@@ -318,7 +320,8 @@ def main():
         if digest(args.package) != package_hash:
             raise RuntimeError("Package changed during integration validation")
         report = {"status": "Passed", "package_sha256": package_hash, "checks": checks, "details": details, "log": str(run / "blender.log"), "gui": "Not Run"}
-        (ROOT / "build/integration-tests.json").write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
+        name = 'minimum' if args.minimum else 'integration'
+        (LATEST / f"{name}-tests.json").write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
         print(json.dumps(report, indent=2))
     finally:
         (run / "stop").touch()
@@ -332,4 +335,5 @@ def main():
 
 
 if __name__ == "__main__":
-    run_check("integration", main)
+    import sys
+    run_check("minimum" if '--minimum' in sys.argv else "integration", main)

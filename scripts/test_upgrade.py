@@ -15,6 +15,8 @@ import urllib.parse
 import urllib.request
 from pathlib import Path
 
+from build_cache import LATEST, current_work
+
 from check_reports import run_check, write_json
 from publication import digest, prepare_repository, verify_download
 from test_integration import ROOT, check_session, free_port, initialize_client_runtime, wait_file
@@ -84,7 +86,7 @@ def main():
     parser.add_argument("--fixture", action="store_true")
     args = parser.parse_args()
     package_hash = digest(args.package)
-    run = ROOT / "build/tests" / f"upgrade-{time.time_ns()}"
+    run = current_work("upgrade")
     web = run / "http"
     web.mkdir(parents=True)
     old = web / "previous-integration.zip"
@@ -143,7 +145,7 @@ def main():
                   "preferences_and_credential_preserved": "Passed", "old_process_stopped": "Passed",
                   "published_archive_readback": "Passed", "checksum_mismatch_rejected": "Passed",
                   "details": details, "log": str(run / "blender.log")}
-        (ROOT / "build/upgrade-tests.json").write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
+        (LATEST / "upgrade-tests.json").write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
         print(json.dumps(report, indent=2))
     finally:
         (control / "stop").touch()

@@ -5,6 +5,7 @@ build/
 .assets/*:Zone.Identifier
 submodules/reports
 docs/superpowers/
+docs/*.zip
 docs/extension-dev-prompt*.md
 docs/extensions-getting_started.md
 .codex/config.toml

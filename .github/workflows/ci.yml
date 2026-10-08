@@ -50,18 +50,18 @@ jobs:
         run: '& $env:BLENDER_PYTHON -B scripts/build_integration.py --blender $env:BLENDER'
       - name: Authenticate and exercise real MCP and lifecycle
         run: |
-          $package = Get-ChildItem build/dist/*.zip | Select-Object -ExpandProperty FullName
+          $package = Get-ChildItem build/latest/dist/*.zip | Select-Object -ExpandProperty FullName
           & $env:BLENDER_PYTHON -B scripts/test_integration.py --blender $env:BLENDER --package $package
       - name: Install from HTTP index and upgrade with preserved preferences
         run: |
-          $package = Get-ChildItem build/dist/*.zip | Select-Object -ExpandProperty FullName
+          $package = Get-ChildItem build/latest/dist/*.zip | Select-Object -ExpandProperty FullName
           & $env:BLENDER_PYTHON -B scripts/test_upgrade.py --blender $env:BLENDER --package $package
       - name: Prepare verified Windows software OpenGL
         if: runner.os == 'Windows'
         run: '& $env:BLENDER_PYTHON -B scripts/ci_setup_gui.py --blender $env:BLENDER'
       - name: GUI timer, configuration and exit validation
         run: |
-          $package = Get-ChildItem build/dist/*.zip | Select-Object -ExpandProperty FullName
+          $package = Get-ChildItem build/latest/dist/*.zip | Select-Object -ExpandProperty FullName
           if ($env:RUNNER_OS -eq 'Linux') {
             $env:LIBGL_ALWAYS_SOFTWARE = '1'
             xvfb-run -a $env:BLENDER_PYTHON -B scripts/test_gui.py --blender $env:BLENDER --package $package
@@ -73,21 +73,18 @@ jobs:
         run: python -B scripts/ci_setup.py --platform ${{ matrix.platform }} --minimum
       - name: Verify the same ZIP on the minimum Blender version
         run: |
-          Copy-Item build/integration-tests.json build/current-integration-tests.json
-          $package = Get-ChildItem build/dist/*.zip | Select-Object -ExpandProperty FullName
-          & $env:BLENDER_PYTHON -B scripts/test_integration.py --blender $env:MINIMUM_BLENDER --package $package
+          $package = Get-ChildItem build/latest/dist/*.zip | Select-Object -ExpandProperty FullName
+          & $env:BLENDER_PYTHON -B scripts/test_integration.py --blender $env:MINIMUM_BLENDER --package $package --minimum
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-          Move-Item build/integration-tests.json build/minimum-tests.json
-          Move-Item build/current-integration-tests.json build/integration-tests.json
           & $env:BLENDER_PYTHON -B scripts/collect_reports.py --package $package
       - name: Upload validated artifacts
         uses: actions/upload-artifact@v4
         with:
           name: native-${{ matrix.platform }}
           path: |
-            build/dist/*
-            build/*-tests.json
-            build/tests/gui-*/preferences.png
+            build/latest/dist/*
+            build/latest/*-tests.json
+            build/latest/evidence/gui/preferences.png
           if-no-files-found: error
       - name: Upload diagnostic logs
         if: failure()
@@ -95,12 +92,12 @@ jobs:
         with:
           name: validation-logs-${{ matrix.platform }}
           path: |
-            build/*-tests.json
-            build/tests/**/blender.log
-            build/tests/**/service.log
-            build/tests/gui-*/failure.txt
-            build/tests/gui-*/desktop.log
-            build/tests/gui-*/preferences.png
+            build/latest/*-tests.json
+            build/latest/evidence/**/blender.log
+            build/latest/evidence/**/service.log
+            build/latest/evidence/gui/failure.txt
+            build/latest/evidence/gui/desktop.log
+            build/latest/evidence/gui/preferences.png
   repository:
     needs: native
     strategy:
@@ -131,27 +128,27 @@ jobs:
       - uses: actions/download-artifact@v4
         with:
           pattern: native-*
-          path: build/native
+          path: build/latest/native
       - name: Arrange the complete package set
         run: |
-          New-Item -ItemType Directory build/collection -Force
+          New-Item -ItemType Directory build/latest/collection -Force
           foreach ($platform in @('windows-x64', 'linux-x64', 'macos-arm64')) {
-            Move-Item "build/native/native-$platform" "build/collection/$platform"
+            Move-Item "build/latest/native/native-$platform" "build/latest/collection/$platform"
           }
       - name: Select, install and upgrade from the unified HTTP index
-        run: '& $env:BLENDER_PYTHON -B scripts/test_repository.py --blender $env:BLENDER --artifacts build/collection'
+        run: '& $env:BLENDER_PYTHON -B scripts/test_repository.py --blender $env:BLENDER --artifacts build/latest/collection'
       - name: Upload complete validated platform artifacts
-        run: Copy-Item build/repository-tests.json "build/collection/${{ matrix.platform }}/repository-tests.json"
+        run: Copy-Item build/latest/repository-tests.json "build/latest/collection/${{ matrix.platform }}/repository-tests.json"
       - uses: actions/upload-artifact@v4
         with:
           name: validated-${{ matrix.platform }}
-          path: build/collection/${{ matrix.platform }}/
+          path: build/latest/collection/${{ matrix.platform }}/
           if-no-files-found: error
       - uses: actions/upload-artifact@v4
         if: failure()
         with:
           name: repository-logs-${{ matrix.platform }}
-          path: build/tests/**/blender.log
+          path: build/latest/evidence/**/blender.log
   release-inputs:
     needs: repository
     runs-on: windows-2022
@@ -166,10 +163,10 @@ jobs:
       - uses: actions/download-artifact@v4
         with:
           pattern: validated-*
-          path: build/validated
+          path: build/latest/validated
       - name: Validate every platform against the clean candidate source
         run: |
           foreach ($platform in @('windows-x64', 'linux-x64', 'macos-arm64')) {
-            Move-Item "build/validated/validated-$platform" "build/validated/$platform"
+            Move-Item "build/latest/validated/validated-$platform" "build/latest/validated/$platform"
           }
-          python -B -c "import os,sys; from pathlib import Path; sys.path.insert(0, 'scripts'); from prepare_release import validate_collection; assets=validate_collection(Path('build/validated'), os.environ['GITHUB_SHA']); print('Complete immutable release input set:', list(assets))"
+          python -B -c "import os,sys; from pathlib import Path; sys.path.insert(0, 'scripts'); from prepare_release import validate_collection; assets=validate_collection(Path('build/latest/validated'), os.environ['GITHUB_SHA']); print('Complete immutable release input set:', list(assets))"

@@ -4,7 +4,7 @@
 
 ## 本地候选验证
 
-2026-10-08 的本地候选为 `1.0.2-dev.2+integration.1`，使用 Windows Blender 5.2.2 LTS / 配套 Python 3.13.13。源码、候选 ZIP、SHA-256、原始报告与截图保存在 `build/pages-update/`；`reports/` 保存绑定同一候选 hash 的报告快照。候选源码未提交，不能作为干净提交的正式发布产物。
+2026-10-08 的本地候选为 `1.0.2-dev.2+integration.1`，使用 Windows Blender 5.2.2 LTS / 配套 Python 3.13.13。源码、候选 ZIP、SHA-256、原始报告与截图保存在 `build/latest/`，报告绑定实际包 hash。候选来源由包内 provenance.json 的 integration_commit 与 integration_dirty 字段确认；正式发布要求干净提交与全部发布检查通过。
 
 | 检查 | 状态与范围 |
 | --- | --- |

@@ -12,6 +12,7 @@ from pathlib import Path
 from publication import verify_download
 from pages_render import render_site
 from upstream_source import channel_path
+from build_cache import LATEST, task_directory, promote, mark
 
 
 CHANNELS = ("", "blender-5.2/preview", "blender-5.2/stable")
@@ -186,19 +187,35 @@ def verify_retained(base, site, deployed=False):
     print(json.dumps({"status": "Passed", "retained_files": saved}, indent=2))
 
 
+def build_site(base, output, candidate=None):
+    """Replace a managed site only after a complete successful composition."""
+    output = output.resolve()
+    if not output.is_relative_to(LATEST.resolve()):
+        return compose(base, candidate, output) if candidate else refresh(base, output)
+    with task_directory('site') as temporary:
+        try:
+            staged = temporary / 'site'
+            result = compose(base, candidate, staged) if candidate else refresh(base, staged)
+            promote(staged, output)
+            return result
+        except Exception as error:
+            mark(output.name, 'Failed', error=str(error))
+            raise
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--base-url", required=True)
     operation = parser.add_mutually_exclusive_group()
     operation.add_argument("--candidate", type=Path)
     operation.add_argument("--refresh", action="store_true", help="Refresh presentation from existing verified public channels")
-    parser.add_argument("--site", type=Path, required=True)
+    parser.add_argument("--site", type=Path, default=LATEST / 'site')
     parser.add_argument("--deployed", action="store_true", help="Verify destination channels and the public unified index")
     args = parser.parse_args()
     if args.refresh:
-        refresh(args.base_url, args.site)
+        build_site(args.base_url, args.site)
     elif args.candidate:
-        compose(args.base_url, args.candidate, args.site)
+        build_site(args.base_url, args.site, args.candidate)
     else:
         verify_retained(args.base_url, args.site, args.deployed)
 

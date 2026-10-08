@@ -8,6 +8,8 @@ import urllib.request
 from pathlib import Path
 
 
+from build_cache import LATEST
+
 ROOT = Path(__file__).resolve().parents[1]
 API = "https://projects.blender.org/api/v1/repos/lab/blender_mcp/releases"
 
@@ -58,7 +60,7 @@ def inspect(pinned, release, commit, main_commit, baseline_commit):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--output", type=Path, default=ROOT / "build/upstream-review")
+    parser.add_argument("--output", type=Path, default=LATEST / "upstream-review")
     args = parser.parse_args()
     path = ROOT / "packaging/upstream.json"
     previous_text = path.read_text(encoding="utf-8")

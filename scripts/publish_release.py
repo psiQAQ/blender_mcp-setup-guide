@@ -9,6 +9,8 @@ import urllib.error
 import urllib.parse
 import urllib.request
 import zipfile
+from build_cache import LATEST
+
 from pathlib import Path
 
 from prepare_release import validate_collection
@@ -166,13 +168,13 @@ def main():
         raise ValueError("Release tag must match the validated integration version")
     token = os.environ["GH_TOKEN"]
     verify_tag(args.repository, args.tag, args.expected_commit, token)
-    asset_directory = ROOT / "build/release-assets"
+    asset_directory = LATEST / "release-assets"
     import hashlib
     package_hashes = {identifier: digest(item[0]) for identifier, item in collection.items()}
     set_hash = hashlib.sha256(json.dumps(package_hashes, sort_keys=True).encode()).hexdigest()
     marker = f"<!-- blender-mcp-integration {args.expected_commit} {version} {set_hash} -->"
     assets = prepare_release_assets(collection, args.artifacts, asset_directory, version)
-    notes = ROOT / "build/release-notes.md"
+    notes = LATEST / "release-notes.md"
     notes.parent.mkdir(parents=True, exist_ok=True)
     notes.write_text(
         f"Blender MCP Integrated {version}: Windows x64, Linux x64, macOS Apple Silicon.\n\n"
