@@ -1,10 +1,13 @@
 {
   "repository": "https://projects.blender.org/lab/blender_mcp.git",
-  "version": "1.0.3",
-  "tag": "v1.0.3",
-  "commit": "2cea8d566dde07fbac28a61d698909d69724e853",
+  "version": "1.0.2",
+  "tag": null,
+  "commit": "dbbf836ad4b1025f14a2b3b504c43903f39e0b04",
   "integration_revision": 1,
   "python": "3.13",
-  "blender_min": "5.1.0",
-  "blender_max": "5.2.0"
+  "blender_min": "5.2.0",
+  "blender_max": "5.3.0",
+  "source_ref": "main",
+  "channel": "preview",
+  "preview_revision": 1
 }

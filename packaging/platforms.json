@@ -6,18 +6,18 @@
     "requirements": "requirements-windows-cp313.txt",
     "wheel_lock": "wheels-windows-cp313.json",
     "blender": {
-      "version": "5.1.2",
-      "url": "https://download.blender.org/release/Blender5.1/blender-5.1.2-windows-x64.zip",
-      "sha256": "345bedea7b0acf7cc9666423d8553f9129622aea34ded65c23e8cb70f83f14ff",
+      "version": "5.2.2",
+      "url": "https://download.blender.org/release/Blender5.2/blender-5.2.2-windows-x64.zip",
+      "sha256": "3849d17a682cba006075aaa3f3597ecb5c9c30ec31035b2e092c53e40679b535",
       "binary": "blender.exe",
-      "python_binary": "5.1/python/bin/python.exe"
+      "python_binary": "5.2/python/bin/python.exe"
     },
     "minimum_blender": {
-      "version": "5.1.0",
-      "url": "https://download.blender.org/release/Blender5.1/blender-5.1.0-windows-x64.zip",
+      "version": "5.2.0",
+      "url": "https://download.blender.org/release/Blender5.2/blender-5.2.0-windows-x64.zip",
       "binary": "blender.exe",
-      "python_binary": "5.1/python/bin/python.exe",
-      "sha256": "bc184226962904e3f26c5809ba7ec86bbeb670060825b046930b0c02a30a4eee"
+      "python_binary": "5.2/python/bin/python.exe",
+      "sha256": "2d184b626c001692c362291911293b6a297179d618d95e9e9192c3a80318adc4"
     }
   },
   "linux-x64": {
@@ -27,18 +27,18 @@
     "requirements": "requirements-linux-cp313.txt",
     "wheel_lock": "wheels-linux-cp313.json",
     "blender": {
-      "version": "5.1.2",
-      "url": "https://download.blender.org/release/Blender5.1/blender-5.1.2-linux-x64.tar.xz",
-      "sha256": "aaccb355f50183979b698bcce7467103a76261b5fa59f4972295842662a285fb",
+      "version": "5.2.2",
+      "url": "https://download.blender.org/release/Blender5.2/blender-5.2.2-linux-x64.tar.xz",
+      "sha256": "84098912789dc450e95697c4184fb8a90acbe5111c2ba4aede3fecb57806a168",
       "binary": "blender",
-      "python_binary": "5.1/python/bin/python3.13"
+      "python_binary": "5.2/python/bin/python3.13"
     },
     "minimum_blender": {
-      "version": "5.1.0",
-      "url": "https://download.blender.org/release/Blender5.1/blender-5.1.0-linux-x64.tar.xz",
+      "version": "5.2.0",
+      "url": "https://download.blender.org/release/Blender5.2/blender-5.2.0-linux-x64.tar.xz",
       "binary": "blender",
-      "python_binary": "5.1/python/bin/python3.13",
-      "sha256": "7f2475990613c8d4c7ac5697803fcf40d09541c1fd8c23936f4b07a169a920c7"
+      "python_binary": "5.2/python/bin/python3.13",
+      "sha256": "96f6c181a30f4950607839dc84d42a354b250d8a0231b098b59b7bc69c351c48"
     }
   },
   "macos-arm64": {
@@ -48,18 +48,18 @@
     "requirements": "requirements-macos-cp313.txt",
     "wheel_lock": "wheels-macos-cp313.json",
     "blender": {
-      "version": "5.1.2",
-      "url": "https://download.blender.org/release/Blender5.1/blender-5.1.2-macos-arm64.dmg",
-      "sha256": "f104ffee2ba6aee32328e5c203b7e4608d8a1745f7bbcf2766f3b9777e8fbe17",
+      "version": "5.2.2",
+      "url": "https://download.blender.org/release/Blender5.2/blender-5.2.2-macos-arm64.dmg",
+      "sha256": "dc4125399b8bfefe283cc1624d6cfc7809d1cac20ace51072127eb371f31f210",
       "binary": "Blender.app/Contents/MacOS/Blender",
-      "python_binary": "Blender.app/Contents/Resources/5.1/python/bin/python3.13"
+      "python_binary": "Blender.app/Contents/Resources/5.2/python/bin/python3.13"
     },
     "minimum_blender": {
-      "version": "5.1.0",
-      "url": "https://download.blender.org/release/Blender5.1/blender-5.1.0-macos-arm64.dmg",
+      "version": "5.2.0",
+      "url": "https://download.blender.org/release/Blender5.2/blender-5.2.0-macos-arm64.dmg",
       "binary": "Blender.app/Contents/MacOS/Blender",
-      "python_binary": "Blender.app/Contents/Resources/5.1/python/bin/python3.13",
-      "sha256": "ebeda0dbb7fbf06f3cbcf58c11397551de745f1177acfe3e2331ac0d4d901996"
+      "python_binary": "Blender.app/Contents/Resources/5.2/python/bin/python3.13",
+      "sha256": "ed4d8390166dec5ea0a2813a03db6221f206ce016442be7f59f41d760972568a"
     }
   }
 }
