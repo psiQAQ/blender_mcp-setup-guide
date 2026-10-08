@@ -15,7 +15,7 @@ import urllib.request
 import zipfile
 from pathlib import Path
 
-from check_reports import run_check
+from check_reports import run_check, write_json
 from publication import digest
 from platforms import process_options
 
@@ -144,7 +144,7 @@ def check_parent_exit(args, directory):
                 handle = kernel.OpenProcess(0x00100000, False, connection["pid"])
                 if not handle:
                     raise OSError(ctypes.get_last_error(), "Cannot watch the test-owned service process")
-            (directory / "action.json").write_text(json.dumps({"action": "parent-exit"}))
+            write_json(directory / "action.json", {"action": "parent-exit"})
             parent.wait(timeout=10)
             assert parent.returncode == 0
             if kernel:
@@ -203,7 +203,7 @@ def main():
         checks["mcp-session-scene-and-reversible-operation"] = "Passed"
         for action in ("duplicate-start", "port-conflict", "crash-recovery", "disable-enable", "cleanup-error"):
             (run / "action-result.json").unlink(missing_ok=True)
-            (run / "action.json").write_text(json.dumps({"action": action}), encoding="utf-8")
+            write_json(run / "action.json", {"action": action})
             wait_file(run / "action-result.json", process)
             result = json.loads((run / "action-result.json").read_text(encoding="utf-8"))
             assert result == {"action": action, "status": "Passed"}
