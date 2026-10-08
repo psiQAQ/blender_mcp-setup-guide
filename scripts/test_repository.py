@@ -1,0 +1,92 @@
+"""Install this platform from a complete local or published Extensions index."""
+
+import argparse
+import asyncio
+import functools
+import http.server
+import json
+import os
+import subprocess
+import threading
+import time
+from pathlib import Path
+
+from platforms import ROOT, process_options, resolve
+from publication import digest, prepare_collection, verify_download
+from test_integration import check_session, free_port, initialize_client_runtime, wait_file
+from test_upgrade import QuietHandler, previous_fixture
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--blender", required=True, type=Path)
+    parser.add_argument("--artifacts", required=True, type=Path)
+    parser.add_argument("--public-index")
+    args = parser.parse_args()
+    identifier, _ = resolve()
+    packages = {path.name: next((path / "dist").glob("*.zip")) for path in args.artifacts.iterdir() if path.is_dir() and (path / "dist").exists()}
+    package = packages[identifier]
+    run = ROOT / "build/tests" / f"repository-{time.time_ns()}"
+    run.mkdir(parents=True)
+    initialize_client_runtime(package, run / "client")
+    server = None
+    if args.public_index:
+        import urllib.request
+        with urllib.request.urlopen(args.public_index, timeout=30) as response:
+            index = json.load(response)
+        items = [item for item in index["data"] if item["platforms"] == [identifier]]
+        assert len(items) == 1 and len(index["data"]) == 3
+        verify_download(items[0]["archive_url"], digest(package), package.stat().st_size)
+        url = args.public_index
+    else:
+        old = {}
+        for key, path in packages.items():
+            old[key] = run / f"previous-{key}.zip"
+            previous_fixture(path, old[key])
+        prepare_collection(args.blender, old, run / "repository")
+        prepare_collection(args.blender, packages, run / "candidate")
+        server = http.server.ThreadingHTTPServer(("127.0.0.1", 0), functools.partial(QuietHandler, directory=str(run)))
+        threading.Thread(target=server.serve_forever, daemon=True).start()
+        url = f"http://127.0.0.1:{server.server_port}/repository/index.json"
+    control = run / "control"
+    control.mkdir()
+    environment = {**os.environ, "BLENDER_USER_RESOURCES": str(run / "profile"), "PYTHONDONTWRITEBYTECODE": "1"}
+    with (run / "blender.log").open("w", encoding="utf-8") as log:
+        process = subprocess.Popen([str(args.blender), "--background", "--factory-startup", "--python-exit-code", "1", "--python",
+            str(ROOT / "tests/blender_integration_host.py"), "--", str(package), str(control), str(free_port()), str(free_port()), url],
+            env=environment, stdin=subprocess.DEVNULL, stdout=log, stderr=subprocess.STDOUT, **process_options())
+        try:
+            wait_file(control / "service.json", process, timeout=90)
+            connection = json.loads((control / "service.json").read_text())
+            details = asyncio.run(check_session(connection))
+            if not args.public_index:
+                import shutil
+                before = json.loads((run / "repository/publication.json").read_text())["extension_version"]
+                after = json.loads((run / "candidate/publication.json").read_text())["extension_version"]
+                (control / "expected-upgrade.json").write_text(json.dumps({"before": before, "after": after}))
+                for path in (run / "candidate").iterdir():
+                    shutil.copyfile(path, run / "repository" / path.name)
+                (control / "action.json").write_text(json.dumps({"action": "upgrade"}))
+                wait_file(control / "action-result.json", process, timeout=90)
+                assert json.loads((control / "action-result.json").read_text())["status"] == "Passed"
+                details = asyncio.run(check_session(json.loads((control / "service.json").read_text())))
+            (control / "stop").touch()
+            process.wait(timeout=15)
+            assert process.returncode == 0
+            report = {"status": "Passed", "platform": identifier, "package_sha256": digest(package), "index_platform_selection": "Passed", "details": details, "log": str(run / "blender.log")}
+            name = "published" if args.public_index else "repository"
+            (ROOT / "build" / f"{name}-tests.json").write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
+            print(json.dumps(report, indent=2))
+        finally:
+            (control / "stop").touch()
+            if process.poll() is None:
+                process.terminate()
+                process.wait(timeout=10)
+            if server:
+                server.shutdown()
+                server.server_close()
+
+
+if __name__ == "__main__":
+    from check_reports import run_check
+    run_check("repository", main)

@@ -1,0 +1,21 @@
+schema_version = "1.0.0"
+id = "blender_mcp_integration"
+version = "$version"
+name = "Blender MCP Integrated"
+tagline = "Official Blender MCP with a bundled local service"
+maintainer = "psiQAQ"
+type = "add-on"
+website = "https://github.com/psiQAQ/blender_mcp-setup-guide"
+blender_version_min = "$blender_min"
+blender_version_max = "$blender_max"
+platforms = ["$platform"]
+license = ["SPDX:GPL-3.0-or-later"]
+tags = ["Development"]
+
+[permissions]
+network = "Communicate with MCP clients through authenticated local sockets"
+files = "Store service logs and client configuration"
+clipboard = "Copy the MCP client connection configuration"
+
+[build]
+paths_exclude_pattern = ["__pycache__/", ".git/", "*.pyc", "*.zip"]

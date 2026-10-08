@@ -1,0 +1,65 @@
+{
+  "windows-x64": {
+    "system": "Windows",
+    "machine": "amd64",
+    "python": "3.13",
+    "requirements": "requirements-windows-cp313.txt",
+    "wheel_lock": "wheels-windows-cp313.json",
+    "blender": {
+      "version": "5.1.2",
+      "url": "https://download.blender.org/release/Blender5.1/blender-5.1.2-windows-x64.zip",
+      "sha256": "345bedea7b0acf7cc9666423d8553f9129622aea34ded65c23e8cb70f83f14ff",
+      "binary": "blender.exe",
+      "python_binary": "5.1/python/bin/python.exe"
+    },
+    "minimum_blender": {
+      "version": "5.1.0",
+      "url": "https://download.blender.org/release/Blender5.1/blender-5.1.0-windows-x64.zip",
+      "binary": "blender.exe",
+      "python_binary": "5.1/python/bin/python.exe",
+      "sha256": "bc184226962904e3f26c5809ba7ec86bbeb670060825b046930b0c02a30a4eee"
+    }
+  },
+  "linux-x64": {
+    "system": "Linux",
+    "machine": "amd64",
+    "python": "3.13",
+    "requirements": "requirements-linux-cp313.txt",
+    "wheel_lock": "wheels-linux-cp313.json",
+    "blender": {
+      "version": "5.1.2",
+      "url": "https://download.blender.org/release/Blender5.1/blender-5.1.2-linux-x64.tar.xz",
+      "sha256": "aaccb355f50183979b698bcce7467103a76261b5fa59f4972295842662a285fb",
+      "binary": "blender",
+      "python_binary": "5.1/python/bin/python3.13"
+    },
+    "minimum_blender": {
+      "version": "5.1.0",
+      "url": "https://download.blender.org/release/Blender5.1/blender-5.1.0-linux-x64.tar.xz",
+      "binary": "blender",
+      "python_binary": "5.1/python/bin/python3.13",
+      "sha256": "7f2475990613c8d4c7ac5697803fcf40d09541c1fd8c23936f4b07a169a920c7"
+    }
+  },
+  "macos-arm64": {
+    "system": "Darwin",
+    "machine": "arm64",
+    "python": "3.13",
+    "requirements": "requirements-macos-cp313.txt",
+    "wheel_lock": "wheels-macos-cp313.json",
+    "blender": {
+      "version": "5.1.2",
+      "url": "https://download.blender.org/release/Blender5.1/blender-5.1.2-macos-arm64.dmg",
+      "sha256": "f104ffee2ba6aee32328e5c203b7e4608d8a1745f7bbcf2766f3b9777e8fbe17",
+      "binary": "Blender.app/Contents/MacOS/Blender",
+      "python_binary": "Blender.app/Contents/Resources/5.1/python/bin/python3.13"
+    },
+    "minimum_blender": {
+      "version": "5.1.0",
+      "url": "https://download.blender.org/release/Blender5.1/blender-5.1.0-macos-arm64.dmg",
+      "binary": "Blender.app/Contents/MacOS/Blender",
+      "python_binary": "Blender.app/Contents/Resources/5.1/python/bin/python3.13",
+      "sha256": "ebeda0dbb7fbf06f3cbcf58c11397551de745f1177acfe3e2331ac0d4d901996"
+    }
+  }
+}
