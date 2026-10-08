@@ -9,6 +9,12 @@ from upstream_source import verify_source, channel_path
 
 
 class ChannelTests(unittest.TestCase):
+    def test_changed_preview_content_requires_a_new_dev_sequence(self):
+        current = dict(version="1.0.2", channel="preview", preview_revision=1, integration_revision=1,
+                       blender_min="5.2.0", blender_max="5.3.0", sha256="old")
+        from publication import check_forward
+        with self.assertRaisesRegex(ValueError, "next dev.N"):
+            check_forward(current, dict(current, integration_revision=2, sha256="new"))
     def test_preview_sequence_precedes_integration_revision_in_version_order(self):
         first = dict(version="1.0.2", channel="preview", preview_revision=1, integration_revision=8)
         second = dict(first, preview_revision=2, integration_revision=1)

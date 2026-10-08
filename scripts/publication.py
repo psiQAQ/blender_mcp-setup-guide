@@ -64,6 +64,8 @@ def check_forward(current, candidate):
         return {record.get("platform", "single"): record["sha256"]}
     if after == before and hashes(current) != hashes(candidate):
         raise ValueError("A published version is immutable; increase integration_revision")
+    if release_channel(candidate) == "preview" and current["version"] == candidate["version"] and current.get("preview_revision") == candidate["preview_revision"] and hashes(current) != hashes(candidate):
+        raise ValueError("Changed preview content requires the next dev.N sequence")
 
 
 def read_current(url):

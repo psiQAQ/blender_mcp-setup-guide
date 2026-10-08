@@ -105,6 +105,10 @@ def build(args):
     check_build_runtime(args.python, lock, target)
     version = extension_version(lock)
     source = acquire_upstream(lock, args.upstream)
+    import tomllib
+    source_version = tomllib.loads((source / "mcp/pyproject.toml").read_text(encoding="utf-8"))["project"]["version"]
+    if source_version != lock["version"]:
+        raise ValueError("Pinned source version differs from the recorded server version")
     args.wheelhouse.mkdir(parents=True, exist_ok=True)
     if not args.offline:
         run([args.python, "-m", "pip", "download", "--quiet", "--only-binary=:all:", "--no-deps", "--require-hashes",
@@ -123,6 +127,9 @@ def build(args):
         shutil.copytree(ROOT / "src/blender_mcp_integration", stage, ignore=shutil.ignore_patterns("__pycache__"))
         vendor = stage / "_vendor"
         vendor.mkdir()
+        upstream_license = source / "LICENSE"
+        if upstream_license.is_file():
+            shutil.copyfile(upstream_license, vendor / "LICENSE")
         (vendor / "__init__.py").write_text("", encoding="utf-8")
         bridge = vendor / "bridge"
         bridge.mkdir()
@@ -139,6 +146,8 @@ def build(args):
         provenance = {
             **lock, "extension_version": version,
             "upstream_submodule_commit": lock["commit"],
+            "source_version": source_version,
+            "upstream_license_sha256": digest(upstream_license) if upstream_license.is_file() else None,
             "integration_commit": subprocess.check_output(["git", "-C", str(ROOT), "rev-parse", "HEAD"], text=True).strip(),
             "integration_dirty": bool(subprocess.check_output(["git", "-C", str(ROOT), "status", "--porcelain"], text=True).strip()),
             "requirements_sha256": digest(requirements), "wheel_lock_sha256": digest(wheel_lock),
