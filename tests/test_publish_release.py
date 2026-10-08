@@ -105,6 +105,28 @@ class PublishReleaseTests(unittest.TestCase):
         command.assert_not_called()
         self.assertEqual(readback.call_count, len(self.assets) * 2)
 
+    def test_preview_is_created_and_published_without_becoming_latest(self):
+        draft = self.draft(())
+        draft["prerelease"] = True
+        uploaded = self.draft(self.assets)
+        uploaded["prerelease"] = True
+        with patch("publish_release.find_release", side_effect=[None, draft]), \
+                patch("publish_release.github_json", return_value=uploaded), \
+                patch("publish_release.subprocess.run") as command, patch("publish_release.verify_download"):
+            publish_assets("owner/repo", "v1.0.2-dev.1+integration.1", self.commit,
+                           self.assets, self.notes, self.marker, "test-token", channel="preview")
+        for invocation in (command.call_args_list[0], command.call_args_list[-1]):
+            self.assertIn("--prerelease", invocation.args[0])
+            self.assertIn("--latest=false", invocation.args[0])
+
+    def test_release_channel_mismatch_blocks_remote_changes(self):
+        with patch("publish_release.find_release", return_value=self.draft(self.assets)), \
+                patch("publish_release.subprocess.run") as command:
+            with self.assertRaisesRegex(ValueError, "different publication channel"):
+                publish_assets("owner/repo", "v1.0.2-dev.1+integration.1", self.commit,
+                               self.assets, self.notes, self.marker, "test-token", channel="preview")
+        command.assert_not_called()
+
     def test_unrelated_draft_is_rejected_before_any_remote_mutation(self):
         for change in ({"body": "Other publisher"}, {"target_commitish": "b" * 40}):
             draft = self.draft(self.assets)

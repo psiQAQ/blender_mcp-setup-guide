@@ -2,7 +2,7 @@ name: Validate Extension
 
 on:
   push:
-    branches: [main]
+    branches: [main, release/blender-5.1, release/blender-5.2]
   pull_request:
   workflow_dispatch:
   workflow_call:
@@ -36,7 +36,9 @@ jobs:
         if: runner.os == 'Linux'
         shell: bash
         run: sudo apt-get update && sudo apt-get install -y xvfb openbox imagemagick x11-utils libegl1 libgl1-mesa-dri libxkbcommon0 libxi6 libxrender1 libxxf86vm1
-      - name: Prepare verified Blender 5.1.2
+      - name: Initialize the pinned official source
+        run: git submodule update --init submodules/blender_mcp
+      - name: Prepare the verified Blender build environment
         run: python -B scripts/ci_setup.py --platform ${{ matrix.platform }}
       - name: Verify native platform
         run: '& $env:BLENDER_PYTHON -B -c "import sys; sys.path.insert(0, ''scripts''); from platforms import resolve; assert resolve()[0] == ''${{ matrix.platform }}''"'
@@ -67,9 +69,9 @@ jobs:
             & $env:BLENDER_PYTHON -B scripts/test_gui.py --blender $env:BLENDER --package $package
           }
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-      - name: Prepare verified Blender 5.1.0
+      - name: Prepare the verified minimum Blender version
         run: python -B scripts/ci_setup.py --platform ${{ matrix.platform }} --minimum
-      - name: Verify the same ZIP on Blender 5.1.0
+      - name: Verify the same ZIP on the minimum Blender version
         run: |
           Copy-Item build/integration-tests.json build/current-integration-tests.json
           $package = Get-ChildItem build/dist/*.zip | Select-Object -ExpandProperty FullName

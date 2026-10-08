@@ -33,7 +33,8 @@ class ReleaseInputsTests(unittest.TestCase):
         (output / (package.name + ".sha256")).write_text(f"{checksum}  {package.name}\n")
         (output / f"provenance-{identifier}.json").write_text(json.dumps(record))
         for name in ("unit", "template", "integration", "upgrade", "gui", "minimum", "repository"):
-            (directory / f"{name}-tests.json").write_text(json.dumps({"status": "Passed", "package_sha256": checksum, "platform": identifier}))
+            (directory / f"{name}-tests.json").write_text(json.dumps({"status": "Passed", "package_sha256": checksum, "platform": identifier,
+                "details": {"blender": target["minimum_blender" if name == "minimum" else "blender"]["version"], "python": "3.13.13"}}))
         return package
 
     def test_successful_report_for_another_zip_cannot_authorize_release(self):
@@ -53,6 +54,17 @@ class ReleaseInputsTests(unittest.TestCase):
                 validate_artifacts(directory, "b" * 40)
             (directory / "upgrade-tests.json").write_text(json.dumps({"status": "Failed"}))
             with self.assertRaisesRegex(ValueError, "did not pass"):
+                validate_artifacts(directory)
+
+    def test_report_from_another_blender_version_is_rejected(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            directory = Path(temporary)
+            self.create_artifacts(directory)
+            path = directory / "minimum-tests.json"
+            record = json.loads(path.read_text())
+            record["details"]["blender"] = "4.2.0"
+            path.write_text(json.dumps(record))
+            with self.assertRaisesRegex(ValueError, "wrong Blender/Python"):
                 validate_artifacts(directory)
 
 

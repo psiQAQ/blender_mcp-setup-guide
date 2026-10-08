@@ -73,7 +73,7 @@ async def check_session(connection):
                 tools = await session.list_tools()
                 names = {tool.name for tool in tools.tools}
                 assert "execute_blender_code" in names
-                response = await session.call_tool("execute_blender_code", {"code": "import bpy\nresult = {'version': bpy.app.version_string, 'count': len(bpy.data.objects)}"})
+                response = await session.call_tool("execute_blender_code", {"code": "import bpy, sys, platform\nresult = {'version': bpy.app.version_string, 'count': len(bpy.data.objects), 'python': sys.version, 'architecture': platform.machine()}"})
                 assert not response.isError, response
                 structured = response.structuredContent or json.loads(response.content[0].text)
                 assert structured["status"] == "ok", structured
@@ -93,7 +93,9 @@ async def check_session(connection):
                 restored = await session.call_tool("execute_blender_code", {"code": "import bpy\nresult = {'count': len(bpy.data.objects)}"})
                 after = restored.structuredContent or json.loads(restored.content[0].text)
                 assert after["result"]["count"] == original_count
-                return {"server": initialized.serverInfo.name, "tools": len(names), "blender": structured["result"]["version"]}
+                assert len(names) == 26, names
+                return {"server": initialized.serverInfo.name, "tools": len(names), "blender": structured["result"]["version"],
+                        "python": structured["result"]["python"], "architecture": structured["result"]["architecture"]}
 
 
 def request_status(connection, headers):

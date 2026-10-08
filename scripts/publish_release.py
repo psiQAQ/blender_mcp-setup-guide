@@ -13,6 +13,7 @@ from pathlib import Path
 
 from prepare_release import validate_collection
 from publication import ROOT, digest, extension_version, verify_download, prepare_collection, read_current, check_forward
+from upstream_source import release_channel, verify_source
 
 
 def github_json(repository, endpoint, token, allow_missing=False):
@@ -76,13 +77,15 @@ def prepare_release_assets(collection, artifacts, output, version):
     return [*assets, evidence]
 
 
-def publish_assets(repository, tag, expected_commit, assets, notes, marker, token, finalize=True):
+def publish_assets(repository, tag, expected_commit, assets, notes, marker, token, finalize=True, channel="stable"):
+    if channel not in {"stable", "preview"}:
+        raise ValueError("Unknown publication channel")
     existing = find_release(repository, tag, token)
     base = f"https://github.com/{repository}/releases/download/{urllib.parse.quote(tag, safe='')}"
 
     def require_release_source(release):
-        if release["prerelease"]:
-            raise ValueError("The matching Release is marked as a prerelease")
+        if release["prerelease"] != (channel == "preview"):
+            raise ValueError("The matching Release has a different publication channel")
         if release["draft"] and (
             marker not in (release.get("body") or "") or release["target_commitish"] != expected_commit
         ):
@@ -103,7 +106,7 @@ def publish_assets(repository, tag, expected_commit, assets, notes, marker, toke
         subprocess.run([
             "gh", "release", "create", tag, "--repo", repository, "--verify-tag", "--draft",
             "--target", expected_commit, "--title", tag.removeprefix("v"), "--notes-file", str(notes),
-        ], check=True)
+        ] + (["--prerelease", "--latest=false"] if channel == "preview" else []), check=True)
         existing = find_release(repository, tag, token)
         if existing is None:
             raise ValueError("Created draft Release was not returned by the authenticated API")
@@ -124,7 +127,8 @@ def publish_assets(repository, tag, expected_commit, assets, notes, marker, toke
     if not finalize:
         return f"{base}/{urllib.parse.quote(assets[0].name, safe='')}"
     if existing["draft"]:
-        subprocess.run(["gh", "release", "edit", tag, "--repo", repository, "--draft=false"], check=True)
+        subprocess.run(["gh", "release", "edit", tag, "--repo", repository, "--draft=false"] +
+                       (["--prerelease", "--latest=false"] if channel == "preview" else []), check=True)
         for path in assets:
             verify_download(f"{base}/{urllib.parse.quote(path.name, safe='')}", digest(path), path.stat().st_size)
     return f"{base}/{urllib.parse.quote(assets[0].name, safe='')}"
@@ -140,11 +144,15 @@ def main():
     parser.add_argument("--blender", type=Path)
     parser.add_argument("--index-output", required=True, type=Path)
     parser.add_argument("--current-url", required=True)
+    parser.add_argument("--channel", choices=("stable", "preview"), required=True)
     args = parser.parse_args()
     if not re.fullmatch(r"[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+", args.repository):
         raise ValueError("Invalid GitHub repository")
     collection = validate_collection(args.artifacts, args.expected_commit)
     source = json.loads(next(iter(collection.values()))[2].read_text())
+    if args.channel != release_channel(source):
+        raise ValueError("Requested channel differs from the validated source")
+    verify_source(source, remote=True)
     version = extension_version(source)
     if args.tag != f"v{version}":
         raise ValueError("Release tag must match the validated integration version")
@@ -160,8 +168,8 @@ def main():
     notes.parent.mkdir(parents=True, exist_ok=True)
     notes.write_text(
         f"Blender MCP Integrated {version}: Windows x64, Linux x64, macOS Apple Silicon.\n\n"
-        "Requires Blender 5.1.x / CPython 3.13; Blender 5.0 uses Python 3.11 and is incompatible.\n\n"
-        f"Official upstream: {source['tag']} ({source['commit']}).\n\n"
+        f"Channel: {args.channel}. Requires {source['blender_min']} <= Blender < {source['blender_max']} / CPython 3.13.\n\n"
+        f"Official upstream: {source.get('source_ref', source['tag'])} ({source['commit']}).\n\n"
         "Validated final ZIP: two generated templates, authenticated MCP scene calls, lifecycle, "
         "HTTP repository upgrade and GUI timer checks. Human GUI and client acceptance remains separate.\n\n"
         "Install the ZIP matching your platform. The evidence ZIP contains provenance and validation reports; "
@@ -173,7 +181,7 @@ def main():
         if args.blender is None:
             raise ValueError("Index staging requires --blender")
         # Every remote draft asset is read back before any index is bound to its future public URL.
-        archive_url = publish_assets(args.repository, args.tag, args.expected_commit, assets, notes, marker, token, finalize=False)
+        archive_url = publish_assets(args.repository, args.tag, args.expected_commit, assets, notes, marker, token, finalize=False, channel=args.channel)
         candidate = prepare_collection(args.blender, {identifier: item[0] for identifier, item in collection.items()}, args.index_output, current=current)
         base = archive_url.rsplit("/", 1)[0]
         index_path = args.index_output / "index.json"
@@ -188,13 +196,13 @@ def main():
             (args.index_output / package.name).unlink()
         import html
         links = "".join(f'<li><a href="{html.escape(entry["archive_url"], quote=True)}">{identifier}</a></li>' for identifier, entry in candidate["packages"].items())
-        (args.index_output / "index.html").write_text(f'<!doctype html><html lang="en"><meta charset="utf-8"><title>Blender MCP Integrated</title><h1>{version}</h1><p>Blender 5.1.x / CPython 3.13</p><ul>{links}</ul><p>Add index.json to Blender Extensions repositories.</p></html>\n', encoding="utf-8")
+        (args.index_output / "index.html").write_text(f'<!doctype html><html lang="en"><meta charset="utf-8"><title>Blender MCP Integrated</title><h1>{version}</h1><p>{args.channel}: {source["blender_min"]} ≤ Blender &lt; {source["blender_max"]} / CPython 3.13</p><ul>{links}</ul><p>Add index.json to Blender Extensions repositories.</p></html>\n', encoding="utf-8")
     else:
         candidate = json.loads((args.index_output / "publication.json").read_text())
         if candidate["integration_commit"] != args.expected_commit or candidate["extension_version"] != version or {key: item["sha256"] for key, item in candidate["packages"].items()} != package_hashes:
             raise ValueError("Staged index does not describe this validated asset set")
         check_forward(current, candidate)
-        archive_url = publish_assets(args.repository, args.tag, args.expected_commit, assets, notes, marker, token)
+        archive_url = publish_assets(args.repository, args.tag, args.expected_commit, assets, notes, marker, token, channel=args.channel)
     if output := os.environ.get("GITHUB_OUTPUT"):
         with open(output, "a", encoding="utf-8", newline="\n") as stream:
             stream.write(f"archive_url={archive_url}\n")
