@@ -14,13 +14,20 @@ flowchart LR
 1. **Windows x64、Linux x64、macOS Apple Silicon 集成 Extension**，随包交付 Blender Lab 官方桥接端、MCP 工具、文档与锁定依赖
 2. **与教程配套的 skill 包**（`blender-mcp-skills`，含模板与开发指导）
 
-安装 ZIP 后选择 agent 并复制连接配置；Blender 管理独立的本机 HTTP 服务。集成包最低要求 Blender 5.1 / CPython 3.13，首版支持 5.1.0 ≤ Blender < 5.2.0。Blender 5.0 使用 Python 3.11，不适用本集成包。按平台下载 [Release 安装包](https://github.com/psiQAQ/blender_mcp-setup-guide/releases)，或添加 [Extensions 索引](https://psiQAQ.github.io/blender_mcp-setup-guide/index.json)。通用插件模板支持 Blender 4.2+。构建和验收见[构建说明](integration-build.md)与[验证记录](integration-validation.md)。
+安装 ZIP 后选择 agent 并复制连接配置；Blender 管理独立的本机 HTTP 服务。两个发布线均使用 Blender 配套 CPython 3.13；Blender 5.0 使用 Python 3.11，不适用。通用插件模板支持 Blender 4.2+。构建和验收见[构建说明](integration-build.md)与[验证记录](integration-validation.md)。
+
+| Blender 范围 | 版本与固定官方来源 | Extensions 索引 |
+| --- | --- | --- |
+| 5.1.0 ≤ 版本 < 5.2.0 | [正式版 1.0.3+integration.1](https://github.com/psiQAQ/blender_mcp-setup-guide/releases/tag/v1.0.3%2Bintegration.1)，官方 v1.0.3 | [5.1 稳定索引](https://notes.psiqaq.cn/blender_mcp-setup-guide/index.json) |
+| 5.2.0 ≤ 版本 < 5.3.0 | [预发布版 1.0.2-dev.1+integration.1](https://github.com/psiQAQ/blender_mcp-setup-guide/releases/tag/v1.0.2-dev.1%2Bintegration.1)，官方 main 快照 `dbbf836ad4b1025f14a2b3b504c43903f39e0b04` | [5.2 预发布索引](https://notes.psiqaq.cn/blender_mcp-setup-guide/blender-5.2/preview/index.json) |
+
+两个版本均提供 Windows x64、Linux x64 与 macOS Apple Silicon 安装包。5.2 版本属于 GitHub Pre-release。`main` 和 `release/blender-5.2` 跟随经审查的 main 快照；`release/blender-5.1` 维护 5.1 稳定线。5.2 转为正式版须等待新的官方稳定 tag，重新完成三平台验收并人工触发发布。
 
 ## 选择安装方式
 
 | 方式 | 适用环境 | 安装与连接方式 | 教程 |
 | --- | --- | --- | --- |
-| 集成 Extension | 原生 Windows x64 / Linux x64 / macOS ARM64、Blender 5.1.x / CPython 3.13，客户端与 Blender 同机 | 安装随包 ZIP，复制带凭据的本机 HTTP 配置；用户无需另外安装 uv/Python | [中文](blender_mcp-setup_zh.md) / [English](blender_mcp-setup_en.md) |
+| 集成 Extension | 原生 Windows x64 / Linux x64 / macOS ARM64、Blender 5.1 稳定版或 5.2 预发布版 / CPython 3.13，客户端与 Blender 同机 | 安装随包 ZIP，复制带凭据的本机 HTTP 配置；用户无需另外安装 uv/Python | [中文](blender_mcp-setup_zh.md) / [English](blender_mcp-setup_en.md) |
 | 官方 Extension + stdio | 官方支持的 Windows/macOS/Linux 环境、Blender 5.1+ | 安装官方 Extension、Git/uv 和外部 MCP 工具，由客户端管理 stdio 进程 | [中文](blender_mcp-stdio-setup_zh.md) / [English](blender_mcp-stdio-setup_en.md) |
 
 两份教程均提供 Codex、Claude Code、OpenCode 的完整配置、文件位置、验证和移除步骤。同一个 Blender 实例选择一种方式；切换时替换客户端的对应条目。

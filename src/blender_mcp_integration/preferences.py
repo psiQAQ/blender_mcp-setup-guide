@@ -99,7 +99,7 @@ class BLMCP_INTEGRATION_AP_preferences(bpy.types.AddonPreferences):
         addon = integration()
         layout = self.layout
         source = json.loads((Path(__file__).parent / "provenance.json").read_text(encoding="utf-8"))
-        layout.label(text=f"Blender Lab MCP {source['version']} · integration {source['integration_revision']}")
+        layout.label(text=f"Blender Lab MCP {source['extension_version']} · {source.get('channel', 'stable')}")
         layout.label(text=f"MCP: {addon.SERVICE.state}")
         if addon.LAST_ERROR:
             layout.label(text=addon.LAST_ERROR, icon="ERROR")

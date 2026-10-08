@@ -2,7 +2,12 @@
 
 # Blender MCP 集成 Extension 安装
 
-适用于 **Windows x64、Linux x64、macOS Apple Silicon，以及 Blender 5.1.x（配套 CPython 3.13）**，客户端与 Blender 在同一台电脑运行。最低版本为 Blender 5.1.0，首版支持范围为 5.1.0 ≤ Blender < 5.2.0。Blender 5.0 内置 Python 3.11，不能使用本集成包。版本依据见 [Blender 5.0 官方源码](https://github.com/blender/blender/blob/v5.0.0/build_files/build_environment/cmake/versions.cmake)与 [5.1 发布说明](https://www.blender.org/download/releases/5-1/)。安装包包含 Blender Lab MCP v1.0.3、运行依赖和文档，使用 Blender 配套 Python，用户无需另外安装 uv 或 Python。
+适用于 **Windows x64、Linux x64、macOS Apple Silicon，以及 Blender 5.1 稳定线或 5.2 预发布线（配套 CPython 3.13）**，客户端与 Blender 在同一台电脑运行。5.1 使用官方 v1.0.3；5.2 使用固定的官方 main 快照，包版本为 `1.0.2-dev.1+integration.1`。安装包包含 MCP、运行依赖和文档，用户无需另外安装 uv 或 Python。Blender 5.0 内置 Python 3.11，不能使用本集成包；版本依据见 [5.0 官方源码](https://github.com/blender/blender/blob/v5.0.0/build_files/build_environment/cmake/versions.cmake)和 [5.1 发布说明](https://www.blender.org/download/releases/5-1/)。
+
+| Blender 范围 | 安装版本 | 在线更新索引 |
+| --- | --- | --- |
+| 5.1.0 ≤ 版本 < 5.2.0 | `1.0.3+integration.1` 正式版 | `https://notes.psiqaq.cn/blender_mcp-setup-guide/index.json` |
+| 5.2.0 ≤ 版本 < 5.3.0 | `1.0.2-dev.1+integration.1` 预发布版 | `https://notes.psiqaq.cn/blender_mcp-setup-guide/blender-5.2/preview/index.json` |
 
 如果希望由客户端启动官方原版 MCP 进程，请使用另一份[官方 stdio 安装教程](blender_mcp-stdio-setup_zh.md)。两种方式的适用情况见[仓库首页](README_zh.md)。
 
@@ -14,11 +19,11 @@ flowchart LR
 
 ## 1. 获取并安装集成包
 
-1. 获取与 Blender 版本匹配的 `blender_mcp_integration-1.0.3+integration.1-<platform>.zip`；`<platform>` 选择 `windows-x64`、`linux-x64` 或 `macos-arm64`。从 [Releases](https://github.com/psiQAQ/blender_mcp-setup-guide/releases) 下载；尚无对应发布时，按[构建说明](integration-build.md)构建，本地输出位于 `build/dist/`。
+1. 根据上表获取匹配版本的 `blender_mcp_integration-<version>-<platform>.zip`；`<platform>` 选择 `windows-x64`、`linux-x64` 或 `macos-arm64`。从 [Releases](https://github.com/psiQAQ/blender_mcp-setup-guide/releases) 下载；5.2 选择带 **Pre-release** 标记的版本。每个 Release 的证据 ZIP 供审计，安装时选择平台 ZIP。
 2. 打开 Blender，进入 **Edit → Preferences → Add-ons → 右上角菜单 → Install from Disk**，选择 ZIP，安装并启用 **Blender MCP Integrated**。
 3. 展开其偏好面板。若已安装官方原版 **MCP** Extension，先停止并禁用原版，再启动集成包，避免两个桥接服务争用端口。
 
-安装本地 ZIP 后即可使用。也可在 **Extensions → Repositories → Add Remote Repository** 中添加 `https://psiQAQ.github.io/blender_mcp-setup-guide/index.json`，Blender 会选择当前平台对应的包并提供更新。通过在线 Extensions 仓库安装或更新时，需启用 **Preferences → System → Network → Allow Online Access**。
+安装本地 ZIP 后即可使用。也可在 **Extensions → Repositories → Add Remote Repository** 中添加上表对应索引，Blender 会选择当前平台对应的包并提供更新。若 5.1 与 5.2 共用扩展目录，为 5.2 创建独立的预发布扩展仓库，避免覆盖 5.1 安装。通过在线 Extensions 仓库安装或更新时，需启用 **Preferences → System → Network → Allow Online Access**。
 
 ## 2. 启动服务并复制配置
 
