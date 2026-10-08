@@ -54,6 +54,9 @@ jobs:
         run: |
           $package = Get-ChildItem build/dist/*.zip | Select-Object -ExpandProperty FullName
           & $env:BLENDER_PYTHON -B scripts/test_upgrade.py --blender $env:BLENDER --package $package
+      - name: Prepare verified Windows software OpenGL
+        if: runner.os == 'Windows'
+        run: '& $env:BLENDER_PYTHON -B scripts/ci_setup_gui.py --blender $env:BLENDER'
       - name: GUI timer, configuration and exit validation
         run: |
           $package = Get-ChildItem build/dist/*.zip | Select-Object -ExpandProperty FullName
@@ -82,6 +85,7 @@ jobs:
           path: |
             build/dist/*
             build/*-tests.json
+            build/tests/gui-*/preferences.png
           if-no-files-found: error
       - name: Upload diagnostic logs
         if: failure()
@@ -92,6 +96,7 @@ jobs:
             build/*-tests.json
             build/tests/**/blender.log
             build/tests/**/service.log
+            build/tests/gui-*/failure.txt
   repository:
     needs: native
     strategy:

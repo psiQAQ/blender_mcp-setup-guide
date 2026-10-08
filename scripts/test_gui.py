@@ -40,8 +40,9 @@ def main():
     environment["BLENDER_USER_RESOURCES"] = str(run / "profile")
     environment["PYTHONDONTWRITEBYTECODE"] = "1"
     log = (run / "blender.log").open("w", encoding="utf-8")
+    graphics = ["--gpu-backend", "opengl"] if environment.get("GALLIUM_DRIVER") == "llvmpipe" else []
     process = subprocess.Popen([
-        str(args.blender), "--factory-startup", "--python-exit-code", "1", "--python",
+        str(args.blender), "--factory-startup", "--debug-gpu", *graphics, "--python-exit-code", "1", "--python",
         str(ROOT / "tests/blender_gui_host.py"), "--", str(args.package.resolve()), str(run),
         str(free_port()), str(free_port()),
     ], env=environment, stdin=subprocess.DEVNULL, stdout=log, stderr=subprocess.STDOUT, **process_options(gui=True))
@@ -64,6 +65,7 @@ def main():
                   "disable_enable_restart": "Passed", "timers_classes_ports_cleanup": "Passed", "details": details,
                   "human_gui_acceptance": "Not Run", "log": str(run / "blender.log")}
         report["preferences_screenshot"] = str(run / "preferences.png")
+        report["graphics"] = json.loads((run / "initial.json").read_text())["graphics"]
         (ROOT / "build/gui-tests.json").write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
         print(json.dumps(report, indent=2))
     finally:

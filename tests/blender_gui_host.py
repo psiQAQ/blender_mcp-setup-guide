@@ -11,6 +11,7 @@ import traceback
 from pathlib import Path
 
 import bpy
+import gpu
 
 
 def main():
@@ -70,7 +71,10 @@ def main():
                     "http_port": prefs.http_port, "bridge_port": prefs.bridge_port,
                     "token": addon.SERVICE.token, "pid": addon.SERVICE.process.pid,
                 }))
-                (control / f"{pending}.json").write_text(json.dumps({"status": "Passed"}))
+                graphics = {"renderer": gpu.platform.renderer_get(), "vendor": gpu.platform.vendor_get(), "version": gpu.platform.version_get()}
+                if os.environ.get("GALLIUM_DRIVER") == "llvmpipe":
+                    assert "llvmpipe" in graphics["renderer"].lower(), graphics
+                (control / f"{pending}.json").write_text(json.dumps({"status": "Passed", "graphics": graphics}))
                 pending = ""
             elif capture:
                 window = bpy.context.window_manager.windows[0]
