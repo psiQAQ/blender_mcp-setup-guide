@@ -71,7 +71,7 @@ def main():
     new_record = prepare_repository(args.blender, package, web / "candidate", f"{base}/{package.name}", current=old_record, allow_local_http=True)
     with (web / "candidate/index.json").open(encoding="utf-8") as stream:
         item = json.load(stream)["data"][0]
-    assert item["platforms"] == [resolve()[0]] and item["blender_version_max"] == "5.2.0"
+    assert item["platforms"] == [resolve()[0]] and item["blender_version_max"] == new_record["blender_max"]
     # Exercise readback failure as an actual HTTP transfer, not a mocked response.
     try:
         verify_download(f"{base}/{package.name}", "0" * 64, new_record["size"], allow_local_http=True)

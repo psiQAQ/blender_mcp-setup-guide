@@ -1,4 +1,6 @@
 import atexit
+import tomllib
+from pathlib import Path
 
 import bpy
 
@@ -96,8 +98,11 @@ def _autostart():
 
 
 def register():
-    if bpy.app.version[:2] != (5, 1):
-        raise ServiceError("This integration is validated for Blender 5.1.x")
+    manifest = tomllib.loads((Path(__file__).parent / "blender_manifest.toml").read_text(encoding="utf-8"))
+    minimum = tuple(map(int, manifest["blender_version_min"].split(".")))
+    maximum = tuple(map(int, manifest["blender_version_max"].split(".")))
+    if not minimum <= bpy.app.version < maximum:
+        raise ServiceError(f"This integration requires {manifest['blender_version_min']} <= Blender < {manifest['blender_version_max']}")
     if _registered_classes:
         raise RuntimeError("Extension is already registered")
     try:

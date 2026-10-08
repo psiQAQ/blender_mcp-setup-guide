@@ -11,7 +11,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
 from prepare_release import validate_artifacts
 from platforms import resolve, package_name
-from publication import digest
+from publication import digest, extension_version
 
 
 class ReleaseInputsTests(unittest.TestCase):
@@ -24,7 +24,7 @@ class ReleaseInputsTests(unittest.TestCase):
                       wheel_lock_sha256=digest(ROOT / "packaging" / target["wheel_lock"]))
         output = directory / "dist"
         output.mkdir()
-        version = f"{record['version']}+integration.{record['integration_revision']}"
+        version = extension_version(record)
         package = output / package_name(version, identifier)
         with zipfile.ZipFile(package, "w") as archive:
             archive.writestr("provenance.json", json.dumps(record))

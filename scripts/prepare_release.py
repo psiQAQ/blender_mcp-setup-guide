@@ -9,11 +9,13 @@ from pathlib import Path
 
 from publication import ROOT, digest, extension_version, prepare_repository, prepare_collection, read_current
 from platforms import resolve, records, package_name
+from upstream_source import verify_source
 
 
 def validate_artifacts(artifacts, expected_commit=None, identifier=None):
     identifier, target = resolve(identifier)
     record = json.loads((ROOT / "packaging/upstream.json").read_text())
+    verify_source(record)
     version = extension_version(record)
     package = artifacts / "dist" / package_name(version, identifier)
     package_hash = digest(package)
@@ -38,6 +40,8 @@ def validate_artifacts(artifacts, expected_commit=None, identifier=None):
         raise ValueError("Artifact manifest compatibility differs from pinned source")
     if source != json.loads(provenance.read_text()) or any(source[key] != value for key, value in record.items()):
         raise ValueError("Artifact provenance differs from the current pinned source")
+    if source.get("upstream_submodule_commit", source["commit"]) != record["commit"]:
+        raise ValueError("Artifact submodule pointer differs from its source")
     if source["platform"] != identifier or source["wheels"] != json.loads((ROOT / "packaging" / target["wheel_lock"]).read_text()):
         raise ValueError("Artifact platform or wheel ABI differs from its lock")
     if source["requirements_sha256"] != digest(ROOT / "packaging" / target["requirements"]) or source["wheel_lock_sha256"] != digest(ROOT / "packaging" / target["wheel_lock"]):
