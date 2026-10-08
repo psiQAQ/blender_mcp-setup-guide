@@ -29,6 +29,14 @@ def free_port():
         return probe.getsockname()[1]
 
 
+def assert_ports_released(ports):
+    for port in ports:
+        with socket.socket() as probe:
+            if os.name != "nt":
+                probe.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+            probe.bind(("127.0.0.1", port))
+
+
 def initialize_client_runtime(package, directory):
     with zipfile.ZipFile(package) as archive:
         for name in archive.namelist():
@@ -145,9 +153,7 @@ def check_parent_exit(args, directory):
                     if time.monotonic() > deadline:
                         raise AssertionError("Service survived abrupt Blender exit")
                     time.sleep(0.1)
-            for port in (connection["http_port"], connection["bridge_port"]):
-                with socket.socket() as probe:
-                    probe.bind(("127.0.0.1", port))
+            assert_ports_released((connection["http_port"], connection["bridge_port"]))
             assert not list(Path(connection["log"]).parent.glob("session-*.json"))
         finally:
             if handle:
@@ -201,9 +207,7 @@ def main():
         (run / "stop").touch()
         process.wait(timeout=15)
         assert process.returncode == 0
-        for port in (http_port, bridge_port):
-            with socket.socket() as probe:
-                probe.bind(("127.0.0.1", port))
+        assert_ports_released((http_port, bridge_port))
         checks["stop-and-port-cleanup"] = "Passed"
         check_parent_exit(args, run / "parent-exit")
         checks["abrupt-parent-exit-and-session-cleanup"] = "Passed"

@@ -14,6 +14,7 @@ import bpy
 
 
 def main():
+    bpy.context.preferences.view.show_splash = False
     package, directory, http_port, bridge_port = sys.argv[sys.argv.index("--") + 1:]
     control = Path(directory)
     assert not bpy.app.background
@@ -39,6 +40,8 @@ def main():
                 assert all(not cls.is_registered for cls in addon.preferences.CLASSES)
                 for port in (int(http_port), int(bridge_port)):
                     with socket.socket() as probe:
+                        if os.name != "nt":
+                            probe.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
                         probe.bind(("127.0.0.1", port))
                 (control / "finished.json").write_text(json.dumps({"status": "Passed", "timers_classes_ports_cleanup": "Passed"}))
                 bpy.ops.wm.quit_blender()

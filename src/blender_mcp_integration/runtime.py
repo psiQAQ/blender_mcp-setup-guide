@@ -54,6 +54,9 @@ def require_free_port(port):
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as probe:
         if os.name == "nt":
             probe.setsockopt(socket.SOL_SOCKET, socket.SO_EXCLUSIVEADDRUSE, 1)
+        else:
+            # Match the service listener: permit closed TIME_WAIT sockets, never another listener.
+            probe.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         try:
             probe.bind(("127.0.0.1", port))
         except OSError as error:

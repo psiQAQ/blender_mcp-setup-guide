@@ -105,7 +105,10 @@ def main():
                 elif action == "port-conflict":
                     addon.stop_service()
                     with socket.socket() as occupied:
+                        if os.name != "nt":
+                            occupied.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
                         occupied.bind(("127.0.0.1", prefs.http_port))
+                        occupied.listen(1)
                         try:
                             addon.start_service()
                         except addon.ServiceError as error:
