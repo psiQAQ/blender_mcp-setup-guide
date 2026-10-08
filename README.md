@@ -1,44 +1,61 @@
 [简体中文](./docs/README_zh.md) | English
 
-# Blender MCP Skills Toolkit
+# Blender MCP Integrated and Skills
 
-![Agent + Blender MCP Architecture](assets/imgs/claude-code-mcp-blender.png)
-
-This repository provides two things together:
-
-1. **Official Blender MCP installation tutorials** (local and remote)
-2. **A matching practical skill package** (`blender-mcp-skills`) with templates and development guidance
-
-It is designed to let agents install first, then build extension workflows consistently.
-
-## One-line prompt for agent to install the official Blender MCP
-
-```text
-Follow https://raw.githubusercontent.com/psiQAQ/blender_mcp-setup-guide/main/docs/blender_mcp-setup_en.md to install the official Blender MCP (Blender Add-on + blender-mcp server), register it with your agent, and verify the connection end-to-end.
+```mermaid
+flowchart LR
+    Agent[MCP client] -->|Authenticated local HTTP| Server[Bundled MCP service]
+    Server -->|Authenticated TCP| Bridge[Blender Extension bridge]
+    Bridge --> Scene[Blender scene]
 ```
 
-The same setup pattern also works for other agents. Use each agent's MCP configuration format.
+This repository integrates [Blender Lab's official MCP](https://projects.blender.org/lab/blender_mcp) and provides:
 
-The installation guides include an OpenCode example that directly adds a `blender` MCP server entry to `~/.config/opencode/opencode.json` (Linux/macOS) or `%USERPROFILE%\\.config\\opencode\\opencode.json` (Windows).
-They also include a Codex example that adds the same server to `.codex/config.toml`.
+1. **An integrated Extension for Windows x64, Linux x64 and macOS Apple Silicon** with the official bridge, MCP tools, documentation, and locked dependencies
+2. **A matching practical skill package** (`blender-mcp-skills`) with templates and development guidance
+
+Blender manages an independent authenticated local HTTP service. Install the ZIP, select your agent, and copy its connection configuration. See [build instructions](docs/integration-build.md) and [validation](docs/integration-validation.md). The integrated package requires Blender 5.1.x / CPython 3.13 (5.1.0 ≤ Blender < 5.2.0). Blender 5.0 uses Python 3.11 and is incompatible. Download the ZIP for your platform from [Releases](https://github.com/psiQAQ/blender_mcp-setup-guide/releases), or add [the Extensions index](https://psiQAQ.github.io/blender_mcp-setup-guide/index.json). The generic template targets Blender 4.2+.
+
+## Choose an installation method
+
+| Method | Suitable environment | Installation and connection | Guide |
+| --- | --- | --- | --- |
+| Integrated Extension | Native Windows x64 / Linux x64 / macOS ARM64, Blender 5.1.x / CPython 3.13; client and Blender on one computer | Install a bundled ZIP, copy Bearer-authenticated local HTTP settings; no separate uv/Python for users | [English](docs/blender_mcp-setup_en.md) / [中文](docs/blender_mcp-setup_zh.md) |
+| Official Extension + stdio | Officially supported Windows/macOS/Linux environments, Blender 5.1+ | Install the official Extension plus Git/uv and an external MCP tool; the client manages its stdio process | [English](docs/blender_mcp-stdio-setup_en.md) / [中文](docs/blender_mcp-stdio-setup_zh.md) |
+
+Each guide includes complete Codex, Claude Code and OpenCode settings, file locations, verification and removal steps. Choose one method for a Blender instance and replace its client entry when switching.
+
+## Setup prompts
+
+Integrated Extension:
+
+```text
+Follow https://raw.githubusercontent.com/psiQAQ/blender_mcp-setup-guide/main/docs/blender_mcp-setup_en.md. Check system, architecture and Blender compatibility, install the integrated Extension, configure my MCP client and verify an actual scene read.
+```
+
+Official stdio:
+
+```text
+Follow https://raw.githubusercontent.com/psiQAQ/blender_mcp-setup-guide/main/docs/blender_mcp-stdio-setup_en.md. Install the official Extension and pinned MCP tool, configure my client for stdio and verify an actual scene read.
+```
 
 ## Skill capabilities (brief)
 
 `blender-mcp-skills` focuses on:
 
 - Extension-only scaffold workflow for Blender 4.2+
-- Autoload-based module topology (`operators/panels/utils`)
-- Extension-private Python dependency management (`deps/site-packages` + `pip --target`)
-- Add-on Preferences dependency status UI and explicit user-triggered installs
+- Explicit class registration, failure rollback, and reverse cleanup
+- Manifest wheels for required dependencies and Extension user directories for writable data
+- Offline template generation and static checks; runtime discovery for live Blender operations
 - Validation/build scripting guidance (`validate_extension.py`, `build_extension.py`)
 - Cross-system runtime adaptation hints (WSL/Linux/Windows path strategy)
 
 ## Tutorials
 
-- Local setup (English): [`docs/blender_mcp-setup_en.md`](docs/blender_mcp-setup_en.md)
-- Local setup (中文): [`docs/blender_mcp-setup_zh.md`](docs/blender_mcp-setup_zh.md)
-- Remote/LAN setup (English): [`docs/blender_mcp-remote.md`](docs/blender_mcp-remote.md)
-- Remote/LAN setup (中文): [`docs/blender_mcp-remote_zh.md`](docs/blender_mcp-remote_zh.md)
+- Integrated Extension: [English](docs/blender_mcp-setup_en.md) / [中文](docs/blender_mcp-setup_zh.md)
+- Official stdio: [English](docs/blender_mcp-stdio-setup_en.md) / [中文](docs/blender_mcp-stdio-setup_zh.md)
+- Integration architecture: [`docs/integration-design.md`](docs/integration-design.md)
+- Build and release: [`docs/integration-build.md`](docs/integration-build.md)
 - Chinese repository overview: [`docs/README_zh.md`](docs/README_zh.md)
 
 ## Install the local skill
@@ -52,53 +69,26 @@ npx skills add https://github.com/psiQAQ/blender_mcp-setup-guide
 
 ## Repository structure (expanded for skill)
 
-```text
-blender_mcp/
-├─ README.md
-├─ LICENSE
-├─ assets/
-│  └─ imgs/
-├─ docs/
-│  ├─ README_zh.md
-│  ├─ blender_mcp-setup_en.md
-│  ├─ blender_mcp-setup_zh.md
-│  ├─ blender_mcp-remote.md
-│  └─ blender_mcp-remote_zh.md
-├─ .agents/
-│  └─ skills/
-│     └─ blender-mcp-skills/
-│        ├─ SKILL.md
-│        ├─ references/
-│        │  ├─ index.md
-│        │  ├─ template-guide.md
-│        │  ├─ extension-workflow.md
-│        │  ├─ extension-install.md
-│        │  ├─ lifecycle.md
-│        │  ├─ system-adaptation.md
-│        │  ├─ dependency-policy.md
-│        │  ├─ pitfalls-and-fixes.md
-│        │  ├─ migration-notes.md
-│        │  └─ manifest-fields.md
-│        └─ templates/
-│           └─ extension_addon/
-│              ├─ operators/ panels/ utils/
-│              ├─ utils/dependency_manager.py
-│              └─ scripts/
-├─ tests/
-│  └─ test_validate_extension.py
-└─ submodules/
-```
+| Path | Purpose |
+| --- | --- |
+| `src/blender_mcp_integration/` | Extension UI and isolated service lifecycle |
+| `packaging/` | Pinned upstream, Blender toolchain and dependency inputs |
+| `scripts/` | Scaffold, build, test and release preparation |
+| `.github/workflows/` | CI, manually triggered release and upstream inspection |
+| `.agents/skills/blender-mcp-skills/` | Skill, reference docs and generic template |
+| `tests/` | Unit checks and actual Blender hosts |
+| `docs/` | Setup, design and validation evidence |
+| `submodules/` | Reference implementations |
 
 ## Extension dependency policy
 
-The built-in extension template supports private Python dependencies for development and internal tools:
+The default template has no third-party dependencies. When a feature needs them:
 
-- Dependencies are declared in `utils/dependency_manager.py`.
-- Missing packages are installed only after the user clicks **Install Missing Dependencies** in Add-on Preferences.
-- Installs use Blender's Python with `pip install --target deps/site-packages`, so Blender's bundled global `site-packages` is not modified.
-- The private dependency path is added during add-on registration and removed during unregistration.
-- The default installer uses the Tsinghua PyPI mirror, with a Preferences toggle to disable it.
-- Release builds should prefer `wheels = [...]` in `blender_manifest.toml`; heavy packages such as `torch`, `opencv-python`, `scipy`, `open3d`, or CUDA stacks should usually live in an external Python environment.
+- Bundle required dependencies as `wheels = [...]` in `blender_manifest.toml`.
+- Store writable data with `bpy.utils.extension_path_user(...)`.
+- Load the integration's prebuilt MCP dependencies only in its independent `-I -S -B` Python process.
+- Keep package data, native libraries, and dependency licenses in the final ZIP.
+- Heavy scientific or GPU workloads can use an external service with a defined interface.
 
 ## Prompt example (natural trigger)
 
@@ -128,4 +118,4 @@ This repository includes references to community projects via git submodules:
 
 ## License
 
-This project is distributed under **GNU GPL v2**. See [`LICENSE`](LICENSE).
+Repository and integration code use **GPL-3.0-or-later**. See [`LICENSE`](LICENSE). The package preserves official upstream copyright notices and bundled dependency licenses.

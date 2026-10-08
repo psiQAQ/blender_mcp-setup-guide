@@ -1,344 +1,165 @@
 [简体中文](./blender_mcp-setup_zh.md) | English
 
-# Blender MCP Local Setup Guide
+# Install the Blender MCP integrated Extension
 
-> Control Blender locally on the same machine via Claude Code using Blender's official MCP Server.  
-> Architecture: `Claude Code ⇄ (stdio) ⇄ blender-mcp process ⇄ (TCP localhost) ⇄ Blender MCP Add-on ⇄ Blender Python API`
->
-> For HTTP transport or remote Blender setup, see [blender_mcp-remote.md](./blender_mcp-remote.md) (English) / [blender_mcp-remote_zh.md](./blender_mcp-remote_zh.md) (中文).
+This package targets **Windows x64, Linux x64, macOS Apple Silicon and Blender 5.1.x with bundled CPython 3.13**, with the client and Blender on the same computer. The supported range is 5.1.0 ≤ Blender < 5.2.0. Blender 5.0 uses Python 3.11 and is incompatible; see [the official 5.0 source](https://github.com/blender/blender/blob/v5.0.0/build_files/build_environment/cmake/versions.cmake) and [5.1 release notes](https://www.blender.org/download/releases/5-1/). It includes Blender Lab MCP v1.0.3, dependencies and documentation. Users do not need a separate uv or Python installation.
 
-![Claude Code + Blender MCP 架构图](../assets/imgs/claude-code-mcp-blender.png)
+For a client-managed official MCP process, use the separate [official stdio guide](blender_mcp-stdio-setup_en.md). The [README](../README.md) compares the two methods.
 
----
-
-## Requirements
-
-| Item | Version | Notes |
-|------|---------|-------|
-| Blender | ≥ 5.1 | Official requirement |
-| Python | ≥ 3.10 | For blender-mcp |
-| uv | latest | Python package manager |
-
-Check Claude Code:
-
-```bash
-claude --version
-claude mcp list
+```mermaid
+flowchart LR
+    Client[Codex / Claude Code / OpenCode] -->|Local HTTP + Bearer token| Service[Bundled MCP service]
+    Service -->|Local TCP 9876 + bridge credential| Blender[Blender Extension]
 ```
 
----
+## 1. Obtain and install the package
 
-## 1. Install Blender MCP Add-on
+1. Obtain the compatible `blender_mcp_integration-1.0.3+integration.1-<platform>.zip`, choosing `windows-x64`, `linux-x64` or `macos-arm64`. Download it from [Releases](https://github.com/psiQAQ/blender_mcp-setup-guide/releases). If no compatible release exists, follow the [build instructions](integration-build.md); local output is in `build/dist/`.
+2. In Blender, open **Edit → Preferences → Add-ons → top-right menu → Install from Disk**, select the ZIP, then install and enable **Blender MCP Integrated**.
+3. Expand its preferences. Stop and disable the original **MCP** Extension before starting the integration if both are installed, to avoid bridge-port conflicts.
 
-### 1.1 Install Blender 5.1+
+Local ZIP installation is sufficient. Alternatively, add `https://psiQAQ.github.io/blender_mcp-setup-guide/index.json` under **Extensions → Repositories → Add Remote Repository**; Blender selects the matching platform package and offers updates. Online Extensions repository installation and updates require **Preferences → System → Network → Allow Online Access**.
 
-Download from [blender.org](https://www.blender.org/download/).
+## 2. Start the service and copy its configuration
 
-### 1.2 Install the Add-on
+**Start MCP When Enabled** is on by default; **Start MCP** also starts the service manually. Wait for **MCP: Running**, then use **Check Connection** to check HTTP health and the Blender bridge.
 
-Visit [https://www.blender.org/lab/mcp-server/](https://www.blender.org/lab/mcp-server/). Two installation methods:
+Choose your client in **Agent** and click **Copy Connection Configuration**. This copies the settings to the clipboard and saves `client-config.txt` in the user directory shown in preferences. That directory also contains `service.log` and the HTTP credential; these user files survive package upgrades.
 
-- **Drag & drop**: Drag the install link from the page into Blender (twice: first to add the Blender Lab repo, then to install the add-on)
-- **Manual**: Download the add-on zip, then `Edit → Preferences → Add-ons → Install from Disk`
+| Setting | Default | Purpose |
+| --- | --- | --- |
+| HTTP Port | `8000` | Client URL `http://127.0.0.1:8000/` |
+| Bridge Port | `9876` | Communication between the bundled service and Blender |
+| Authorization | `Bearer <locally generated token>` | HTTP authentication |
 
-> Drag & drop enables update notifications.
+Replace `YOUR_BLENDER_MCP_TOKEN` below with the actual copied token. Prefer the generated configuration. Clients use the root path `/`; port `9876` belongs to the bridge. Copy settings again after changing the HTTP port. Keep local credentials out of Git.
 
-### 1.3 Enable the Add-on
+## 3. Configure your client
+
+Complete only your client's subsection. Merge the `blender` entry into existing settings while preserving other servers. Replace an existing entry with the same name. When switching from stdio, remove the old entry using [section 5](#5-switch-methods-or-uninstall).
+
+### 3.1 Codex
+
+User settings are in `%USERPROFILE%\.codex\config.toml` on Windows or `~/.codex/config.toml` on Linux/macOS, for example `C:\Users\Alice\.codex\config.toml`. A trusted project's `.codex/config.toml` provides project scope. Create the directory/file if needed, then add:
+
+```toml
+[mcp_servers.blender]
+enabled = true
+url = "http://127.0.0.1:8000/"
+http_headers = { Authorization = "Bearer YOUR_BLENDER_MCP_TOKEN" }
+```
+
+Save and start a new Codex CLI session, or reload servers in the desktop client's MCP settings. The CLI can inspect the loaded configuration:
 
 ```text
-Edit → Preferences → Add-ons → Search "MCP"
+codex mcp list
+codex mcp get blender
 ```
 
-Make sure the add-on is enabled.
+Check the HTTP URL and `Authorization` header. Configuration inspection still needs the actual scene check in section 4. See [official OpenAI MCP documentation](https://developers.openai.com/codex/mcp/) for fields and scope.
 
-### 1.4 Add-on Configuration (keep defaults)
+### 3.2 Claude Code
 
-For local setup, keep the default Host:
-
-```text
-Host = localhost
-Port = 9876
-```
-
-Click **Start Server** (or restart Blender to let Auto Start take effect). Confirm you see:
-
-```text
-Server is running
-```
-
-### 1.5 Enable Online Access
-
-Blender 5.1+ requires online access permission:
-
-```text
-Edit → Preferences → System → Online Access → Enable
-```
-
-Without this, the add-on will show: `Online access must be enabled in the system preferences`.
-
----
-
-## 2. Install blender-mcp MCP Server
-
-Install globally with `uv tool install` so `blender-mcp` is available as a system-wide command.
-
-### 2.1 Prerequisites
-
-- [uv](https://docs.astral.sh/uv/#installation) installed
-- Python ≥ 3.10
-
-```bash
-uv --version
-```
-
-### 2.2 Clone the Source
-
-```bash
-# Linux/macOS
-cd ~/.local/share
-# Windows
-cd %USERPROFILE%\.local\share
-git clone --depth 1 https://projects.blender.org/lab/blender_mcp.git
-```
-
-> `pyproject.toml` is inside `blender_mcp/mcp/`, not at the repo root. All install commands run from `mcp/`.
-
-### 2.3 Global Install
-
-```bash
-# Linux/macOS
-cd ~/.local/share/blender_mcp/mcp
-# Windows
-cd %USERPROFILE%\.local\share\blender_mcp\mcp
-uv tool install --python 3.11 .
-```
-
-Verify the installation:
-
-```bash
-which blender-mcp
-blender-mcp --help
-```
-
-> `uv tool install` places the package in uv's isolated tool directory — no system Python pollution.
-
-### 2.4 Register with Claude Code
-
-Claude Code auto-manages the `blender-mcp` process in stdio mode — it starts the process on demand and stops it on exit.
-
-```bash
-# Note: server name must come before options
-claude mcp add blender --transport stdio --scope user \
-  -e BLENDER_MCP_HOST=localhost \
-  -e BLENDER_MCP_PORT=9876 \
-  -- blender-mcp
-```
-
-> **Environment variables**: `BLENDER_MCP_HOST` and `BLENDER_MCP_PORT` (note the `_MCP` infix).
-
-Verify:
-
-```bash
-claude mcp get blender
-```
-
-Expected output: `Status: ✓ Connected` with `BLENDER_MCP_HOST=localhost` in the Environment section.
-
-Reference registration for other agents (example: OpenCode):
-
-Write to `~/.config/opencode/opencode.json` (Linux/macOS) or `%USERPROFILE%\\.config\\opencode\\opencode.json` (Windows):
+**Project configuration**: create or merge `.mcp.json` at the root of the project where you launch Claude Code:
 
 ```json
 {
-  "mcp": {
+  "mcpServers": {
     "blender": {
-      "type": "local",
-      "command": ["blender-mcp"],
-      "environment": {
-        "BLENDER_MCP_HOST": "localhost",
-        "BLENDER_MCP_PORT": "9876"
-      },
-      "enabled": true
+      "type": "http",
+      "url": "http://127.0.0.1:8000/",
+      "headers": {
+        "Authorization": "Bearer YOUR_BLENDER_MCP_TOKEN"
+      }
     }
   }
 }
 ```
 
-For Codex, add this to `.codex/config.toml`:
+**User configuration**: alternatively, the following command works in PowerShell and Bash and registers the server across projects in `~/.claude.json`. Choose this scope or the project file:
 
-```toml
-[mcp_servers.blender]
-enabled = true
-command = "blender-mcp"
-
-[mcp_servers.blender.env]
-BLENDER_MCP_HOST = "localhost"
-BLENDER_MCP_PORT = "9876"
+```text
+claude mcp add --transport http --scope user blender http://127.0.0.1:8000/ --header "Authorization: Bearer YOUR_BLENDER_MCP_TOKEN"
 ```
 
-### 2.5 Updating
+Check from the relevant project, then start a new session:
 
-When the official repo has updates:
-
-```bash
-# Linux/macOS
-cd ~/.local/share/blender_mcp
-# Windows
-cd %USERPROFILE%\.local\share\blender_mcp
-
-# First time only: set upstream tracking
-git branch --set-upstream-to=origin/main main
-
-# Pull latest code
-git pull
-
-# Reinstall (upgrade won't work for local-path installs)
-cd mcp && uv tool install --reinstall .
-
-# Verify
-blender-mcp --help
-```
-
-> **Why `--reinstall` instead of `upgrade`**: `uv tool install` was done from a local path. `upgrade` only checks PyPI. `--reinstall` forces a rebuild from the current source.
-
-### 2.6 Uninstalling
-
-```bash
-# 1. Remove MCP server registration
-claude mcp remove blender -s local
-claude mcp remove blender -s user  # if you used --scope user
-
-# 2. Uninstall the tool
-uv tool uninstall blender-mcp
-
-# 3. Optionally delete the source
-# Linux/macOS
-rm -rf ~/.local/share/blender_mcp
-# Windows PowerShell
-Remove-Item -LiteralPath "$env:USERPROFILE\.local\share\blender_mcp" -Recurse -Force
-```
-
----
-
-## 3. Connection Test
-
-### 3.1 Check MCP Status
-
-Start Claude Code:
-
-```bash
+```text
+claude mcp list
+claude mcp get blender
 claude
 ```
 
-Then type:
+Approve a project-scoped server when prompted. Enter `/mcp` in Claude Code to inspect connections, then read the scene as described in section 4. See [Claude Code's official MCP documentation](https://code.claude.com/docs/en/mcp).
+
+### 3.3 OpenCode
+
+User settings are in `%USERPROFILE%\.config\opencode\opencode.json` on Windows or `~/.config/opencode/opencode.json` on Linux/macOS; a project's root `opencode.json` is also supported. Merge:
+
+```json
+{
+  "$schema": "https://opencode.ai/config.json",
+  "mcp": {
+    "blender": {
+      "type": "remote",
+      "url": "http://127.0.0.1:8000/",
+      "enabled": true,
+      "oauth": false,
+      "headers": {
+        "Authorization": "Bearer YOUR_BLENDER_MCP_TOKEN"
+      }
+    }
+  }
+}
+```
+
+`remote` selects HTTP even for a local service. This example adds explicit `enabled` and `oauth: false` settings to the exported configuration and uses the integration's Bearer token.
+
+Save, restart OpenCode, and check from the same project:
 
 ```text
-/mcp
+opencode mcp list
 ```
 
-Confirm `blender` shows as **connected**.
+Then read the scene using section 4. See [OpenCode configuration](https://opencode.ai/docs/config/) and [MCP fields](https://opencode.ai/docs/mcp-servers/).
 
-### 3.2 Test: Read Scene
+## 4. Verify communication and diagnose errors
 
-In Claude Code:
+Keep Blender open with the service **Running**. Start with a read-only request:
 
-```text
-Use blender MCP to read the object list from the current Blender scene.
+> Use blender MCP to read Blender's version and the current scene object list. Report the actual returned data.
+
+The result must match your running Blender. For a write check, use a backed-up test scene:
+
+> Create a cube named MCP_Test_Cube, read its position, delete that test object and verify that the object count is restored.
+
+Loaded client settings, HTTP health and successful scene calls are separate checks. To inspect HTTP health in PowerShell, replace the token and use the port from preferences:
+
+```powershell
+$token = 'YOUR_BLENDER_MCP_TOKEN'
+Invoke-RestMethod -Uri 'http://127.0.0.1:8000/health' -Headers @{ Authorization = "Bearer $token" }
 ```
 
-### 3.3 Test: Create an Object
+| Symptom | Check or action |
+| --- | --- |
+| Service does not reach Running | Matching package platform and native architecture, Blender 5.1.x / CPython 3.13; preferences error and `service.log` |
+| Occupied port | Stop the known previous service, or stop the integration, select free ports, restart and copy settings again |
+| HTTP 401 | Copy the actual token again; check `Authorization` and the `Bearer ` prefix |
+| HTTP 403 | Use `http://127.0.0.1:<HTTP Port>/`; check Host / Origin |
+| blender configuration missing | Check the actual file and user/project scope; restart the client and trust project settings where required |
+| Connected but scene calls fail | Check the bridge, original Extension conflict and actual logged error |
+| Service exited | Read the log, use Stop MCP and restart, then retry a scene call |
 
-In Claude Code:
+The integration supports native loopback on all three target platforms. WSL, SSH and container clients require a separate check of execution location and network reachability.
 
-```text
-Use blender MCP to create a cube named MCP_Test_Cube at position (0, 0, 1) with size 1, and add a blue material to it.
-```
+## 5. Switch methods or uninstall
 
-If successful, the new cube should appear in your local Blender viewport.
+Before switching to official stdio, use **Stop MCP**, disable the integration and remove its HTTP entry. Then follow the [stdio guide](blender_mcp-stdio-setup_en.md).
 
----
+- Codex: remove `[mcp_servers.blender]` and its subtables from the chosen file. A CLI-registered user entry can be removed with `codex mcp remove blender`.
+- Claude Code: remove only `mcpServers.blender` from `.mcp.json`, or run `claude mcp remove --scope user blender` for user registration.
+- OpenCode: remove only `mcp.blender` from the chosen file.
 
-## 4. Data Flow
+To uninstall completely, stop, disable and uninstall **Blender MCP Integrated** in Blender. Its separate user directory contains logs, credentials and exported settings; handle those files after confirming they are no longer needed.
 
-```text
-┌──────────────────┐       stdin/stdout        ┌──────────────────┐
-│   Claude Code    │ ◄══════════════════════► │  blender-mcp     │
-│   (local)        │    (MCP protocol)         │  (local process) │
-└──────────────────┘                           └────────┬─────────┘
-                                                        │
-                                                 TCP socket
-                                              localhost:9876
-                                                        │
-                                                        ▼
-                                              ┌──────────────────┐
-                                              │  Blender Add-on  │
-                                              │  localhost:9876   │
-                                              └────────┬─────────┘
-                                                        │
-                                                  exec(code)
-                                                        │
-                                                        ▼
-                                              ┌──────────────────┐
-                                              │  Blender         │
-                                              │  Python API      │
-                                              └──────────────────┘
-```
-
----
-
-## 5. Troubleshooting
-
-### 5.1 `claude mcp list` shows disconnected
-
-```bash
-claude mcp get blender
-```
-
-Check:
-- `command` is `blender-mcp` and it's executable
-- `BLENDER_MCP_HOST` is `localhost`
-- `BLENDER_MCP_PORT` is `9876`
-
-### 5.2 MCP shows connected but operations fail with "Cannot connect to Blender"
-
-Possible causes:
-1. Blender add-on not running (check for `Server is running`)
-2. Online access not enabled in Blender preferences
-3. The add-on's Host was changed from `localhost`
-
-### 5.3 Connection drops after a short time
-
-Possible causes:
-1. The Blender add-on has a 10-second idle timeout — it disconnects if no request is received
-2. The `blender-mcp` process crashed (check terminal output)
-
----
-
-## 6. Remove Configuration
-
-```bash
-claude mcp remove blender
-claude mcp list
-```
-
----
-
-## 7. Security Notes
-
-Blender MCP effectively allows the LLM to execute arbitrary Python code inside Blender. Recommendations:
-
-1. Only use with test projects or backed-up files
-2. Avoid running in environments with sensitive files
-3. Review high-risk operations before confirming
-4. Do not let Claude auto-execute Python code you don't understand
-
----
-
-## 8. References
-
-- Blender Lab MCP Server: https://www.blender.org/lab/mcp-server/
-- Blender MCP source: `blender_mcp/` project directory
-- MCP Server entry point: `mcp/blmcp/__init__.py` → `main()`
-- TCP connection: `mcp/blmcp/tools_helpers/connection.py` → `send_code()`
-- Add-on server: `addon/blender_mcp_addon/mcp_to_blender_server.py` → `start()`
-- Claude Code MCP docs: https://docs.anthropic.com/en/docs/claude-code/mcp
+See [build instructions](integration-build.md) and [local validation evidence](integration-validation.md) for implementation checks.

@@ -1,44 +1,61 @@
 简体中文 | [English](../README.md)
 
-# Blender MCP Skills Toolkit（中文版）
+# Blender MCP 集成安装与开发技能
 
-![Agent + Blender MCP 架构图](../assets/imgs/claude-code-mcp-blender.png)
+```mermaid
+flowchart LR
+    Agent[MCP 客户端] -->|本机 HTTP + 凭据| Server[随包 MCP 服务]
+    Server -->|本机 TCP + 凭据| Bridge[Blender Extension 桥接]
+    Bridge --> Scene[Blender 场景]
+```
 
 本仓库同时提供两部分内容：
 
-1. **官方 Blender MCP 安装教程**（本地/远端）
+1. **Windows x64、Linux x64、macOS Apple Silicon 集成 Extension**，随包交付 Blender Lab 官方桥接端、MCP 工具、文档与锁定依赖
 2. **与教程配套的 skill 包**（`blender-mcp-skills`，含模板与开发指导）
 
-目标是先安装打通，再稳定复用 extension 开发流程，并持续扩展更多能力。
+安装 ZIP 后选择 agent 并复制连接配置；Blender 管理独立的本机 HTTP 服务。集成包最低要求 Blender 5.1 / CPython 3.13，首版支持 5.1.0 ≤ Blender < 5.2.0。Blender 5.0 使用 Python 3.11，不适用本集成包。按平台下载 [Release 安装包](https://github.com/psiQAQ/blender_mcp-setup-guide/releases)，或添加 [Extensions 索引](https://psiQAQ.github.io/blender_mcp-setup-guide/index.json)。通用插件模板支持 Blender 4.2+。构建和验收见[构建说明](integration-build.md)与[验证记录](integration-validation.md)。
 
-## 给 Agent 的一句话安装 Blender 官方 MCP 的提示词
+## 选择安装方式
+
+| 方式 | 适用环境 | 安装与连接方式 | 教程 |
+| --- | --- | --- | --- |
+| 集成 Extension | 原生 Windows x64 / Linux x64 / macOS ARM64、Blender 5.1.x / CPython 3.13，客户端与 Blender 同机 | 安装随包 ZIP，复制带凭据的本机 HTTP 配置；用户无需另外安装 uv/Python | [中文](blender_mcp-setup_zh.md) / [English](blender_mcp-setup_en.md) |
+| 官方 Extension + stdio | 官方支持的 Windows/macOS/Linux 环境、Blender 5.1+ | 安装官方 Extension、Git/uv 和外部 MCP 工具，由客户端管理 stdio 进程 | [中文](blender_mcp-stdio-setup_zh.md) / [English](blender_mcp-stdio-setup_en.md) |
+
+两份教程均提供 Codex、Claude Code、OpenCode 的完整配置、文件位置、验证和移除步骤。同一个 Blender 实例选择一种方式；切换时替换客户端的对应条目。
+
+## 给 Agent 的安装提示词
+
+集成 Extension：
 
 ```text
-请严格按 https://raw.githubusercontent.com/psiQAQ/blender_mcp-setup-guide/main/docs/blender_mcp-setup_zh.md 完成官方 Blender MCP 安装（Blender Add-on + blender-mcp server），并在你的 agent 中完成注册与连通性验证。
+请按 https://raw.githubusercontent.com/psiQAQ/blender_mcp-setup-guide/main/docs/blender_mcp-setup_zh.md 操作。核对系统、架构与 Blender 兼容性，安装集成 Extension，配置我使用的 MCP 客户端，并实际读取场景验证连接。
 ```
 
-同一套安装思路也支持其他 agent。请按各家 agent 的 MCP 配置格式进行接入。
+官方 stdio：
 
-安装教程中已提供 OpenCode 示例：可直接向 `~/.config/opencode/opencode.json`（Linux/macOS）或 `%USERPROFILE%\\.config\\opencode\\opencode.json`（Windows）添加 `blender` 的 MCP 配置。
-也提供了 Codex 示例：可通过向 `.codex/config.toml` 添加配置接入同一个 MCP Server。
+```text
+请按 https://raw.githubusercontent.com/psiQAQ/blender_mcp-setup-guide/main/docs/blender_mcp-stdio-setup_zh.md 操作。安装官方 Extension 和固定来源的 MCP 工具，为我使用的客户端配置 stdio，并实际读取场景验证连接。
+```
 
 ## Skills 能力（简述）
 
 `blender-mcp-skills` 主要覆盖：
 
 - Blender 4.2+ extension-only 脚手架流程
-- autoload 拓扑注册与 `operators/panels/utils` 结构拆分
-- 插件私有 Python 依赖管理（`deps/site-packages` + `pip --target`）
-- Add-on Preferences 依赖状态展示与用户显式点击安装
+- 显式类注册、失败回滚与逆序卸载
+- 必需依赖使用 manifest wheels，用户数据写入 Extension 用户目录
+- 静态开发离线完成，操作 Blender 时再查询目标运行环境
 - 校验/构建脚本实践（`validate_extension.py`、`build_extension.py`）
 - 跨系统运行适配提示（WSL/Linux/Windows 路径策略）
 
 ## 教程入口
 
-- 本地单机教程（中文）：[`blender_mcp-setup_zh.md`](./blender_mcp-setup_zh.md)
-- 本地单机教程（English）：[`blender_mcp-setup_en.md`](./blender_mcp-setup_en.md)
-- 远端局域网教程（中文）：[`blender_mcp-remote_zh.md`](./blender_mcp-remote_zh.md)
-- 远端局域网教程（English）：[`blender_mcp-remote.md`](./blender_mcp-remote.md)
+- 集成 Extension：[中文](blender_mcp-setup_zh.md) / [English](blender_mcp-setup_en.md)
+- 官方 stdio：[中文](blender_mcp-stdio-setup_zh.md) / [English](blender_mcp-stdio-setup_en.md)
+- 集成架构：[`integration-design.md`](integration-design.md)
+- 构建与发布：[`integration-build.md`](integration-build.md)
 
 ## Skills 安装
 
@@ -51,44 +68,26 @@ npx skills add https://github.com/psiQAQ/blender_mcp-setup-guide
 
 ## 目录结构（按 skill 展开）
 
-```text
-blender_mcp/
-├─ README.md                                # 根目录英文总览
-├─ LICENSE
-├─ assets/
-│  └─ imgs/
-├─ docs/
-│  ├─ README_zh.md                          # 本文件（中文总览）
-│  ├─ blender_mcp-setup_zh.md               # 本地教程（中文）
-│  ├─ blender_mcp-setup_en.md               # 本地教程（英文）
-│  ├─ blender_mcp-remote_zh.md              # 远端教程（中文）
-│  └─ blender_mcp-remote.md                 # 远端教程（英文）
-├─ .agents/skills/blender-mcp-skills/
-│  ├─ SKILL.md                              # 技能入口
-│  ├─ references/                           # 开发思路与规范指导
-│  │  ├─ index.md / template-guide.md
-│  │  ├─ extension-workflow.md / extension-install.md / lifecycle.md
-│  │  ├─ system-adaptation.md / dependency-policy.md / pitfalls-and-fixes.md
-│  │  └─ migration-notes.md / manifest-fields.md
-│  └─ templates/extension_addon/
-│     ├─ operators/ panels/ utils/
-│     ├─ utils/dependency_manager.py
-│     └─ scripts/
-├─ tests/
-│  └─ test_validate_extension.py
-└─ submodules/                              # 外部参考项目（git submodule）
-```
+| 路径 | 用途 |
+| --- | --- |
+| `src/blender_mcp_integration/` | Extension 界面与独立服务生命周期 |
+| `packaging/` | 固定上游、Blender 工具链和依赖输入 |
+| `scripts/` | 生成、构建、测试及发布准备 |
+| `.github/workflows/` | CI、手动触发发布与上游检查 |
+| `.agents/skills/blender-mcp-skills/` | 技能、参考说明与通用模板 |
+| `tests/` | 单元检查和真实 Blender 验证入口 |
+| `docs/` | 安装、设计和验收证据 |
+| `submodules/` | 参考实现 |
 
 ## Extension 依赖策略
 
-内置 extension 模板支持开发期和内部工具场景的插件私有 Python 依赖：
+默认模板不需要第三方依赖。需要扩展能力时遵守以下约定：
 
-- 依赖声明集中放在 `utils/dependency_manager.py`。
-- 缺失依赖只会在用户于 Add-on Preferences 中点击 **Install Missing Dependencies** 后安装。
-- 安装命令使用 Blender Python 执行 `pip install --target deps/site-packages`，不会写入 Blender 自带 Python 的全局 `site-packages`。
-- 插件注册时加入私有依赖路径，注销时从 `sys.path` 移除。
-- 默认使用清华 PyPI 镜像，并在 Preferences 中提供关闭选项。
-- 正式发布优先使用 `blender_manifest.toml` 的 `wheels = [...]`；`torch`、`opencv-python`、`scipy`、`open3d`、CUDA 栈等重型依赖通常应放在外部 Python 环境中。
+- 必需依赖使用 `blender_manifest.toml` 的 `wheels = [...]` 随包交付。
+- 用户数据写入 `bpy.utils.extension_path_user(...)`。
+- 集成产品只在独立的 `-I -S -B` Python 进程中加载 MCP 依赖。
+- 包内保留依赖数据、原生库和许可证。
+- 科学计算与 GPU 等重型能力可使用具有明确接口的外部服务。
 
 ## 提示词示例（自然触发）
 
@@ -118,4 +117,4 @@ blender_mcp/
 
 ## 开源许可
 
-本仓库默认采用 **GNU GPL v2**（见 [`../LICENSE`](../LICENSE)）。
+本仓库与集成代码采用 **GPL-3.0-or-later**（见 [`../LICENSE`](../LICENSE)）；安装包保留官方版权声明和依赖许可证。
