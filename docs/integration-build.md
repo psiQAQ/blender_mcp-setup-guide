@@ -43,6 +43,8 @@ CI 使用 windows-2022、ubuntu-24.04、macos-15 ARM64 原生 runner，hash 固�
 
 报告绑定平台及 ZIP SHA-256。失败检查写入 Failed，不复用旧 Passed 报告。人工 GUI 操作及三个实际 agent 的验收与自动化测试分开记录。
 
+`packaging/` 的 JSON/TXT 锁文件统一使用 LF，确保三个系统计算相同的来源 hash。CI 最后在 Windows 汇总核验三个最终 ZIP、七类报告及干净提交，使用与发布相同的完整资产检查。
+
 ## 正式发布
 
 将 Pages 来源设置为 GitHub Actions。为完全通过 CI 的同一干净提交创建 `v1.0.3+integration.1` 标签，手动触发 `release.yml`，指定该提交的成功 CI run ID 和标签。

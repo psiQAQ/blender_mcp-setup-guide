@@ -1,0 +1,3 @@
+# Packaging provenance must hash identical source bytes on every platform.
+/packaging/*.json text eol=lf
+/packaging/*.txt text eol=lf

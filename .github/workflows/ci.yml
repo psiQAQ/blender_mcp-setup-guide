@@ -150,3 +150,24 @@ jobs:
         with:
           name: repository-logs-${{ matrix.platform }}
           path: build/tests/**/blender.log
+  release-inputs:
+    needs: repository
+    runs-on: windows-2022
+    defaults:
+      run:
+        shell: pwsh
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: validated-*
+          path: build/validated
+      - name: Validate every platform against the clean candidate source
+        run: |
+          foreach ($platform in @('windows-x64', 'linux-x64', 'macos-arm64')) {
+            Move-Item "build/validated/validated-$platform" "build/validated/$platform"
+          }
+          python -B -c "import os,sys; from pathlib import Path; sys.path.insert(0, 'scripts'); from prepare_release import validate_collection; assets=validate_collection(Path('build/validated'), os.environ['GITHUB_SHA']); print('Complete immutable release input set:', list(assets))"
