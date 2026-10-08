@@ -4,7 +4,7 @@
 
 | 检查 | 证据与状态判定 |
 | --- | --- |
-| 本地标准库单元测试 | 36 项 Passed，覆盖渠道与来源保护、版本排序、Pages 保留、平台锁、ABI、报告环境、配置、清理、证据归档、不可变资产、draft 恢复与鉴权重定向 |
+| 本地标准库单元测试 | 37 项 Passed，覆盖渠道与来源保护、版本排序、Pages 保留、平台锁、ABI、报告环境、配置、清理、证据归档、不可变资产、draft 恢复与鉴权重定向 |
 | 原生最终 ZIP、MCP、鉴权和生命周期 | CI 的平台 integration-tests.json；必须为 Passed 并匹配 ZIP hash |
 | GUI 事件循环、Timer、配置复制、重启及清理 | 平台 gui-tests.json，GUI 测试为必需项 |
 | 最低版本兼容 | 平台 minimum-tests.json，5.2 线使用 5.2.0，5.1 线使用 5.1.0；使用相同最终 ZIP |
