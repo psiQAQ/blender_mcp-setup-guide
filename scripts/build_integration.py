@@ -14,6 +14,8 @@ import zipfile
 from pathlib import Path
 
 from platforms import resolve, package_name
+from publication import extension_version
+from upstream_source import verify_source
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -57,6 +59,7 @@ def patch_bridge(vendor):
 
 
 def acquire_upstream(lock, requested):
+    verify_source(lock)
     source = requested or ROOT / "submodules/blender_mcp"
     if not (source / ".git").exists():
         raise RuntimeError("Initialize the pinned official submodule: git submodule update --init submodules/blender_mcp")
@@ -100,7 +103,7 @@ def build(args):
     wheel_lock = ROOT / "packaging" / target["wheel_lock"]
     args.wheelhouse = args.wheelhouse or ROOT / "build/wheels" / identifier
     check_build_runtime(args.python, lock, target)
-    version = f"{lock['version']}+integration.{lock['integration_revision']}"
+    version = extension_version(lock)
     source = acquire_upstream(lock, args.upstream)
     args.wheelhouse.mkdir(parents=True, exist_ok=True)
     if not args.offline:
@@ -135,6 +138,7 @@ def build(args):
              "--only-binary=:all:", "--no-deps", "--require-hashes", "--no-compile", "--target", runtime, "-r", requirements])
         provenance = {
             **lock, "extension_version": version,
+            "upstream_submodule_commit": lock["commit"],
             "integration_commit": subprocess.check_output(["git", "-C", str(ROOT), "rev-parse", "HEAD"], text=True).strip(),
             "integration_dirty": bool(subprocess.check_output(["git", "-C", str(ROOT), "status", "--porcelain"], text=True).strip()),
             "requirements_sha256": digest(requirements), "wheel_lock_sha256": digest(wheel_lock),

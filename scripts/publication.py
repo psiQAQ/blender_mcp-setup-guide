@@ -14,6 +14,7 @@ import urllib.parse
 import urllib.request
 import zipfile
 from pathlib import Path
+from upstream_source import release_channel, channel_path
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -30,17 +31,30 @@ def version_key(record):
     revision = record["integration_revision"]
     if type(revision) is not int or revision < 0:
         raise ValueError("integration_revision must be a non-negative integer")
-    return (*map(int, record["version"].split(".")), revision)
+    channel = release_channel(record)
+    preview = record.get("preview_revision", 0)
+    if type(preview) is not int or (channel == "preview" and preview < 1) or (channel == "stable" and preview != 0):
+        raise ValueError("Preview sequence must match the release channel")
+    return (*map(int, record["version"].split(".")), int(channel == "stable"), preview, revision)
 
 
 def extension_version(record):
     version_key(record)
-    return f"{record['version']}+integration.{record['integration_revision']}"
+    preview = f"-dev.{record['preview_revision']}" if release_channel(record) == "preview" else ""
+    return f"{record['version']}{preview}+integration.{record['integration_revision']}"
+
+
+def publication_identity(source):
+    return {"channel": release_channel(source), "preview_revision": source.get("preview_revision", 0),
+            "source_ref": source.get("source_ref", source.get("tag")),
+            "blender_min": source["blender_min"], "blender_max": source["blender_max"]}
 
 
 def check_forward(current, candidate):
     if current is None:
         return
+    if channel_path(current) != channel_path(candidate):
+        raise ValueError("Refusing to replace another release channel or Blender line")
     before, after = version_key(current), version_key(candidate)
     if after < before:
         raise ValueError("Refusing to replace the index with an older integration")
@@ -96,6 +110,7 @@ def prepare_repository(blender, package, output, archive_url=None, current=None,
     ) != (source["blender_min"], source["blender_max"]):
         raise ValueError("Manifest compatibility differs from provenance")
     candidate = {
+        **publication_identity(source),
         "version": source["version"], "integration_revision": source["integration_revision"],
         "extension_version": version, "commit": source["commit"], "platform": source["platform"],
         "sha256": digest(package), "size": package.stat().st_size,
@@ -124,7 +139,7 @@ def prepare_repository(blender, package, output, archive_url=None, current=None,
         (stage / "publication.json").write_text(json.dumps(candidate, indent=2) + "\n", encoding="utf-8")
         (stage / "index.html").write_text(
             '<!doctype html><html lang="en"><meta charset="utf-8"><title>Blender MCP Integrated</title>'
-            '<h1>Blender MCP Integrated</h1><p>Windows x64 · Blender 5.1.x</p>'
+            f'<h1>Blender MCP Integrated</h1><p>{source["blender_min"]} ≤ Blender &lt; {source["blender_max"]}</p>'
             f'<p><a href="{html.escape(candidate["archive_url"], quote=True)}">Download {html.escape(version)}</a></p>'
             '<p>Add this site\'s index.json URL to Blender Extensions repositories.</p></html>\n', encoding="utf-8",
         )
@@ -163,9 +178,9 @@ def prepare_collection(blender, packages, output, archive_urls=None, current=Non
         sources[identifier], manifests[identifier] = source, manifest
     source = next(iter(sources.values()))
     for other in sources.values():
-        if any(other.get(key) != source.get(key) for key in ("version", "integration_revision", "commit", "integration_commit", "integration_dirty", "python", "blender_min", "blender_max")):
+        if publication_identity(other) != publication_identity(source) or any(other.get(key) != source.get(key) for key in ("version", "integration_revision", "commit", "integration_commit", "integration_dirty", "python", "blender_min", "blender_max")):
             raise ValueError("Platform packages do not share the same source and compatibility")
-    candidate = {"schema_version": 2, **{key: source[key] for key in ("version", "integration_revision", "commit", "integration_commit")},
+    candidate = {"schema_version": 2, **publication_identity(source), **{key: source[key] for key in ("version", "integration_revision", "commit", "integration_commit")},
                  "extension_version": extension_version(source), "packages": entries}
     check_forward(current, candidate)
     output.mkdir(parents=True)
@@ -190,7 +205,7 @@ def prepare_collection(blender, packages, output, archive_urls=None, current=Non
     (output / "publication.json").write_text(json.dumps(candidate, indent=2) + "\n", encoding="utf-8")
     links = "".join(f'<li><a href="{html.escape(entry["archive_url"], quote=True)}">{identifier}</a></li>' for identifier, entry in entries.items())
     (output / "index.html").write_text('<!doctype html><html lang="en"><meta charset="utf-8"><title>Blender MCP Integrated</title>'
-        f'<h1>Blender MCP Integrated {candidate["extension_version"]}</h1><p>Blender 5.1.x / CPython 3.13</p><ul>{links}</ul>'
+        f'<h1>Blender MCP Integrated {candidate["extension_version"]}</h1><p>{source["blender_min"]} ≤ Blender &lt; {source["blender_max"]} / CPython {source["python"]}</p><ul>{links}</ul>'
         '<p>Add this site\'s index.json URL to Blender Extensions repositories.</p></html>\n', encoding="utf-8")
     if archive_urls:
         for package in packages.values():

@@ -31,10 +31,15 @@ def previous_fixture(package, destination):
             if item.filename == "provenance.json":
                 record = json.loads(content)
                 revision = record["integration_revision"]
-                if revision < 1:
+                if record.get("channel") == "preview":
+                    record["integration_revision"] = revision - 1
+                    from publication import extension_version
+                    record["extension_version"] = extension_version(record)
+                elif revision < 1:
                     raise ValueError("Upgrade fixture needs integration_revision >= 1")
-                record["integration_revision"] = revision - 1
-                record["extension_version"] = f"{record['version']}+integration.{revision - 1}"
+                else:
+                    record["integration_revision"] = revision - 1
+                    record["extension_version"] = f"{record['version']}+integration.{revision - 1}"
                 content = json.dumps(record).encode()
             elif item.filename == "blender_manifest.toml":
                 import tomllib
