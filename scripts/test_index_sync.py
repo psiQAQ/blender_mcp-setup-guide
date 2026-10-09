@@ -17,6 +17,9 @@ def host(url, destination, previous_url=None, expected_version=None):
     import bpy
     import bl_pkg
     from bl_pkg import repo_stats_calc_outdated_for_repo_directory
+    sys.path.insert(0, str(Path(__file__).resolve().parent))
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'tests'))
+    from native_install_capture import capture_install
 
     bpy.context.preferences.system.use_online_access = True
     repo = bpy.context.preferences.extensions.repos.new(
@@ -26,8 +29,10 @@ def host(url, destination, previous_url=None, expected_version=None):
     baseline = None
     if previous_url:
         assert bpy.ops.extensions.repo_sync(repo_index=position) == {"FINISHED"}
-        assert bpy.ops.extensions.package_install(repo_index=position, pkg_id="blender_mcp_integration",
-                                                  enable_on_install=False) == {"FINISHED"}
+        control = Path(os.environ['BLENDER_USER_CONFIG']).parents[1]
+        with capture_install(control):
+            assert bpy.ops.extensions.package_install(repo_index=position, pkg_id="blender_mcp_integration",
+                                                      enable_on_install=False) == {"FINISHED"}
         manifest = Path(repo.directory) / "blender_mcp_integration/blender_manifest.toml"
         baseline = tomllib.loads(manifest.read_text(encoding="utf-8"))["version"]
         repo.remote_url = url
@@ -70,13 +75,15 @@ def main():
     parser.add_argument("--expected-version", help="Reject a stale public version")
     args = parser.parse_args()
     from build_cache import task_directory
-    from check_reports import write_json
+    from check_reports import preserve_failure, write_json
     from publication import digest, prepare_repository
+    args.output.parent.mkdir(parents=True, exist_ok=True)
+    preserve_failure(args.output.stem, args.output)
     with task_directory(args.output.stem) as run:
-        args.output.parent.mkdir(parents=True, exist_ok=True)
         write_json(args.output, {"status": "Not Run", "index_url": args.index_url})
         server = None
         baseline = None
+        expected = None
         try:
             previous_url = ""
             if args.previous_package:
@@ -108,8 +115,17 @@ def main():
                 report["baseline"] = {"version": baseline["extension_version"], **expected}
                 write_json(args.output, report)
         except Exception as error:
-            write_json(args.output, {"status": "Failed", "index_url": args.index_url,
-                                    "error": f"{type(error).__name__}: {error}"})
+            report = {"status": "Failed", "index_url": args.index_url,
+                      "error": f"{type(error).__name__}: {error}", "update_discovery": "Not Run"}
+            if baseline and expected:
+                report['baseline'] = {"version": baseline['extension_version'], **expected}
+            if (run / 'native-install.json').exists():
+                trace = json.loads((run / 'native-install.json').read_bytes())
+                report['native_install'] = trace
+                errors = [str(message) for kind, message in trace['messages'] if kind == 'ERROR']
+                if errors:
+                    report['error'] = 'Native extension installation failed: ' + '; '.join(errors)
+            write_json(args.output, report)
             raise
         finally:
             if server:
