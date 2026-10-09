@@ -45,6 +45,9 @@ class PagesRenderTests(unittest.TestCase):
                 source = (site / path).read_text(encoding="utf-8")
                 tags = Elements(source).tags
                 self.assertIn(("html", {"lang": language}), tags)
+                self.assertIn("Known upstream limitations" if language == "en" else "已知上游限制", source)
+                self.assertIn("/docs/upstream-issues/thumbnail-deferred-render.md", source)
+                self.assertIn("/docs/upstream-issues/api-class-member-resolution.md", source)
                 self.assertEqual({attributes["href"] for tag, attributes in tags if tag == "a" and "download-button" in attributes.get("class", "")}, expected)
                 panels = [attributes for tag, attributes in tags if "data-channel-panel" in attributes]
                 self.assertEqual(len(panels), 2)

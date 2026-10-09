@@ -182,6 +182,13 @@ def main():
         f"Official upstream: {source.get('source_ref', source['tag'])} ({source['commit']}).\n\n"
         "Validated final ZIP: two generated templates, authenticated MCP scene calls, lifecycle, "
         "HTTP repository upgrade and GUI timer checks. Human GUI and client acceptance remains separate.\n\n"
+        "\nThis update uses the running host's Blender executable for all six CLI tools. Native checks include "
+        "real saved scenes, missing files, linked libraries and 60-second HTTP / 90-second SDK read deadlines.\n\n"
+        "Known upstream limitations, reproduced with the official split installation on Blender 5.1.1 and 5.2.2:\n"
+        "- GUI `render_thumbnail_to_path` may render at the original scene resolution. Check the PNG dimensions.\n"
+        "- `get_python_api_docs` cannot resolve some class members; `bpy.types.Object.Object.location` is a workaround "
+        "for `bpy.types.Object.location`.\n"
+        "Reproduction evidence and local issue drafts: https://github.com/psiQAQ/blender_mcp-setup-guide/tree/main/docs/upstream-issues .\n\n"
         "Install the ZIP matching your platform. The evidence ZIP contains provenance and validation reports; "
         "it is for auditing and is not a Blender extension.\n\n"
         f"{marker}\n", encoding="utf-8",
