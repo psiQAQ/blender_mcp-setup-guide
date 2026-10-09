@@ -6,8 +6,10 @@ This package targets **Windows x64, Linux x64, macOS Apple Silicon and Blender 5
 
 | Blender range | Package version | Online update index |
 | --- | --- | --- |
-| 5.1.0 ≤ version < 5.2.0 | `1.0.3+integration.1`, stable | `https://notes.psiqaq.cn/blender_mcp-setup-guide/index.json` |
-| 5.2.0 ≤ version < 5.3.0 | `1.0.2-dev.1+integration.1`, preview | `https://notes.psiqaq.cn/blender_mcp-setup-guide/blender-5.2/preview/index.json` |
+| 5.1.0 ≤ version < 5.2.0 | `1.0.3+integration.2`, stable | `https://notes.psiqaq.cn/blender_mcp-setup-guide/index.json` |
+| 5.2.0 ≤ version < 5.3.0 | `1.0.2-dev.2+integration.1`, preview | `https://notes.psiqaq.cn/blender_mcp-setup-guide/index.json` |
+
+The unified index selects the compatible Blender version and platform, preferring stable within each Blender line. For explicit channel selection use [5.1 stable](https://notes.psiqaq.cn/blender_mcp-setup-guide/blender-5.1/stable/index.json) or [5.2 preview](https://notes.psiqaq.cn/blender_mcp-setup-guide/blender-5.2/preview/index.json).
 
 For a client-managed official MCP process, use the separate [official stdio guide](blender_mcp-stdio-setup_en.md). The [README](../README.md) compares the two methods.
 

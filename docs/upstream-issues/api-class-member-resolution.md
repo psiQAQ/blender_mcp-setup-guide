@@ -60,11 +60,11 @@ Both controls succeed in every session (6/6 each). The duplicated class identifi
 
 ### Evidence and source location
 
-- [5.1 official split results](evidence/blender-5.1-official.json), [5.2 official split results](evidence/blender-5.2-official.json): actual response fields, connection/control results, exact source hashes and versions. Attach these token-free, path-free files when posting.
-- `mcp/blmcp/tools/get_python_api_docs.py`: intra-file lookup selects `bpy.types.Object.rst` and searches its doctree for the remaining `location` identifier.
-- `mcp/blmcp/tools_helpers/rst_parse_docs.py`, `_find_definition`: lookup encounters the root `Object` class container, whose name does not match `location` at that level. Bundled `data/api/bpy.types.Object.rst` contains `.. class:: Object(ID)` with a nested `.. attribute:: location`.
+- [5.1 official split results](https://github.com/psiQAQ/blender_mcp-setup-guide/blob/main/docs/upstream-issues/evidence/blender-5.1-official.json), [5.2 official split results](https://github.com/psiQAQ/blender_mcp-setup-guide/blob/main/docs/upstream-issues/evidence/blender-5.2-official.json): actual response fields, connection/control results, exact source hashes and versions. Attach these token-free, path-free files when posting.
+- [Pinned get_python_api_docs.py](https://projects.blender.org/lab/blender_mcp/src/commit/dbbf836ad4b1025f14a2b3b504c43903f39e0b04/mcp/blmcp/tools/get_python_api_docs.py): intra-file lookup selects `bpy.types.Object.rst` and searches its doctree for the remaining `location` identifier.
+- [Pinned rst_parse_docs.py](https://projects.blender.org/lab/blender_mcp/src/commit/dbbf836ad4b1025f14a2b3b504c43903f39e0b04/mcp/blmcp/tools_helpers/rst_parse_docs.py), `_find_definition`: lookup encounters the root `Object` class container, whose name does not match `location` at that level. Bundled `data/api/bpy.types.Object.rst` contains `.. class:: Object(ID)` with a nested `.. attribute:: location`.
 - Proposed direction: account for the root class container when resolving members while preserving operator and explicitly nested-definition lookups. No upstream code was patched.
 
 ## Submission note
 
-This local draft has not been posted. Both fixed Git trees were checked for `.github`, `.gitea` and `.forgejo` issue templates; none were present. The upstream issue creation webpage was inaccessible to the reading tool on 2026-10-10, so server-provided templates could not be checked. Apply any form requirements shown after signing in.
+This local draft has not been posted. The official README directs reports to the [Blender MCP issue tracker](https://projects.blender.org/lab/blender_mcp/issues). Both fixed Git trees were checked for `.github`, `.gitea` and `.forgejo` issue templates; none were present. The upstream issue creation webpage was inaccessible to the reading tool on 2026-10-10, so server-provided templates could not be checked. Apply any form requirements shown after signing in.

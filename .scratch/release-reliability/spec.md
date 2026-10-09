@@ -1,6 +1,6 @@
 # 两条发布线可靠性更新
 
-Status: ready-for-agent
+Status: ready-for-human
 Category: bug
 
 ## 目标与验收
@@ -16,3 +16,5 @@ WinError 5 与历史黑图暂缓，保留证据；不修改系统 Blender、不�
 ## Comments
 
 2026-10-10：实施开始。临时环境位于 build/.working，报告与必要证据位于 build/latest；现有工作区内容按范围分批纳入，未验证的编辑器排除设置保留未提交。
+
+2026-10-10：两条新版 Release、三平台公开安装、不可变回执及网站更新完成；六份公开 JSON 和六个下载回读通过。两个上游问题经官方分体方式复现，英文 issue 只交付本地文档，由用户自行发布。本机 5.1 更新发现通过；5.2 只读同步与选包通过，但旧基线安装触发 WinError 5，更新发现未运行。保留失败并停止该项，不实施暂缓问题的处理。交付与证据见 docs/release-reliability-update.md；待用户发布 issue、人工验收及决定何时恢复暂缓诊断。
