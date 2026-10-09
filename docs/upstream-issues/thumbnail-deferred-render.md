@@ -53,10 +53,10 @@ Representative response, with its temporary directory redacted:
 
 ### Evidence and source location
 
-- [5.1 official split results](evidence/blender-5.1-official.json), [5.2 official split results](evidence/blender-5.2-official.json): per-call verdicts, PNG dimensions/SHA-256, pixel range, restoration checks, dependencies and source hashes. Attach these path-free, token-free files when posting.
-- `mcp/blmcp/tools/render_thumbnail_to_path_toolcode.py`, `main()`, around lines 89–112: thumbnail settings are applied inside `_backup_attrs_and_assign_multi`, but GUI rendering uses `INVOKE_DEFAULT`. The context exits before the asynchronous job completes. Its deferred handler keeps/restores `filepath`, while the other settings have already been restored.
+- [5.1 official split results](https://github.com/psiQAQ/blender_mcp-setup-guide/blob/main/docs/upstream-issues/evidence/blender-5.1-official.json), [5.2 official split results](https://github.com/psiQAQ/blender_mcp-setup-guide/blob/main/docs/upstream-issues/evidence/blender-5.2-official.json): per-call verdicts, PNG dimensions/SHA-256, pixel range, restoration checks, dependencies and source hashes. Attach these path-free, token-free files when posting.
+- [Pinned thumbnail implementation](https://projects.blender.org/lab/blender_mcp/src/commit/dbbf836ad4b1025f14a2b3b504c43903f39e0b04/mcp/blmcp/tools/render_thumbnail_to_path_toolcode.py), `main()`, around lines 89–112: thumbnail settings are applied inside `_backup_attrs_and_assign_multi`, but GUI rendering uses `INVOKE_DEFAULT`. The context exits before the asynchronous job completes. Its deferred handler keeps/restores `filepath`, while the other settings have already been restored.
 - Keeping all temporary settings until completion/cancellation is a proposed fix direction, not a tested upstream patch. Background rendering was not part of this reproduction.
 
 ## Submission note
 
-This local draft has not been posted. Both fixed Git trees were checked for `.github`, `.gitea` and `.forgejo` issue templates; none were present. The upstream issue creation webpage was inaccessible to the reading tool on 2026-10-10, so server-provided templates could not be checked. Apply any form requirements shown after signing in.
+This local draft has not been posted. The official README directs reports to the [Blender MCP issue tracker](https://projects.blender.org/lab/blender_mcp/issues). Both fixed Git trees were checked for `.github`, `.gitea` and `.forgejo` issue templates; none were present. The upstream issue creation webpage was inaccessible to the reading tool on 2026-10-10, so server-provided templates could not be checked. Apply any form requirements shown after signing in.

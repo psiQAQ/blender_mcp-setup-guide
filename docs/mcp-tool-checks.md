@@ -2,7 +2,7 @@
 
 2026-10-09，在 Windows x64 上使用 Blender 5.1.1 / Python 3.13.9 和 Blender 5.2.2 LTS / Python 3.13.13，分别通过真实 HTTP MCP SDK 调用服务公布的全部 26 个工具。每个工具单独建立 SDK 会话；另测同一会话连续 33 次调用。Blender 使用隔离配置、真实 GUI、随机本机端口和一次性场景，结束后清理运行环境。
 
-当前两个候选包的常规用例均为 **25 Passed / 1 Failed**。失败项为上游缩略图输出尺寸；另一个参数边界是上游 API 类成员查询失败。5.1 已发布包的 6 个 CLI 工具失败，使用当前集成代码构建的 5.1 本地候选已全部通过这 6 项。历史 SDK 超时已定位到旧测试客户端的 HTTP 读取期限，见[响应与截图诊断](mcp-response-diagnosis.md)。原生安装仍有 WinError 5，新跟踪捕获到失败期间的 Codex 子目录访问，详见[目录诊断](native-install-diagnosis.md)。
+2026-10-09 两个本地候选的常规用例均为 **25 Passed / 1 Failed**。失败项为上游缩略图输出尺寸；另一个参数边界是上游 API 类成员查询失败。5.1 旧发布包的 6 个 CLI 工具失败，使用修正后集成代码构建的 5.1 本地候选已全部通过这 6 项。历史 SDK 超时已定位到旧测试客户端的 HTTP 读取期限，见[响应与截图诊断](mcp-response-diagnosis.md)。WinError 5 与历史黑图暂缓处理，证据分别见[目录诊断](native-install-diagnosis.md)和响应诊断。当前正式发布验收见[验证记录](integration-validation.md)。
 
 ## 成果来源
 
@@ -12,7 +12,7 @@
 | 5.1 本地候选 | `1.0.3+integration.2`，同一上游，当前集成源码 | `0c08933ad2e9cb32ea974120b9519705b78c21ace0d30081431e0abde64b4e25` |
 | 5.2 本地候选 | `1.0.2-dev.2+integration.1`，上游 `dbbf836ad4b1025f14a2b3b504c43903f39e0b04` | `85acceb703ad52bcacd412e0991c84c3c3c424fd616826dacc04e8d97325ca23` |
 
-候选位于 `build/latest/dist/`，5.1 位于其 `blender-5.1/` 子目录。来源提交为 `39342f8349618b4486b606e85955cf9fe6423310`；5.1 候选 provenance 标记 `integration_dirty: true`。这些包用于本地验证，本次没有发布安装包、提交代码、推送或提交外部 issue。
+该次候选来源提交为 `39342f8349618b4486b606e85955cf9fe6423310`；5.1 候选 provenance 标记 `integration_dirty: true`。这些包用于本地检查；正式包由对应干净提交的三平台 CI 重建。候选替换前的哈希保留在 `build/latest/maintenance/release-update-context.json`，逐工具失败报告继续保留。外部 issue 只交付本地文档。
 
 5.1 发布基线缓存位于 `build/latest/inputs/mcp-tools/blender-5.1-windows-x64/<SHA-256>/stable.zip`。5.1 候选使用当前仓库已有的 Windows wheel 锁，没有添加依赖或更新 wheel 锁。双版本候选分别通过官方 `extension validate`。
 
@@ -49,7 +49,7 @@
 | `render_thumbnail_to_path` | Failed | Failed | 期望最长边 ≤ 320，实际 PNG 为 400 × 300 |
 | `render_viewport_to_path` | Passed | Passed | 实际 PNG 为 400 × 300，像素有可见内容 |
 
-这些是单个真实场景中的自动化用例，不能代表所有参数和所有 Blender 状态均已覆盖。人工 GUI 操作验收、其他系统、最低兼容 Blender 版本、完整发布与远端 CI 属于 Not Run。
+这些是单个真实场景中的自动化用例，不能代表所有参数和所有 Blender 状态均已覆盖。该次逐工具检查没有覆盖其他系统或最低 Blender 版本；正式包的跨系统、最低版本和公开安装结果单独记录在[发布验证](integration-validation.md)中。人工 GUI 操作验收为 Not Run。
 
 ## 失败尝试与责任判断
 
@@ -57,7 +57,7 @@
 
 | 失败尝试 | 证据与根因 | 处理及状态 |
 | --- | --- | --- |
-| 5.1 发布包的 `execute_blender_code_for_cli` 及五个 `*_for_cli` 摘要工具 | 上游 CLI 默认使用 `BLENDER_PATH`，否则调用 PATH 中的 `blender`；发布包未注入宿主路径，错误为 `Blender executable not found at 'blender'` | 当前集成运行时已设置真实 `bpy.app.binary_path`；重新构建 5.1 候选并复测，六项 Passed。已发布包仍需另行发布修复版本 |
+| 5.1 旧发布包的 `execute_blender_code_for_cli` 及五个 `*_for_cli` 摘要工具 | 上游 CLI 默认使用 `BLENDER_PATH`，否则调用 PATH 中的 `blender`；旧发布包未注入宿主路径，错误为 `Blender executable not found at 'blender'` | 当前集成运行时设置真实 `bpy.app.binary_path`。修复已进入 `1.0.3+integration.2` 与 `1.0.2-dev.2+integration.1`；两个正式包的三平台 CI 均实际调用六个 CLI 并通过 |
 | `render_thumbnail_to_path` 输出过大 | 两版本 GUI 均产出 400 × 300；原始桥接对照同样失败。上游 `INVOKE_DEFAULT` 异步渲染后过早恢复分辨率 | 上游问题，[issue 草稿](upstream-issues/thumbnail-deferred-render.md)。未修改上游工具 |
 | `get_python_api_docs("bpy.types.Object.location")` | 两版本返回 `found: false`；RST 实际包含 location。父文件前缀被去掉后，解析器仍要求根类名 | 上游问题，[issue 草稿](upstream-issues/api-class-member-resolution.md)。`bpy.types.Object.Object.location` 临时查询通过 |
 | 此前用户 GUI 的窗口截图全黑 | 历史两张 PNG 的 RGB 确为零；定向诊断中 101 次真实图像内容检查通过，含旧包、两种图形后端及多窗口 | 当前未复现，具体原因未确认。用户确认没有 RDP、锁屏或显示器切换；详见[诊断边界](mcp-response-diagnosis.md) |
@@ -76,7 +76,7 @@ PowerShell，在仓库根目录使用已有 Python。以下检查会启动自己
 ```powershell
 $python = 'C:\Users\ustcw\miniforge3\python.exe'
 $blender = 'C:\Program Files\Blender Foundation\Blender 5.2\blender.exe'
-$package = 'build/latest/dist/blender_mcp_integration-1.0.2-dev.2+integration.1-windows-x64.zip'
+$package = 'build/latest/validated/blender-5.2/windows-x64/dist/blender_mcp_integration-1.0.2-dev.2+integration.1-windows-x64.zip'
 & $python -B scripts/test_mcp_tools.py --blender $blender --package $package --label 5.2-complete
 & $python -B scripts/test_mcp_tools.py --blender $blender --package $package --label 5.2-upstream --official-bridge
 & $python -B scripts/summarize_mcp_tools.py
@@ -98,12 +98,13 @@ $python51 = 'C:\Program Files\Blender Foundation\Blender 5.1\5.1\python\bin\pyth
 
 | 项目 | 状态 |
 | --- | --- |
-| 标准库单元测试 | Passed：80 项 |
+| 标准库单元测试 | Passed：维护代码 94 项；正式包的干净 CI 为 81 项，分别绑定包哈希 |
 | 两个 Windows 候选官方格式校验 | Passed |
 | 两版本所有 26 个工具的真实调用 | 已运行：各 25 常规用例 Passed、1 Failed；类成员参数另有 Failed |
 | 两版本原始上游桥接对照 | Passed：完成对照；上游问题仍 Failed |
 | 同一 SDK 会话连续 33 次响应 | Passed：两个版本及原始桥接对照 |
-| 独立人工操作、跨系统、最低版本、发布验收 | Not Run |
+| 独立人工操作 | Not Run |
+| 正式包跨系统、最低版本与公开发布验收 | 见[发布验证](integration-validation.md)，与上述本地逐工具检查分别记录 |
 
 `integration-tests.json` 的工具数量只证明工具发现。当前原生入口还会真实调用全部六个 CLI 工具并核对正向夹具；其他逐工具行为以 `mcp-tools-*-tests.json` 为准。每次原生安装失败独立保留。
 

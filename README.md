@@ -20,8 +20,10 @@ Blender manages an independent authenticated local HTTP service. Install the ZIP
 
 | Blender | Release and fixed official source | Extensions index |
 | --- | --- | --- |
-| 5.1.0 ≤ version < 5.2.0 | [Stable 1.0.3+integration.1](https://github.com/psiQAQ/blender_mcp-setup-guide/releases/tag/v1.0.3%2Bintegration.1), official v1.0.3 | [5.1 stable](https://notes.psiqaq.cn/blender_mcp-setup-guide/index.json) |
-| 5.2.0 ≤ version < 5.3.0 | [Preview 1.0.2-dev.1+integration.1](https://github.com/psiQAQ/blender_mcp-setup-guide/releases/tag/v1.0.2-dev.1%2Bintegration.1), official main snapshot `dbbf836ad4b1025f14a2b3b504c43903f39e0b04` | [5.2 preview](https://notes.psiqaq.cn/blender_mcp-setup-guide/blender-5.2/preview/index.json) |
+| 5.1.0 ≤ version < 5.2.0 | [Stable 1.0.3+integration.2](https://github.com/psiQAQ/blender_mcp-setup-guide/releases/tag/v1.0.3%2Bintegration.2), official v1.0.3 | [5.1 stable](https://notes.psiqaq.cn/blender_mcp-setup-guide/blender-5.1/stable/index.json) |
+| 5.2.0 ≤ version < 5.3.0 | [Preview 1.0.2-dev.2+integration.1](https://github.com/psiQAQ/blender_mcp-setup-guide/releases/tag/v1.0.2-dev.2%2Bintegration.1), official main snapshot `dbbf836ad4b1025f14a2b3b504c43903f39e0b04` | [5.2 preview](https://notes.psiqaq.cn/blender_mcp-setup-guide/blender-5.2/preview/index.json) |
+
+Use the [unified Extensions index](https://notes.psiqaq.cn/blender_mcp-setup-guide/index.json) for automatic Blender version and platform selection. Stable releases take priority within each Blender line; the individual indexes above allow explicit channel selection. Known upstream thumbnail and API member lookup limits are documented in the [validation record](docs/integration-validation.md).
 
 Each line provides Windows x64, Linux x64 and macOS Apple Silicon packages. The 5.2 preview is a GitHub Pre-release. `main` and `release/blender-5.2` follow the reviewed snapshot; `release/blender-5.1` maintains the 5.1 stable line. Promotion to 5.2 stable requires a new official stable tag, complete native validation and manual publication.
 
