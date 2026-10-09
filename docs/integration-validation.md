@@ -31,6 +31,8 @@
 
 原生集成检查通过已保存场景、一个真实链接库和一个有 fake user 的缺失图片，调用全部六个 CLI 工具。在 PATH 为空且传入错误 BLENDER_PATH 的条件下，核对工具实际使用宿主 Blender。安装器报告 ERROR 时直接失败，不导入未安装的 Extension。重试会保留原 Failed 报告和必要日志；候选替换只使对应输出目录旧包的证据失效。
 
+部署后使用 `scripts/test_index_sync.py --blender <可执行文件> --index-url <统一索引> --output <报告>` 验证实际官方同步与选包。增加 `--previous-package <真实旧发布 ZIP> --expected-version <新版本>` 时，入口先核对发布基线的大小和 SHA-256，在隔离仓库安装旧包，再切换到公开统一索引，并要求 Blender 官方更新统计恰好发现一个更新。此检查不会启用旧插件或修改系统配置。
+
 官方分体复测使用 `scripts/test_upstream_split.py`，安装原版 `mcp` Extension 并使用独立 uv 环境的 stdio 服务。每版本三个 GUI 会话、九次缩略图调用与三组文档查询，报告不计入集成发布门槛的 Passed 项。完整脱敏证据和两个待用户发布的英文 issue 位于 `docs/upstream-issues/`。官方复测确认的失败继续保留为 Failed，网站与新 Release 注明其限制。
 
 ## 发布验收

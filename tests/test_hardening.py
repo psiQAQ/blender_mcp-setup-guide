@@ -97,6 +97,19 @@ class HardeningTests(unittest.TestCase):
         self.assertEqual(json.loads(report.read_text())["package_sha256"], "a" * 64)
         self.assertEqual(json.loads(report.read_text())["checks"], {"first": "Passed"})
 
+    def test_preflight_failure_remains_bound_to_the_input_package(self):
+        build = self.directory / "build/latest"
+        package = self.directory / "candidate.zip"
+        package.write_bytes(b"candidate identity")
+        def fail():
+            raise RuntimeError("Preflight failure")
+        with patch.object(check_reports, "LATEST", build), patch("build_cache.LATEST", build), patch("build_cache.BUILD", self.directory / "build"), patch.object(sys, "argv", ["check", "--package", str(package)]):
+            with self.assertRaisesRegex(RuntimeError, "Preflight failure"):
+                check_reports.run_check("native", fail)
+        report = json.loads((build / "native-tests.json").read_text())
+        self.assertEqual(report["status"], "Failed")
+        self.assertEqual(report["package_sha256"], build_integration.digest(package))
+
     def package(self, version):
         record = dict(version=version, channel="preview", preview_revision=1, integration_revision=1,
                       extension_version=f"{version}-dev.1+integration.1", blender_min="5.2.0", blender_max="5.3.0", platform="windows-x64")

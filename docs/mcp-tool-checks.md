@@ -98,7 +98,7 @@ $python51 = 'C:\Program Files\Blender Foundation\Blender 5.1\5.1\python\bin\pyth
 
 | 项目 | 状态 |
 | --- | --- |
-| 标准库单元测试 | Passed：79 项 |
+| 标准库单元测试 | Passed：80 项 |
 | 两个 Windows 候选官方格式校验 | Passed |
 | 两版本所有 26 个工具的真实调用 | 已运行：各 25 常规用例 Passed、1 Failed；类成员参数另有 Failed |
 | 两版本原始上游桥接对照 | Passed：完成对照；上游问题仍 Failed |
