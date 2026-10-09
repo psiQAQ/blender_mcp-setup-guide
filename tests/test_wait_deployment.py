@@ -49,3 +49,18 @@ class DeploymentReadinessTests(unittest.TestCase):
             with self.assertRaises(urllib.error.HTTPError):
                 wait_metadata('https://example.com', self.site)
         sleep.assert_not_called()
+
+    def test_socket_timeout_is_kept_in_observations_before_recovery(self):
+        observed = []
+        def read(base, name):
+            if self.clock == 0:
+                raise TimeoutError('Read timed out')
+            return b'new public metadata'
+        with patch('wait_deployment.read_bytes', side_effect=read), \
+                patch('wait_deployment.time.monotonic', side_effect=lambda: self.clock), \
+                patch('wait_deployment.time.sleep', side_effect=self.sleep):
+            report = wait_metadata('https://example.com', self.site, timeout=2, interval=1,
+                                   observe=lambda value: observed.append(value['status']))
+        self.assertEqual(report['status'], 'Passed')
+        self.assertEqual(observed, ['Not Run', 'Passed'])
+        self.assertEqual(report['observations'][0]['errors']['index.json'], 'Read timed out')

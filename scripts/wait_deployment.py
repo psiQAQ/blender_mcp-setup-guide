@@ -12,7 +12,7 @@ from check_reports import preserve_failure, write_json
 from pages_site import read_bytes
 
 
-def wait_metadata(base, site, timeout=660, interval=15):
+def wait_metadata(base, site, timeout=660, interval=15, observe=None):
     expected = {path.relative_to(site).as_posix(): path.read_bytes()
                 for path in sorted(site.rglob('*.json')) if path.name in {'index.json', 'publication.json'}}
     if not {'index.json', 'publication.json'} <= expected.keys():
@@ -31,7 +31,7 @@ def wait_metadata(base, site, timeout=660, interval=15):
                     raise
                 actual = None
                 errors[name] = str(error)
-            except urllib.error.URLError as error:
+            except (urllib.error.URLError, TimeoutError) as error:
                 actual = None
                 errors[name] = str(error)
             if actual != content:
@@ -41,6 +41,8 @@ def wait_metadata(base, site, timeout=660, interval=15):
         report = {'status': 'Passed' if not pending else 'Not Run', 'base_url': base,
                   'expected_metadata': {name: hashlib.sha256(content).hexdigest() for name, content in expected.items()},
                   'observations': observations}
+        if observe:
+            observe(report)
         if not pending:
             return report
         if elapsed >= timeout:
@@ -59,10 +61,14 @@ def main():
     args = parser.parse_args()
     args.output.parent.mkdir(parents=True, exist_ok=True)
     preserve_failure(args.output.name.removesuffix('-tests.json'), args.output)
+    write_json(args.output, {'status': 'Not Run', 'base_url': args.base_url, 'observations': []})
     try:
-        report = wait_metadata(args.base_url, args.site, args.timeout, args.interval)
+        report = wait_metadata(args.base_url, args.site, args.timeout, args.interval,
+                               observe=lambda value: write_json(args.output, value))
     except Exception as error:
-        write_json(args.output, {'status': 'Failed', 'base_url': args.base_url, 'error': f'{type(error).__name__}: {error}'})
+        report = json.loads(args.output.read_text(encoding='utf-8'))
+        report.update(status='Failed', error=f'{type(error).__name__}: {error}')
+        write_json(args.output, report)
         raise
     write_json(args.output, report)
     print(json.dumps(report, indent=2))

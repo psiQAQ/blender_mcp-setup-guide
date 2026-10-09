@@ -7,13 +7,20 @@ on:
       - 'web/**'
       - 'scripts/pages_render.py'
       - 'scripts/pages_site.py'
+      - 'scripts/deployment_recovery.py'
       - 'scripts/wait_deployment.py'
       - 'scripts/run_checks.py'
       - 'tests/test_pages*.py'
       - 'tests/test_wait_deployment.py'
+      - 'tests/test_deployment_recovery.py'
       - '.github/workflows/pages.yml'
       - 'docs/release-site.md'
   workflow_dispatch:
+    inputs:
+      publication_run_id:
+        description: Optional failed publication with successful assets and stale public metadata
+        type: string
+        default: ''
   workflow_run:
     workflows: ['Publish validated integration']
     types: [completed]
@@ -37,14 +44,15 @@ jobs:
     permissions:
       contents: read
       pages: read
+      actions: read
     outputs:
       base_url: ${{ steps.pages.outputs.base_url }}
       site_commit: ${{ steps.source.outputs.commit }}
     steps:
-      # workflow_run may refer to an older release branch. Only use the trusted main renderer.
+      # Automatic refreshes use main. Recovery uses the explicitly selected maintenance commit.
       - uses: actions/checkout@v4
         with:
-          ref: main
+          ref: ${{ github.event_name == 'workflow_dispatch' && inputs.publication_run_id != '' && github.sha || 'main' }}
           persist-credentials: false
       - name: Record the website source commit
         id: source
@@ -57,9 +65,32 @@ jobs:
       - name: Run repository unit tests
         run: python -B scripts/run_checks.py
       - name: Verify published channels and render the website
+        if: ${{ !inputs.publication_run_id }}
         env:
           PAGES_BASE: ${{ steps.pages.outputs.base_url }}
         run: python -B scripts/pages_site.py --base-url "$PAGES_BASE" --refresh --site build/latest/site
+      - name: Recover the exact verified publication site
+        if: ${{ inputs.publication_run_id }}
+        uses: actions/download-artifact@v4
+        with:
+          name: verified-extension-index
+          path: build/latest/site
+          github-token: ${{ github.token }}
+          run-id: ${{ inputs.publication_run_id }}
+      - name: Recover original public verification failures
+        if: ${{ inputs.publication_run_id }}
+        uses: actions/download-artifact@v4
+        with:
+          pattern: publication-*
+          path: build/latest/publication-reports
+          github-token: ${{ github.token }}
+          run-id: ${{ inputs.publication_run_id }}
+      - name: Verify published assets and restrict recovery to stale metadata
+        if: ${{ inputs.publication_run_id }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PUBLICATION_RUN_ID: ${{ inputs.publication_run_id }}
+        run: python -B scripts/deployment_recovery.py --run-id "$PUBLICATION_RUN_ID" --site build/latest/site --reports build/latest/publication-reports
       - name: Recheck immutable metadata and downloads before deployment
         env:
           PAGES_BASE: ${{ steps.pages.outputs.base_url }}
@@ -74,6 +105,12 @@ jobs:
             build/latest/site/**/*.json
           if-no-files-found: error
           retention-days: 7
+      - uses: actions/upload-artifact@v4
+        if: ${{ inputs.publication_run_id }}
+        with:
+          name: deployment-recovery-verification
+          path: build/latest/deployment-recovery-tests.json
+          if-no-files-found: error
       - uses: actions/upload-pages-artifact@v3
         with:
           path: build/latest/site
