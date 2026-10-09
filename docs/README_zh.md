@@ -20,8 +20,10 @@ flowchart LR
 
 | Blender 范围 | 版本与固定官方来源 | Extensions 索引 |
 | --- | --- | --- |
-| 5.1.0 ≤ 版本 < 5.2.0 | [正式版 1.0.3+integration.1](https://github.com/psiQAQ/blender_mcp-setup-guide/releases/tag/v1.0.3%2Bintegration.1)，官方 v1.0.3 | [5.1 稳定索引](https://notes.psiqaq.cn/blender_mcp-setup-guide/index.json) |
-| 5.2.0 ≤ 版本 < 5.3.0 | [预发布版 1.0.2-dev.1+integration.1](https://github.com/psiQAQ/blender_mcp-setup-guide/releases/tag/v1.0.2-dev.1%2Bintegration.1)，官方 main 快照 `dbbf836ad4b1025f14a2b3b504c43903f39e0b04` | [5.2 预发布索引](https://notes.psiqaq.cn/blender_mcp-setup-guide/blender-5.2/preview/index.json) |
+| 5.1.0 ≤ 版本 < 5.2.0 | [正式版 1.0.3+integration.2](https://github.com/psiQAQ/blender_mcp-setup-guide/releases/tag/v1.0.3%2Bintegration.2)，官方 v1.0.3 | [5.1 稳定索引](https://notes.psiqaq.cn/blender_mcp-setup-guide/blender-5.1/stable/index.json) |
+| 5.2.0 ≤ 版本 < 5.3.0 | [预发布版 1.0.2-dev.2+integration.1](https://github.com/psiQAQ/blender_mcp-setup-guide/releases/tag/v1.0.2-dev.2%2Bintegration.1)，官方 main 快照 `dbbf836ad4b1025f14a2b3b504c43903f39e0b04` | [5.2 预发布索引](https://notes.psiqaq.cn/blender_mcp-setup-guide/blender-5.2/preview/index.json) |
+
+推荐添加[统一 Extensions 索引](https://notes.psiqaq.cn/blender_mcp-setup-guide/index.json)，由 Blender 自动匹配版本与系统平台，同一 Blender 发布线优先稳定版。上表的独立索引用于明确选择通道。已知上游缩略图与 API 类成员查询限制见[验证记录](integration-validation.md)。
 
 两个版本均提供 Windows x64、Linux x64 与 macOS Apple Silicon 安装包。5.2 版本属于 GitHub Pre-release。`main` 和 `release/blender-5.2` 跟随经审查的 main 快照；`release/blender-5.1` 维护 5.1 稳定线。5.2 转为正式版须等待新的官方稳定 tag，重新完成三平台验收并人工触发发布。
 

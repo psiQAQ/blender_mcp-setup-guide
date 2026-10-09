@@ -23,7 +23,7 @@ blender_python='/path/to/blender/python/bin/python3.13'
 
 `--platform` 可选；默认检测本机。指定的平台与解释器系统、架构、CPython 3.13 不一致时拒绝构建。平台配置、官方 Blender URL/hash 和依赖锁路径来自 `packaging/platforms.json`。Windows 为 40 个 wheels，Linux/macOS 为 39 个；pywin32 只用于 Windows。5.1 来源为 v1.0.3 / `2cea8d566dde07fbac28a61d698909d69724e853`；5.2 来源为 main / `dbbf836ad4b1025f14a2b3b504c43903f39e0b04`，上游服务器版本为 1.0.2。构建验证已提交的子模块指针、干净源码与原远端，不自动拉取浮动 main。
 
-当前 5.2 候选构建输出为 `build/latest/dist/blender_mcp_integration-1.0.2-dev.2+integration.1-<platform>.zip`、对应 `.sha256` 与 `provenance-<platform>.json`。版本来自 `packaging/upstream.json`。来源包含渠道、main/tag 引用、预发布序号、子模块指针、仓库提交和 dirty 状态、依赖版本、wheel hash 与桥接补丁 hash。旧稳定记录缺少渠道字段时按 5.1 stable 解析。ZIP 通过官方 `extension validate`，保留依赖数据与许可证；发布仍要求干净提交。
+5.2 本地构建默认输出为 `build/latest/dist/blender_mcp_integration-1.0.2-dev.2+integration.1-<platform>.zip`、对应 `.sha256` 与 `provenance-<platform>.json`。版本来自 `packaging/upstream.json`。正式发布 CI 成果保留在 `build/latest/validated/blender-<发布线>/`。来源包含渠道、main/tag 引用、预发布序号、子模块指针、仓库提交和 dirty 状态、依赖版本、wheel hash 与桥接补丁 hash。旧稳定记录缺少渠道字段时按 5.1 stable 解析。ZIP 通过官方 `extension validate`，保留依赖数据与许可证；发布仍要求干净提交。
 
 已核验的官方源码和 wheel 缓存可通过 `--upstream <目录> --wheelhouse <目录> --offline` 复用。构建不得从已安装插件目录复制依赖。更新依赖时，三个平台同步核对版本及独立 wheel hash。
 
@@ -52,7 +52,7 @@ CI 使用 windows-2022、ubuntu-24.04、macos-15 ARM64 原生 runner；5.2 线 h
 
 ## 渠道发布
 
-将 Pages 来源设置为 GitHub Actions。为完全通过 CI 的同一干净提交创建版本标签，手动触发 `release.yml`，指定对应分支、成功 CI run ID、标签和 `stable` 或 `preview` 渠道。首次 5.2 预发布标签为 `v1.0.2-dev.1+integration.1`。候选来源选择和发布前分别核对官方远端 main HEAD；若变化，重新固定子模块并完成验收。`main` 快照禁止发布为 stable；preview 显式设置 Pre-release 与 `latest=false`。
+将 Pages 来源设置为 GitHub Actions。为完全通过 CI 的同一干净提交创建版本标签，手动触发 `release.yml`，指定指向该提交且获准部署的维护分支、成功 CI run ID、标签名和 `stable` 或 `preview` 渠道。当前 `github-pages` 环境允许 `main`、`release/blender-5.1` 和 `release/blender-5.2`，不允许标签作为部署来源。工作流核对分支提交、CI 提交与版本标签指向一致。5.2 预发布标签示例为 `v1.0.2-dev.2+integration.1`。候选来源选择和发布前分别核对官方远端 main HEAD；若变化，重新固定子模块并完成验收。`main` 快照禁止发布为 stable；preview 显式设置 Pre-release 与 `latest=false`。
 
 工作流复用三个已验证产物，核对来源、标签、完整平台集合和所有报告；先上传 draft Release 并逐资产鉴权回读大小/hash，再验证官方 Extensions 索引。Pages 合成完整站点并回读保留渠道的索引与 ZIP；全部通过后公开相应渠道的 Release，回读公开下载并部署 Pages。三个原生 runner 随后从公开索引实际安装并调用 MCP，并再次核对保留渠道。
 
