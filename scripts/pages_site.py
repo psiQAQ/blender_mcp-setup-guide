@@ -177,8 +177,9 @@ def verify_retained(base, site, deployed=False):
             index, publication = content("index.json"), content("publication.json")
             record = validate_index(index, publication, path)
             channels[path] = json.loads(index)
-            for package in record["packages"].values():
-                verify_download(package["archive_url"], package["sha256"], package["size"])
+            if deployed or prefix + "publication.json" in saved:
+                for package in record["packages"].values():
+                    verify_download(package["archive_url"], package["sha256"], package["size"])
     if deployed:
         if json.loads(read_bytes(base, "index.json")) != unified_index(channels):
             raise ValueError("Public unified index differs from channel records")

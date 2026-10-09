@@ -44,7 +44,7 @@ class PagesSiteTests(unittest.TestCase):
                 self.assertTrue((directory / "site/assets/site.css").exists())
                 self.assertTrue((directory / "site/blender-5.2/preview/en/index.html").exists())
                 verify_retained("https://example.com", directory / "site")
-                self.assertEqual(readback.call_count, 9)
+                self.assertEqual(readback.call_count, 6)
             with patch("pages_site.read_bytes", return_value=b"changed"):
                 with self.assertRaisesRegex(ValueError, "Retained channel changed"):
                     verify_retained("https://example.com", directory / "site")
@@ -69,6 +69,27 @@ class PagesSiteTests(unittest.TestCase):
                     public['index.json'] = stable['index.json']
                     with self.assertRaisesRegex(ValueError, 'unified index'):
                         verify_retained("https://example.com/project", site, deployed=True)
+
+    def test_draft_assets_are_checked_publicly_only_after_publication(self):
+        stable, preview = self.channel(""), self.channel("blender-5.2/preview")
+        for name in ("index.json", "publication.json"):
+            preview[name] = preview[name].replace(b"https://example.com/", b"https://example.com/draft/")
+        def download(url, digest, size):
+            if "/draft/" in url:
+                raise ValueError("Draft asset is not publicly available")
+        with tempfile.TemporaryDirectory() as temporary:
+            directory = Path(temporary)
+            candidate, site = directory / "candidate", directory / "site"
+            candidate.mkdir()
+            for name, content in preview.items():
+                (candidate / name).write_bytes(content)
+            with patch("pages_site.read_bytes", side_effect=lambda base, path, optional=False: stable.get(path)), patch("pages_site.verify_download", side_effect=download):
+                compose("https://example.com", candidate, site)
+                verify_retained("https://example.com", site)
+            public = {path.relative_to(site).as_posix(): path.read_bytes() for path in site.rglob("*.json")}
+            with patch("pages_site.read_bytes", side_effect=lambda base, path, optional=False: public.get(path)), patch("pages_site.verify_download", side_effect=download):
+                with self.assertRaisesRegex(ValueError, "Draft asset is not publicly available"):
+                    verify_retained("https://example.com", site, deployed=True)
 
     def test_subsequent_refresh_uses_canonical_channels(self):
         stable, preview = self.channel(""), self.channel("blender-5.2/preview")
