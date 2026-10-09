@@ -129,7 +129,7 @@ def check_build_runtime(python, lock, target):
 
 
 def build_in_work(args):
-    lock = json.loads(LOCK_PATH.read_text(encoding="utf-8"))
+    lock = json.loads(getattr(args, "lock", LOCK_PATH).read_text(encoding="utf-8"))
     identifier, target = resolve(args.platform)
     lock["platform"] = identifier
     requirements = ROOT / "packaging" / target["requirements"]
@@ -214,6 +214,7 @@ def build_in_work(args):
 def build(args):
     import copy
     output = args.output.resolve()
+    previous_hashes = {digest(path) for path in output.glob("blender_mcp_integration-*.zip")}
     with task_directory('build') as temporary:
         staged = copy.copy(args)
         staged.output = temporary / 'dist'
@@ -227,11 +228,7 @@ def build(args):
                 shutil.copytree(staged.output, output)
             package = output / package.name
             current_hash = digest(package)
-            for report in LATEST.glob('*-tests.json'):
-                value = json.loads(report.read_text(encoding='utf-8'))
-                if value.get('package_sha256') not in (None, current_hash):
-                    value.update(status='Not Run', reason='Report belongs to a previous candidate package')
-                    report.write_text(json.dumps(value, indent=2) + '\n', encoding='utf-8', newline='\n')
+            invalidate_candidate_reports(previous_hashes, current_hash)
             mark('dist', 'Passed', package_sha256=current_hash, path=str(package))
             print(package)
             return package
@@ -240,11 +237,21 @@ def build(args):
             raise
 
 
+def invalidate_candidate_reports(previous_hashes, current_hash):
+    """Retire evidence only for candidates replaced in this output directory."""
+    for report in LATEST.glob('*-tests.json'):
+        value = json.loads(report.read_text(encoding='utf-8'))
+        if value.get('package_sha256') in previous_hashes and value['package_sha256'] != current_hash:
+            value.update(status='Not Run', reason='Report belongs to a previous candidate package')
+            report.write_text(json.dumps(value, indent=2) + '\n', encoding='utf-8', newline='\n')
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--blender", required=True, type=Path)
     parser.add_argument("--python", default=Path(sys.executable), type=Path)
     parser.add_argument("--upstream", type=Path)
+    parser.add_argument("--lock", type=Path, default=LOCK_PATH, help="Exact release-line source lock")
     parser.add_argument("--platform", choices=("windows-x64", "linux-x64", "macos-arm64"))
     parser.add_argument("--wheelhouse", type=Path)
     parser.add_argument("--output", default=LATEST / "dist", type=Path)

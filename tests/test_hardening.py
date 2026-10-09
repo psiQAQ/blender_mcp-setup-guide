@@ -12,6 +12,7 @@ sys.path.insert(0, str(ROOT / "scripts"))
 import check_reports
 import platforms
 import test_repository
+import build_integration
 from test_upgrade import previous_fixture, previous_release
 from upstream_sync import inspect
 from integration_build_runtime.private_files import normalize_windows_dacl, persistent_token, private_directory, windows_dacl, windows_user_sid, write_private
@@ -64,6 +65,38 @@ class HardeningTests(unittest.TestCase):
         self.assertIn("Install failed", result["error"])
         self.assertFalse((build / "repository-tests.json").exists())
 
+    def test_retry_retains_the_previous_failure_and_its_log(self):
+        build = self.directory / "build/latest"
+        log = build / "evidence/native/blender.log"
+        log.parent.mkdir(parents=True)
+        log.write_text("Original installation error")
+        report = build / "native-tests.json"
+        report.write_text(json.dumps({"status": "Failed", "package_sha256": "a" * 64,
+                                      "checks": {"installation": "Failed"}}))
+        with patch.object(check_reports, "LATEST", build):
+            check_reports.preserve_failure("native", report)
+            check_reports.preserve_failure("native", report)
+        saved = list((build / "evidence/failed-checks/native").glob("*/report.json"))
+        self.assertEqual(len(saved), 1)
+        self.assertEqual(json.loads(saved[0].read_text())["checks"]["installation"], "Failed")
+        self.assertEqual((saved[0].parent / "diagnostics/blender.log").read_text(), "Original installation error")
+
+    def test_child_failure_preserves_package_and_completed_checks(self):
+        build = self.directory / "build/latest"
+        work = self.directory / "build/.working/native"
+        build.mkdir(parents=True)
+        work.mkdir(parents=True)
+        report = build / "native-tests.json"
+        def fail():
+            check_reports.write_json(report, {"status": "Failed", "package_sha256": "a" * 64,
+                                              "checks": {"first": "Passed"}})
+            raise RuntimeError("Native installation failed")
+        with patch.object(check_reports, "LATEST", build), patch("build_cache.BUILD", self.directory / "build"), patch.dict(os.environ, BLENDER_MCP_CHECK_WORK=str(work)):
+            with self.assertRaisesRegex(RuntimeError, "Native installation failed"):
+                check_reports.run_check("native", fail)
+        self.assertEqual(json.loads(report.read_text())["package_sha256"], "a" * 64)
+        self.assertEqual(json.loads(report.read_text())["checks"], {"first": "Passed"})
+
     def package(self, version):
         record = dict(version=version, channel="preview", preview_revision=1, integration_revision=1,
                       extension_version=f"{version}-dev.1+integration.1", blender_min="5.2.0", blender_max="5.3.0", platform="windows-x64")
@@ -108,6 +141,15 @@ class HardeningTests(unittest.TestCase):
         with patch.object(platforms.runtime, "check_runtime"), patch.object(platforms.runtime, "require_free_port"):
             with self.assertRaisesRegex(platforms.runtime.ServiceError, "host Blender"):
                 platforms.runtime.Service().start(self.directory, 8123, 9876)
+
+    def test_candidate_replacement_preserves_other_release_line_evidence(self):
+        for name, checksum in (("replaced", "old"), ("stable", "stable"), ("current", "new")):
+            (self.directory / f"{name}-tests.json").write_text(json.dumps({"status": "Passed", "package_sha256": checksum}))
+        with patch.object(build_integration, "LATEST", self.directory):
+            build_integration.invalidate_candidate_reports({"old"}, "new")
+        self.assertEqual(json.loads((self.directory / "replaced-tests.json").read_text())["status"], "Not Run")
+        for name in ("stable", "current"):
+            self.assertEqual(json.loads((self.directory / f"{name}-tests.json").read_text())["status"], "Passed")
 
 
 if __name__ == "__main__":

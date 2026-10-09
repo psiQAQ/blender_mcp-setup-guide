@@ -16,16 +16,21 @@ import gpu
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
 from check_reports import write_json
+sys.path.insert(0, str(Path(__file__).parent))
+from blender_integration_host import make_cli_fixture
+from native_install_capture import capture_install
 
 
 def main():
     bpy.context.preferences.view.show_splash = False
     package, directory, http_port, bridge_port = sys.argv[sys.argv.index("--") + 1:]
     control = Path(directory)
+    make_cli_fixture(control)
     blend_file = control / "cli-test.blend"
     bpy.ops.wm.save_as_mainfile(filepath=str(blend_file))
     assert not bpy.app.background
-    assert bpy.ops.extensions.package_install_files(filepath=package, repo="user_default", enable_on_install=True) == {"FINISHED"}
+    with capture_install(control):
+        assert bpy.ops.extensions.package_install_files(filepath=package, repo="user_default", enable_on_install=True) == {"FINISHED"}
     name = "bl_ext.user_default.blender_mcp_integration"
     addon = importlib.import_module(name)
     prefs = bpy.context.preferences.addons[name].preferences

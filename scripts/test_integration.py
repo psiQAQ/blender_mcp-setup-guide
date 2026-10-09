@@ -18,6 +18,8 @@ from pathlib import Path
 from datetime import timedelta
 
 from check_reports import run_check, write_json
+from mcp_checks import HTTP_READ_SECONDS, SDK_READ_TIMEOUT, check_cli_tools
+from mcp_checks import HTTP_READ_SECONDS, SDK_READ_TIMEOUT, check_cli_tools
 from publication import digest
 from platforms import process_options
 
@@ -70,9 +72,9 @@ async def check_session(connection, cli=True):
     from mcp import ClientSession
     from mcp.client.streamable_http import streamable_http_client
 
-    async with httpx.AsyncClient(headers={"Authorization": f"Bearer {connection['token']}"}, trust_env=False) as http:
+    async with httpx.AsyncClient(headers={"Authorization": f"Bearer {connection['token']}"}, trust_env=False, timeout=HTTP_READ_SECONDS) as http:
         async with streamable_http_client(f"http://127.0.0.1:{connection['http_port']}/", http_client=http) as (read, write, _):
-            async with ClientSession(read, write) as session:
+            async with ClientSession(read, write, read_timeout_seconds=SDK_READ_TIMEOUT) as session:
                 initialized = await session.initialize()
                 tools = await session.list_tools()
                 names = {tool.name for tool in tools.tools}
@@ -104,19 +106,11 @@ async def check_session(connection, cli=True):
                     recovered = await session.call_tool("execute_blender_code", {"code": "result = {'recovered': True}"})
                     result = recovered.structuredContent or json.loads(recovered.content[0].text)
                     assert result["status"] == "ok" and result["result"]["recovered"], result
-                if cli:
-                    command = await session.call_tool("execute_blender_code_for_cli", {
-                        "blend_file": connection["blend_file"],
-                        "code": "import bpy\nresult = {'version': bpy.app.version_string, 'binary': bpy.app.binary_path}",
-                    })
-                    assert not command.isError, command
-                    result = command.structuredContent or json.loads(command.content[0].text)
-                    assert result["version"] == structured["result"]["version"], result
-                    assert Path(result["binary"]).resolve() == Path(structured["result"]["binary"]).resolve(), result
+                cli_results = await check_cli_tools(session, connection, structured["result"]) if cli else {}
                 assert len(names) == 26, names
                 return {"server": initialized.serverInfo.name, "tools": len(names), "blender": structured["result"]["version"],
                         "python": structured["result"]["python"], "architecture": structured["result"]["architecture"],
-                        "cli_host_executable": "Passed" if cli else "Not Run",
+                        "cli_host_executable": "Passed" if cli else "Not Run", "cli_tools": cli_results,
                         "deferred_failure_recovery": "Passed" if not structured["result"]["background"] else "Not Run"}
 
 
@@ -149,8 +143,9 @@ def start_inflight_cli(connection, directory, host):
         import httpx
         from mcp import ClientSession
         from mcp.client.streamable_http import streamable_http_client
-        async with httpx.AsyncClient(headers={"Authorization": f"Bearer {connection['token']}"}, trust_env=False) as http:
+        async with httpx.AsyncClient(headers={"Authorization": f"Bearer {connection['token']}"}, trust_env=False, timeout=HTTP_READ_SECONDS) as http:
             async with streamable_http_client(f"http://127.0.0.1:{connection['http_port']}/", http_client=http) as (read, write, _):
+                # Deliberately short: this call is interrupted by lifecycle cleanup.
                 async with ClientSession(read, write, read_timeout_seconds=timedelta(seconds=15)) as session:
                     await session.initialize()
                     return await session.call_tool("execute_blender_code_for_cli", {
@@ -282,6 +277,10 @@ def main():
     ], env=environment, stdin=subprocess.DEVNULL, stdout=log, stderr=subprocess.STDOUT,
         **process_options())
     checks = {}
+    name = 'minimum' if args.minimum else 'integration'
+    report = {"status": "Not Run", "package_sha256": package_hash, "checks": checks,
+              "log": str(run / "blender.log"), "gui": "Not Run"}
+    write_json(LATEST / f"{name}-tests.json", report)
     try:
         wait_file(run / "service.json", process)
         connection = json.loads((run / "service.json").read_text(encoding="utf-8"))
@@ -292,8 +291,10 @@ def main():
         check_bridge_auth(connection)
         checks["authentication"] = "Passed"
         details = asyncio.run(check_session(connection))
+        report["details"] = details
         checks["mcp-session-scene-and-reversible-operation"] = "Passed"
         checks["cli-host-executable-without-path"] = "Passed"
+        checks["all-six-cli-tools-with-positive-fixtures"] = "Passed"
         verify_child = start_inflight_cli(connection, run, process)
         write_json(run / "action.json", {"action": "stop-start"})
         wait_file(run / "action-result.json", process)
@@ -307,7 +308,7 @@ def main():
             result = json.loads((run / "action-result.json").read_text(encoding="utf-8"))
             assert result == {"action": action, "status": "Passed"}
             connection = json.loads((run / "service.json").read_text(encoding="utf-8"))
-            asyncio.run(check_session(connection))
+            asyncio.run(check_session(connection, cli=False))
             checks[action] = "Passed"
         (run / "stop").touch()
         process.wait(timeout=15)
@@ -332,6 +333,11 @@ def main():
                 process.terminate()
                 process.wait(timeout=10)
         log.close()
+        if report["status"] != "Passed":
+            report.update(status="Failed", checks=checks)
+            if (run / "native-install.json").exists():
+                report["native_install"] = json.loads((run / "native-install.json").read_text(encoding="utf-8"))
+            write_json(LATEST / f"{name}-tests.json", report)
 
 
 if __name__ == "__main__":
