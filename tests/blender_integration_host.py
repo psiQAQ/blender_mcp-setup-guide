@@ -24,6 +24,7 @@ def main():
     with capture_install(control):
         install(arguments, package)
     repo = next((item for item in bpy.context.preferences.extensions.repos if item.module == 'integration_test'), None) if len(arguments) == 5 else None
+    repo_index = list(bpy.context.preferences.extensions.repos).index(repo) if repo else -1
     module_name = f"bl_ext.{repo.module if repo else 'user_default'}.blender_mcp_integration"
     addon = importlib.import_module(module_name)
     prefs = bpy.context.preferences.addons[module_name].preferences
