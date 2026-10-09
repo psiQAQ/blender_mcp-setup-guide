@@ -98,7 +98,9 @@ jobs:
   deploy-index:
     needs: publish-assets
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     permissions:
+      contents: read
       actions: read
       pages: write
       id-token: write
@@ -106,6 +108,10 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
       - uses: actions/download-artifact@v4
         with:
           name: verified-extension-index
@@ -115,6 +121,16 @@ jobs:
           path: site
       - id: deployment
         uses: actions/deploy-pages@v4
+      - name: Wait for canonical metadata to match the deployed site
+        env:
+          PAGES_BASE: ${{ needs.publish-assets.outputs.base_url }}
+        run: python -B scripts/wait_deployment.py --base-url "$PAGES_BASE" --site site
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: deployment-readiness
+          path: build/latest/deployment-readiness-tests.json
+          if-no-files-found: warn
   verify-publication:
     needs: [deploy-index, publish-assets]
     strategy:

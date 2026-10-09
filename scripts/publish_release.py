@@ -5,6 +5,7 @@ import json
 import os
 import re
 import subprocess
+import time
 import urllib.error
 import urllib.parse
 import urllib.request
@@ -21,7 +22,7 @@ from upstream_source import release_channel, verify_source
 def github_json(repository, endpoint, token, allow_missing=False):
     request = urllib.request.Request(
         f"https://api.github.com/repos/{repository}/{endpoint}",
-        headers={"Authorization": f"Bearer {token}", "Accept": "application/vnd.github+json", "User-Agent": "BlenderMCPIntegration"},
+        headers={"Authorization": f"Bearer {token}", "Accept": "application/vnd.github+json", "User-Agent": "BlenderMCPIntegration", "Cache-Control": "no-cache"},
     )
     try:
         with urllib.request.urlopen(request, timeout=30) as response:
@@ -109,9 +110,13 @@ def publish_assets(repository, tag, expected_commit, assets, notes, marker, toke
             "gh", "release", "create", tag, "--repo", repository, "--verify-tag", "--draft",
             "--target", expected_commit, "--title", tag.removeprefix("v"), "--notes-file", str(notes),
         ] + (["--prerelease", "--latest=false"] if channel == "preview" else []), check=True)
-        existing = find_release(repository, tag, token)
-        if existing is None:
-            raise ValueError("Created draft Release was not returned by the authenticated API")
+        for attempt in range(6):
+            existing = find_release(repository, tag, token)
+            if existing is not None:
+                break
+            if attempt == 5:
+                raise ValueError("Created draft Release was not returned by the authenticated API")
+            time.sleep(2 ** attempt)
     require_release_source(existing)
     version = tag.removeprefix("v")
     receipt_pattern = re.compile(r"blender_mcp_integration-" + re.escape(version) + r"-publication-[1-9][0-9]*\.zip")

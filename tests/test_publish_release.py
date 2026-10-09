@@ -105,6 +105,27 @@ class PublishReleaseTests(unittest.TestCase):
         command.assert_not_called()
         self.assertEqual(readback.call_count, len(self.assets) * 2)
 
+    def test_delayed_draft_visibility_does_not_create_a_second_release(self):
+        with patch("publish_release.find_release", side_effect=[None, None, None, self.draft(())]), \
+                patch("publish_release.github_json", return_value=self.draft(self.assets)), \
+                patch("publish_release.subprocess.run") as command, patch("time.sleep"), \
+                patch("publish_release.verify_download") as readback:
+            self.publish()
+        creates = [call for call in command.call_args_list if call.args[0][:3] == ["gh", "release", "create"]]
+        self.assertEqual(len(creates), 1)
+        self.assertIn("--draft=false", command.call_args_list[-1].args[0])
+        self.assertGreater(readback.call_count, 0)
+
+    def test_missing_created_draft_stops_before_upload_or_publication(self):
+        with patch("publish_release.find_release", return_value=None) as lookup, \
+                patch("publish_release.subprocess.run") as command, patch("time.sleep"), \
+                patch("publish_release.verify_download") as readback:
+            with self.assertRaisesRegex(ValueError, "Created draft Release was not returned"):
+                self.publish()
+        self.assertEqual(lookup.call_count, 7)
+        self.assertEqual(command.call_count, 1)
+        readback.assert_not_called()
+
     def test_preview_is_created_and_published_without_becoming_latest(self):
         draft = self.draft(())
         draft["prerelease"] = True
