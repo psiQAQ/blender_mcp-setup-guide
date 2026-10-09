@@ -239,10 +239,12 @@ def build(args):
 
 def invalidate_candidate_reports(previous_hashes, current_hash):
     """Retire evidence only for candidates replaced in this output directory."""
+    from check_reports import preserve_failure
     for report in LATEST.glob('*-tests.json'):
         value = json.loads(report.read_text(encoding='utf-8'))
         if value.get('package_sha256') in previous_hashes and value['package_sha256'] != current_hash:
-            value.update(status='Not Run', reason='Report belongs to a previous candidate package')
+            preserve_failure(report.name.removesuffix('-tests.json'), report)
+            value.update(previous_status=value.get('status'), status='Not Run', reason='Report belongs to a previous candidate package')
             report.write_text(json.dumps(value, indent=2) + '\n', encoding='utf-8', newline='\n')
 
 

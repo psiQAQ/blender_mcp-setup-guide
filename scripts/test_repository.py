@@ -13,6 +13,7 @@ import urllib.request
 from pathlib import Path
 
 from build_cache import LATEST, current_work
+from check_reports import write_json
 
 from platforms import ROOT, process_options, resolve
 from publication import digest, prepare_collection, verify_download
@@ -43,6 +44,9 @@ def main(args):
     packages = {path.name: next((path / "dist").glob("*.zip")) for path in args.artifacts.iterdir() if path.is_dir() and (path / "dist").exists()}
     package = packages[identifier]
     run = current_work("repository")
+    name = "published" if args.public_index else "repository"
+    write_json(LATEST / f"{name}-tests.json", {"status": "Not Run", "platform": identifier,
+                                              "package_sha256": digest(package)})
     initialize_client_runtime(package, run / "client")
     request = urllib.request.Request("https://github.com/psiQAQ/blender_mcp-setup-guide/releases", headers={"User-Agent": "BlenderMCPIntegrationCI"})
     with urllib.request.urlopen(request, timeout=30) as response:
@@ -85,7 +89,6 @@ def main(args):
                 import shutil
                 before = json.loads((run / "repository/publication.json").read_text())["extension_version"]
                 after = json.loads((run / "candidate/publication.json").read_text())["extension_version"]
-                from check_reports import write_json
                 write_json(control / "expected-upgrade.json", {"before": before, "after": after})
                 for path in (run / "candidate").iterdir():
                     shutil.copyfile(path, run / "repository" / path.name)

@@ -52,7 +52,13 @@ def run_check(name, operation):
                 raise
     path.parent.mkdir(parents=True, exist_ok=True)
     preserve_failure(name, path)
-    path.write_text(json.dumps({"status": "Not Run", "reason": "Check in progress"}) + "\n", encoding="utf-8")
+    context = {"status": "Not Run", "reason": "Check in progress"}
+    if '--package' in sys.argv:
+        package = Path(sys.argv[sys.argv.index('--package') + 1])
+        if package.is_file():
+            with package.open('rb') as source:
+                context['package_sha256'] = hashlib.file_digest(source, 'sha256').hexdigest()
+    write_json(path, context)
     mark(name, 'Not Run', reason='Check in progress')
     with task_directory(name) as work:
         try:
@@ -70,6 +76,8 @@ def run_check(name, operation):
         except Exception as error:
             report = json.loads(path.read_text(encoding='utf-8'))
             if report.get('status') != 'Failed':
-                write_json(path, {"status": "Failed", "error": f"{type(error).__name__}: {error}"})
-            mark(name, 'Failed', error=str(error))
+                report.pop('reason', None)
+                report.update(status='Failed', error=f'{type(error).__name__}: {error}')
+                write_json(path, report)
+            mark(name, 'Failed', package_sha256=report.get('package_sha256'), error=str(error))
             raise
