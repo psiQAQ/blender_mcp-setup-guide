@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<WindowsPerformanceRecorder Version="1.0">
+  <Profiles>
+    <SystemCollector Id="NativeFileCollector" Name="Blender native installer focused diagnostics">
+      <BufferSize Value="1024" />
+      <Buffers Value="128" />
+    </SystemCollector>
+    <SystemProvider Id="NativeFileProvider">
+      <Keywords>
+        <Keyword Value="FileIO" />
+        <Keyword Value="FileIOInit" />
+        <Keyword Value="FilterIOFailure" />
+        <Keyword Value="FilterIOInit" />
+        <Keyword Value="Loader" />
+        <Keyword Value="ProcessThread" />
+      </Keywords>
+      <Stacks>
+        <Stack Value="FileRename" />
+      </Stacks>
+    </SystemProvider>
+    <Profile Id="NativeInstall.Verbose.File" Name="NativeInstall" Description="File lifetimes and rename failures with reduced trace volume" LoggingMode="File" DetailLevel="Verbose">
+      <Collectors>
+        <SystemCollectorId Value="NativeFileCollector">
+          <SystemProviderId Value="NativeFileProvider" />
+        </SystemCollectorId>
+      </Collectors>
+    </Profile>
+  </Profiles>
+</WindowsPerformanceRecorder>

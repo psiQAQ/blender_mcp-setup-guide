@@ -3,11 +3,16 @@ import json
 import tomllib
 import tempfile
 import unittest
+import sys
+import types
 from pathlib import Path
 from unittest.mock import patch
 
 
-SPEC = importlib.util.spec_from_file_location("integration_runtime", Path(__file__).resolve().parents[1] / "src/blender_mcp_integration/runtime.py")
+PACKAGE = types.ModuleType("integration_unit")
+PACKAGE.__path__ = [str(Path(__file__).resolve().parents[1] / "src/blender_mcp_integration")]
+sys.modules[PACKAGE.__name__] = PACKAGE
+SPEC = importlib.util.spec_from_file_location("integration_unit.runtime", Path(PACKAGE.__path__[0]) / "runtime.py")
 runtime = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(runtime)
 

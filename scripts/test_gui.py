@@ -10,6 +10,8 @@ import time
 from pathlib import Path
 from platforms import process_options
 
+from build_cache import LATEST, current_work
+
 from check_reports import run_check
 from publication import digest
 
@@ -57,8 +59,7 @@ def main():
     parser.add_argument("--package", required=True, type=Path)
     args = parser.parse_args()
     package_hash = digest(args.package)
-    run = ROOT / "build/tests" / f"gui-{time.time_ns()}"
-    run.mkdir(parents=True)
+    run = current_work("gui")
     initialize_client_runtime(args.package, run / "client")
     environment = os.environ.copy()
     environment["BLENDER_USER_RESOURCES"] = str(run / "profile")
@@ -93,7 +94,7 @@ def main():
         report["preferences_screenshot"] = str(run / "preferences.png")
         report["graphics"] = json.loads((run / "initial.json").read_text())["graphics"]
         report["screenshot_method"] = "X11 desktop" if sys.platform == "linux" else "Blender window"
-        (ROOT / "build/gui-tests.json").write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
+        (LATEST / "gui-tests.json").write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
         print(json.dumps(report, indent=2))
     finally:
         (run / "stop").touch()

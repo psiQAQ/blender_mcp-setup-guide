@@ -9,6 +9,8 @@ import urllib.error
 import urllib.parse
 import urllib.request
 import zipfile
+from build_cache import LATEST
+
 from pathlib import Path
 
 from prepare_release import validate_collection
@@ -111,8 +113,16 @@ def publish_assets(repository, tag, expected_commit, assets, notes, marker, toke
         if existing is None:
             raise ValueError("Created draft Release was not returned by the authenticated API")
     require_release_source(existing)
-    if set(asset["name"] for asset in existing["assets"]) - {path.name for path in assets}:
+    version = tag.removeprefix("v")
+    receipt_pattern = re.compile(r"blender_mcp_integration-" + re.escape(version) + r"-publication-[1-9][0-9]*\.zip")
+    extra = [asset for asset in existing["assets"] if asset["name"] not in {path.name for path in assets}]
+    if any(existing["draft"] or not receipt_pattern.fullmatch(asset["name"]) for asset in extra):
         raise ValueError("The matching Release contains unexpected assets")
+    for asset in extra:
+        checksum = asset.get("digest", "")
+        if not re.fullmatch(r"sha256:[0-9a-f]{64}", checksum):
+            raise ValueError("Publication receipt asset is missing its immutable digest")
+        verify_download(f"{base}/{urllib.parse.quote(asset['name'], safe='')}", checksum[7:], asset["size"])
     present = {asset["name"] for asset in existing["assets"]}
     for path in assets:
         if path.name in present:
@@ -158,13 +168,13 @@ def main():
         raise ValueError("Release tag must match the validated integration version")
     token = os.environ["GH_TOKEN"]
     verify_tag(args.repository, args.tag, args.expected_commit, token)
-    asset_directory = ROOT / "build/release-assets"
+    asset_directory = LATEST / "release-assets"
     import hashlib
     package_hashes = {identifier: digest(item[0]) for identifier, item in collection.items()}
     set_hash = hashlib.sha256(json.dumps(package_hashes, sort_keys=True).encode()).hexdigest()
     marker = f"<!-- blender-mcp-integration {args.expected_commit} {version} {set_hash} -->"
     assets = prepare_release_assets(collection, args.artifacts, asset_directory, version)
-    notes = ROOT / "build/release-notes.md"
+    notes = LATEST / "release-notes.md"
     notes.parent.mkdir(parents=True, exist_ok=True)
     notes.write_text(
         f"Blender MCP Integrated {version}: Windows x64, Linux x64, macOS Apple Silicon.\n\n"
@@ -172,6 +182,13 @@ def main():
         f"Official upstream: {source.get('source_ref', source['tag'])} ({source['commit']}).\n\n"
         "Validated final ZIP: two generated templates, authenticated MCP scene calls, lifecycle, "
         "HTTP repository upgrade and GUI timer checks. Human GUI and client acceptance remains separate.\n\n"
+        "\nThis update uses the running host's Blender executable for all six CLI tools. Native checks include "
+        "real saved scenes, missing files, linked libraries and 60-second HTTP / 90-second SDK read deadlines.\n\n"
+        "Known upstream limitations, reproduced with the official split installation on Blender 5.1.1 and 5.2.2:\n"
+        "- GUI `render_thumbnail_to_path` may render at the original scene resolution. Check the PNG dimensions.\n"
+        "- `get_python_api_docs` cannot resolve some class members; `bpy.types.Object.Object.location` is a workaround "
+        "for `bpy.types.Object.location`.\n"
+        "Reproduction evidence and local issue drafts: https://github.com/psiQAQ/blender_mcp-setup-guide/tree/main/docs/upstream-issues .\n\n"
         "Install the ZIP matching your platform. The evidence ZIP contains provenance and validation reports; "
         "it is for auditing and is not a Blender extension.\n\n"
         f"{marker}\n", encoding="utf-8",

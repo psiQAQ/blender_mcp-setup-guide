@@ -85,7 +85,14 @@ def main():
         f"Blender MCP Integrated {version}: Windows x64 / {record['blender_min']} <= Blender < {record['blender_max']}.\n\n"
         f"Official upstream: {record.get('source_ref', record['tag'])} ({record['commit']}).\n\n"
         "Validated final ZIP: templates, authenticated MCP scene calls, lifecycle, HTTP repository upgrade and GUI timers. "
-        "Human GUI and client acceptance is recorded separately.\n", encoding="utf-8",
+        "Human GUI and client acceptance is recorded separately.\n"
+        "\nThis update uses the running host's Blender executable for all six CLI tools. Native checks include "
+        "real saved scenes, missing files, linked libraries and 60-second HTTP / 90-second SDK read deadlines.\n\n"
+        "Known upstream limitations, reproduced with the official split installation on Blender 5.1.1 and 5.2.2:\n"
+        "- GUI `render_thumbnail_to_path` may render at the original scene resolution. Check the PNG dimensions.\n"
+        "- `get_python_api_docs` cannot resolve some class members; `bpy.types.Object.Object.location` is a workaround "
+        "for `bpy.types.Object.location`.\n"
+        "Reproduction evidence and local issue drafts: https://github.com/psiQAQ/blender_mcp-setup-guide/tree/main/docs/upstream-issues .\n\n", encoding="utf-8",
     )
     print(json.dumps(result, indent=2))
 

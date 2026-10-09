@@ -7,11 +7,14 @@ import unittest
 from pathlib import Path
 
 
+from build_cache import LATEST, cached_task, current_work
+
 ROOT = Path(__file__).resolve().parents[1]
 
 
+@cached_task("unit")
 def main():
-    temporary = ROOT / "build/test-temp"
+    temporary = current_work("unit")
     temporary.mkdir(parents=True, exist_ok=True)
     tempfile.tempdir = str(temporary)
     sys.dont_write_bytecode = True
@@ -20,8 +23,9 @@ def main():
     report = {
         "status": "Passed" if result.wasSuccessful() else "Failed",
         "tests": result.testsRun, "failures": len(result.failures), "errors": len(result.errors),
+        "skipped": len(result.skipped),
     }
-    (ROOT / "build/unit-tests.json").write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
+    (LATEST / "unit-tests.json").write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
     return 0 if result.wasSuccessful() else 1
 
 

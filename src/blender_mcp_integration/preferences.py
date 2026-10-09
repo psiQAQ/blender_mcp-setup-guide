@@ -4,6 +4,7 @@ from pathlib import Path
 import bpy
 
 from .runtime import ServiceError
+from .private_files import write_private
 
 
 def integration():
@@ -50,11 +51,11 @@ class BLMCP_INTEGRATION_OT_copy_configuration(bpy.types.Operator):
         preferences = context.preferences.addons[__package__].preferences
         try:
             content = addon.SERVICE.configuration(preferences.client)
+            write_private(Path(addon.service_directory()) / "client-config.txt", content)
         except (ServiceError, OSError) as error:
             self.report({"ERROR"}, str(error))
             return {"CANCELLED"}
         context.window_manager.clipboard = content
-        (Path(addon.service_directory()) / "client-config.txt").write_text(content, encoding="utf-8")
         self.report({"INFO"}, "Configuration copied and saved in the extension user directory")
         return {"FINISHED"}
 
@@ -99,7 +100,7 @@ class BLMCP_INTEGRATION_AP_preferences(bpy.types.AddonPreferences):
         addon = integration()
         layout = self.layout
         source = json.loads((Path(__file__).parent / "provenance.json").read_text(encoding="utf-8"))
-        layout.label(text=f"Blender Lab MCP {source['version']} · integration {source['integration_revision']}")
+        layout.label(text=f"Blender Lab MCP {source['extension_version']} · {source.get('channel', 'stable')}")
         layout.label(text=f"MCP: {addon.SERVICE.state}")
         if addon.LAST_ERROR:
             layout.label(text=addon.LAST_ERROR, icon="ERROR")

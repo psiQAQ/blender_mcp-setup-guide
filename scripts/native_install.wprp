@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<WindowsPerformanceRecorder Version="1.0">
+  <Profiles>
+    <SystemCollector Id="NativeFileCollector" Name="Blender native installer file diagnostics">
+      <BufferSize Value="1024" />
+      <Buffers Value="64" />
+    </SystemCollector>
+    <EventCollector Id="NativeSecurityCollector" Name="Blender native installer filter diagnostics">
+      <BufferSize Value="1024" />
+      <Buffers Value="32" />
+    </EventCollector>
+    <SystemProvider Id="NativeFileProvider">
+      <Keywords>
+        <Keyword Value="FileIO" />
+        <Keyword Value="FileIOInit" />
+        <Keyword Value="FilterIO" />
+        <Keyword Value="FilterIOFailure" />
+        <Keyword Value="FilterIOFastIO" />
+        <Keyword Value="FilterIOInit" />
+        <Keyword Value="Loader" />
+        <Keyword Value="ProcessThread" />
+      </Keywords>
+      <Stacks>
+        <Stack Value="FileCreate" />
+        <Stack Value="FileCleanup" />
+        <Stack Value="FileClose" />
+        <Stack Value="FileRename" />
+        <Stack Value="FileSetInformation" />
+        <Stack Value="MiniFilterPreOpInit" />
+        <Stack Value="MiniFilterPostOpInit" />
+      </Stacks>
+    </SystemProvider>
+    <EventProvider Id="NativeAMFilter" Name="cfeb0608-330e-4410-b00d-56d8da9986e6" NonPagedMemory="true" />
+    <EventProvider Id="NativeAMRTP" Name="8e92deef-5e17-413b-b927-59b2f06a3cfc" NonPagedMemory="true" />
+    <EventProvider Id="NativeAMEngine" Name="0a002690-3839-4e3a-b3b6-96d8df868d99" NonPagedMemory="true" Level="5" />
+    <Profile Id="NativeInstall.Verbose.File" Name="NativeInstall" Description="File rename, child handles and filter activity" LoggingMode="File" DetailLevel="Verbose">
+      <Collectors>
+        <SystemCollectorId Value="NativeFileCollector">
+          <SystemProviderId Value="NativeFileProvider" />
+        </SystemCollectorId>
+        <EventCollectorId Value="NativeSecurityCollector">
+          <EventProviders>
+            <EventProviderId Value="NativeAMFilter" />
+            <EventProviderId Value="NativeAMRTP" />
+            <EventProviderId Value="NativeAMEngine" />
+          </EventProviders>
+        </EventCollectorId>
+      </Collectors>
+    </Profile>
+  </Profiles>
+</WindowsPerformanceRecorder>

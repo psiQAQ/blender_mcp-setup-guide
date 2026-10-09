@@ -1,0 +1,472 @@
+{
+  "transport": "stdio",
+  "source_commit": "2cea8d566dde07fbac28a61d698909d69724e853",
+  "source_repository": "https://projects.blender.org/lab/blender_mcp.git",
+  "extension_version": "1.0.3",
+  "server_version": "1.0.3",
+  "extension_package": {
+    "name": "mcp-1.0.3.zip",
+    "sha256": "ef6f6c03a960ee60af1c5facd361ca797361fa4d607903a1993916f0d73adefb",
+    "size": 18159
+  },
+  "source_hashes": {
+    "mcp/blmcp/tools/render_thumbnail_to_path_toolcode.py": "5b7394f0ace437963b8c79eb4d6ecc644ee94d251842811a033fe38b6b51d522",
+    "mcp/blmcp/tools/get_python_api_docs.py": "a51afc611bc492fc2d24ff178ea89bc63193b62e9426d53549a8209fbe087271",
+    "mcp/blmcp/tools_helpers/rst_parse_docs.py": "daef7d81fb4bf6f0ad720c768ab703dbb74aad842a97b60416eea71dadc995d6"
+  },
+  "extension_source_unchanged": true,
+  "external_environment": {
+    "installer": "uv 0.11.19 (7b2cff1c3 2026-06-03 x86_64-pc-windows-msvc)",
+    "isolation": "project-local uv tool environment; no integrated Extension or _vendor",
+    "python": "3.13.12 | packaged by conda-forge | (main, Feb  5 2026, 05:41:12) [MSC v.1944 64 bit (AMD64)]",
+    "dependencies": {
+      "annotated-doc": "0.0.5",
+      "annotated-types": "0.8.0",
+      "anyio": "4.15.1",
+      "attrs": "26.1.0",
+      "blender-mcp": "1.0.3",
+      "certifi": "2026.7.22",
+      "cffi": "2.1.1",
+      "click": "8.5.0",
+      "colorama": "0.4.6",
+      "cryptography": "50.0.2",
+      "docutils": "0.23",
+      "h11": "0.16.0",
+      "httpcore": "1.0.9",
+      "httpx": "0.28.1",
+      "httpx-sse": "0.4.3",
+      "idna": "3.20",
+      "jsonschema": "4.26.0",
+      "jsonschema-specifications": "2025.9.1",
+      "markdown-it-py": "4.2.0",
+      "mcp": "1.30.0",
+      "mdurl": "0.1.2",
+      "pycparser": "3.11",
+      "pydantic": "2.14.0",
+      "pydantic-settings": "2.15.0",
+      "pydantic_core": "2.50.0",
+      "Pygments": "2.21.0",
+      "PyJWT": "2.15.1",
+      "python-dotenv": "1.2.4",
+      "python-multipart": "0.0.32",
+      "pywin32": "312",
+      "PyYAML": "6.0.3",
+      "referencing": "0.37.0",
+      "rich": "15.0.0",
+      "rpds-py": "2026.9.1",
+      "shellingham": "1.5.4",
+      "sse-starlette": "3.5.0",
+      "starlette": "1.7.0",
+      "typer": "0.27.3",
+      "typing-inspection": "0.4.4",
+      "typing_extensions": "4.16.0",
+      "uvicorn": "0.54.0"
+    }
+  },
+  "repository_issue_templates": [],
+  "reproduction": {
+    "thumbnail": {
+      "failed": 8,
+      "attempts": 9
+    },
+    "api_member": {
+      "failed": 3,
+      "attempts": 3
+    }
+  },
+  "sessions": [
+    {
+      "session": 1,
+      "connection": "Passed",
+      "host": {
+        "version": "5.1.1",
+        "python": "3.13.9 (main, Jan 16 2026, 12:29:45) [MSC v.1944 64 bit (AMD64)]",
+        "platform": "Windows",
+        "background": false,
+        "graphics": {
+          "renderer": "NVIDIA GeForce RTX 4070 Ti SUPER/PCIe/SSE2",
+          "vendor": "NVIDIA Corporation",
+          "version": "4.6.0 NVIDIA 572.83"
+        }
+      },
+      "host_exit_code": 0,
+      "checks": [
+        {
+          "case": "bpy.types.Object.location",
+          "tool": "get_python_api_docs",
+          "status": "Failed",
+          "seconds": 0.076,
+          "arguments": {
+            "identifier": "bpy.types.Object.location"
+          },
+          "response": {
+            "kind": "partial",
+            "found": false,
+            "identifier": "bpy.types.Object.location",
+            "parent": "bpy.types.Object",
+            "available": [
+              "Object"
+            ],
+            "submodules": []
+          }
+        },
+        {
+          "case": "bpy.ops.mesh.primitive_cube_add",
+          "tool": "get_python_api_docs",
+          "status": "Passed",
+          "seconds": 0.156,
+          "arguments": {
+            "identifier": "bpy.ops.mesh.primitive_cube_add"
+          },
+          "response": {
+            "kind": "definition",
+            "found": true,
+            "identifier": "bpy.ops.mesh.primitive_cube_add"
+          }
+        },
+        {
+          "case": "bpy.types.Object.Object.location",
+          "tool": "get_python_api_docs",
+          "status": "Passed",
+          "seconds": 0.071,
+          "arguments": {
+            "identifier": "bpy.types.Object.Object.location"
+          },
+          "response": {
+            "kind": "definition",
+            "found": true,
+            "identifier": "bpy.types.Object.Object.location"
+          }
+        },
+        {
+          "case": "thumbnail-1",
+          "tool": "render_thumbnail_to_path",
+          "status": "Failed",
+          "seconds": 1.559,
+          "png": {
+            "name": "thumbnail-1.png",
+            "bytes": 99885,
+            "sha256": "ec3d6d6fe1adf3c18585f2a036cbbdddd2961bfd645fa99491c4ee677fb256ca",
+            "width": 400,
+            "height": 300
+          },
+          "pixels": {
+            "minimum": 0.1725490242242813,
+            "maximum": 0.6745098233222961
+          },
+          "settings_restored": true,
+          "response": {
+            "status": "ok",
+            "filepath": "<MCP temporary directory>/thumbnail-1.png"
+          }
+        },
+        {
+          "case": "thumbnail-2",
+          "tool": "render_thumbnail_to_path",
+          "status": "Failed",
+          "seconds": 1.511,
+          "png": {
+            "name": "thumbnail-2.png",
+            "bytes": 99885,
+            "sha256": "02e10bd3c98905a33b3f1d0fa5b49118d6e6adde189ba378076f83b8f0a5135a",
+            "width": 400,
+            "height": 300
+          },
+          "pixels": {
+            "minimum": 0.1725490242242813,
+            "maximum": 0.6745098233222961
+          },
+          "settings_restored": true,
+          "response": {
+            "status": "ok",
+            "filepath": "<MCP temporary directory>/thumbnail-2.png"
+          }
+        },
+        {
+          "case": "thumbnail-3",
+          "tool": "render_thumbnail_to_path",
+          "status": "Failed",
+          "seconds": 1.525,
+          "png": {
+            "name": "thumbnail-3.png",
+            "bytes": 99885,
+            "sha256": "dd1d28d4dda271295f0148b06c3cb25ea368baa194db03084561ed8e9fbc92ef",
+            "width": 400,
+            "height": 300
+          },
+          "pixels": {
+            "minimum": 0.1725490242242813,
+            "maximum": 0.6745098233222961
+          },
+          "settings_restored": true,
+          "response": {
+            "status": "ok",
+            "filepath": "<MCP temporary directory>/thumbnail-3.png"
+          }
+        }
+      ]
+    },
+    {
+      "session": 2,
+      "connection": "Passed",
+      "host": {
+        "version": "5.1.1",
+        "python": "3.13.9 (main, Jan 16 2026, 12:29:45) [MSC v.1944 64 bit (AMD64)]",
+        "platform": "Windows",
+        "background": false,
+        "graphics": {
+          "renderer": "NVIDIA GeForce RTX 4070 Ti SUPER/PCIe/SSE2",
+          "vendor": "NVIDIA Corporation",
+          "version": "4.6.0 NVIDIA 572.83"
+        }
+      },
+      "host_exit_code": 0,
+      "checks": [
+        {
+          "case": "bpy.types.Object.location",
+          "tool": "get_python_api_docs",
+          "status": "Failed",
+          "seconds": 0.083,
+          "arguments": {
+            "identifier": "bpy.types.Object.location"
+          },
+          "response": {
+            "kind": "partial",
+            "found": false,
+            "identifier": "bpy.types.Object.location",
+            "parent": "bpy.types.Object",
+            "available": [
+              "Object"
+            ],
+            "submodules": []
+          }
+        },
+        {
+          "case": "bpy.ops.mesh.primitive_cube_add",
+          "tool": "get_python_api_docs",
+          "status": "Passed",
+          "seconds": 0.155,
+          "arguments": {
+            "identifier": "bpy.ops.mesh.primitive_cube_add"
+          },
+          "response": {
+            "kind": "definition",
+            "found": true,
+            "identifier": "bpy.ops.mesh.primitive_cube_add"
+          }
+        },
+        {
+          "case": "bpy.types.Object.Object.location",
+          "tool": "get_python_api_docs",
+          "status": "Passed",
+          "seconds": 0.066,
+          "arguments": {
+            "identifier": "bpy.types.Object.Object.location"
+          },
+          "response": {
+            "kind": "definition",
+            "found": true,
+            "identifier": "bpy.types.Object.Object.location"
+          }
+        },
+        {
+          "case": "thumbnail-1",
+          "tool": "render_thumbnail_to_path",
+          "status": "Failed",
+          "seconds": 1.518,
+          "png": {
+            "name": "thumbnail-1.png",
+            "bytes": 99885,
+            "sha256": "1f6ba6fb0c666e7736427b67d5b574657eae4cb74a66ac2334d5663dd5ddc813",
+            "width": 400,
+            "height": 300
+          },
+          "pixels": {
+            "minimum": 0.1725490242242813,
+            "maximum": 0.6745098233222961
+          },
+          "settings_restored": true,
+          "response": {
+            "status": "ok",
+            "filepath": "<MCP temporary directory>/thumbnail-1.png"
+          }
+        },
+        {
+          "case": "thumbnail-2",
+          "tool": "render_thumbnail_to_path",
+          "status": "Passed",
+          "seconds": 1.525,
+          "png": {
+            "name": "thumbnail-2.png",
+            "bytes": 66214,
+            "sha256": "0dc38919cca48f67e7b8d22d401b8b7bde33bd750dcfe902f61195194603f8fb",
+            "width": 320,
+            "height": 240
+          },
+          "pixels": {
+            "minimum": 0.16862745583057404,
+            "maximum": 0.6784313917160034
+          },
+          "settings_restored": true,
+          "response": {
+            "status": "ok",
+            "filepath": "<MCP temporary directory>/thumbnail-2.png"
+          }
+        },
+        {
+          "case": "thumbnail-3",
+          "tool": "render_thumbnail_to_path",
+          "status": "Failed",
+          "seconds": 1.534,
+          "png": {
+            "name": "thumbnail-3.png",
+            "bytes": 99885,
+            "sha256": "5d46d58636b88e937a20964f306e5dd122c0d1cdc9a2dd0dd298a4f2bd408724",
+            "width": 400,
+            "height": 300
+          },
+          "pixels": {
+            "minimum": 0.1725490242242813,
+            "maximum": 0.6745098233222961
+          },
+          "settings_restored": true,
+          "response": {
+            "status": "ok",
+            "filepath": "<MCP temporary directory>/thumbnail-3.png"
+          }
+        }
+      ]
+    },
+    {
+      "session": 3,
+      "connection": "Passed",
+      "host": {
+        "version": "5.1.1",
+        "python": "3.13.9 (main, Jan 16 2026, 12:29:45) [MSC v.1944 64 bit (AMD64)]",
+        "platform": "Windows",
+        "background": false,
+        "graphics": {
+          "renderer": "NVIDIA GeForce RTX 4070 Ti SUPER/PCIe/SSE2",
+          "vendor": "NVIDIA Corporation",
+          "version": "4.6.0 NVIDIA 572.83"
+        }
+      },
+      "host_exit_code": 0,
+      "checks": [
+        {
+          "case": "bpy.types.Object.location",
+          "tool": "get_python_api_docs",
+          "status": "Failed",
+          "seconds": 0.076,
+          "arguments": {
+            "identifier": "bpy.types.Object.location"
+          },
+          "response": {
+            "kind": "partial",
+            "found": false,
+            "identifier": "bpy.types.Object.location",
+            "parent": "bpy.types.Object",
+            "available": [
+              "Object"
+            ],
+            "submodules": []
+          }
+        },
+        {
+          "case": "bpy.ops.mesh.primitive_cube_add",
+          "tool": "get_python_api_docs",
+          "status": "Passed",
+          "seconds": 0.155,
+          "arguments": {
+            "identifier": "bpy.ops.mesh.primitive_cube_add"
+          },
+          "response": {
+            "kind": "definition",
+            "found": true,
+            "identifier": "bpy.ops.mesh.primitive_cube_add"
+          }
+        },
+        {
+          "case": "bpy.types.Object.Object.location",
+          "tool": "get_python_api_docs",
+          "status": "Passed",
+          "seconds": 0.067,
+          "arguments": {
+            "identifier": "bpy.types.Object.Object.location"
+          },
+          "response": {
+            "kind": "definition",
+            "found": true,
+            "identifier": "bpy.types.Object.Object.location"
+          }
+        },
+        {
+          "case": "thumbnail-1",
+          "tool": "render_thumbnail_to_path",
+          "status": "Failed",
+          "seconds": 1.533,
+          "png": {
+            "name": "thumbnail-1.png",
+            "bytes": 99885,
+            "sha256": "2686bd23c64e5297fdb9fefa2202f79e8d4b84ac6ecc8a89317ab1c606ec055c",
+            "width": 400,
+            "height": 300
+          },
+          "pixels": {
+            "minimum": 0.1725490242242813,
+            "maximum": 0.6745098233222961
+          },
+          "settings_restored": true,
+          "response": {
+            "status": "ok",
+            "filepath": "<MCP temporary directory>/thumbnail-1.png"
+          }
+        },
+        {
+          "case": "thumbnail-2",
+          "tool": "render_thumbnail_to_path",
+          "status": "Failed",
+          "seconds": 1.518,
+          "png": {
+            "name": "thumbnail-2.png",
+            "bytes": 99885,
+            "sha256": "3e8dd012efdc2956d802dd7a7ea58c1b8c562e27536a8124fb4004c0dcf3f732",
+            "width": 400,
+            "height": 300
+          },
+          "pixels": {
+            "minimum": 0.1725490242242813,
+            "maximum": 0.6745098233222961
+          },
+          "settings_restored": true,
+          "response": {
+            "status": "ok",
+            "filepath": "<MCP temporary directory>/thumbnail-2.png"
+          }
+        },
+        {
+          "case": "thumbnail-3",
+          "tool": "render_thumbnail_to_path",
+          "status": "Failed",
+          "seconds": 1.513,
+          "png": {
+            "name": "thumbnail-3.png",
+            "bytes": 81290,
+            "sha256": "051792bfcc6262cc28f0179e10c4bc0808f1d2b3473280f5aab4d2276c98751e",
+            "width": 400,
+            "height": 240
+          },
+          "pixels": {
+            "minimum": 0.1725490242242813,
+            "maximum": 0.6745098233222961
+          },
+          "settings_restored": true,
+          "response": {
+            "status": "ok",
+            "filepath": "<MCP temporary directory>/thumbnail-3.png"
+          }
+        }
+      ]
+    }
+  ]
+}

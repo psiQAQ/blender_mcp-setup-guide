@@ -9,6 +9,8 @@ import subprocess
 import urllib.request
 from pathlib import Path
 
+from build_cache import LATEST, pinned_input
+
 from platforms import ROOT, resolve
 
 
@@ -16,10 +18,10 @@ def prepare(blender):
     if resolve()[0] != "windows-x64":
         raise ValueError("Windows Mesa setup requires a native Windows x64 runner")
     blender = Path(blender).resolve(strict=True)
-    if not blender.is_relative_to((ROOT / "build/toolchain/windows-x64").resolve()):
+    if not blender.is_relative_to((LATEST / "inputs/toolchain").resolve()):
         raise ValueError("Mesa deployment is restricted to the isolated CI Blender toolchain")
     record = json.loads((ROOT / "packaging/gui-windows-x64.json").read_text())
-    work = ROOT / "build/mesa" / record["version"]
+    work = pinned_input("mesa", "windows-x64", record["version"])
     work.mkdir(parents=True, exist_ok=True)
     archive = work / Path(record["url"]).name
     if not archive.exists():

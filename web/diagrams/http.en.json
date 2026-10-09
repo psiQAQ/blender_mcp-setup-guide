@@ -1,0 +1,361 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Integrated Extension + HTTP: installation and runtime",
+    "locale": "en",
+    "quality_profile": "showcase",
+    "output": "build/visual-refresh/aligned-diagrams/http-en/http.en.html",
+    "repository": {
+      "url": "https://github.com/psiQAQ/blender_mcp-setup-guide.git",
+      "revision": "7f281466d9ef01a957f872906c0bc468198a0635",
+      "provider": "github",
+      "link_mode": "web"
+    },
+    "legend": {
+      "entries": {
+        "frontend": {
+          "label": "Agent client"
+        },
+        "backend": {
+          "label": "Runtime components"
+        },
+        "database": {
+          "label": "Files and dependencies"
+        }
+      }
+    },
+    "viewBox": [
+      1000,
+      720
+    ]
+  },
+  "components": [
+    {
+      "id": "agent-client",
+      "type": "frontend",
+      "label": "Agent / MCP client",
+      "sublabel": "Codex / Claude Code / OpenCode",
+      "tag": "Process: client",
+      "pos": [
+        60,
+        286
+      ],
+      "size": [
+        300,
+        108
+      ],
+      "sources": [
+        {
+          "path": "src/blender_mcp_integration/runtime.py",
+          "line": 66,
+          "end_line": 80
+        }
+      ]
+    },
+    {
+      "id": "client-config",
+      "type": "database",
+      "label": "Client MCP configuration",
+      "sublabel": "URL + Authorization: Bearer",
+      "tag": "Location: client settings directory",
+      "pos": [
+        60,
+        110
+      ],
+      "size": [
+        300,
+        108
+      ],
+      "sources": [
+        {
+          "path": "src/blender_mcp_integration/runtime.py",
+          "line": 66,
+          "end_line": 80
+        }
+      ]
+    },
+    {
+      "id": "mcp-service",
+      "type": "backend",
+      "label": "Bundled MCP service",
+      "sublabel": "Separate Python process",
+      "tag": "Blender Python · -I -S -B",
+      "pos": [
+        550,
+        286
+      ],
+      "size": [
+        330,
+        108
+      ],
+      "sources": [
+        {
+          "path": "src/blender_mcp_integration/runtime.py",
+          "line": 127,
+          "end_line": 139
+        },
+        {
+          "path": "src/blender_mcp_integration/server.py",
+          "line": 72,
+          "end_line": 81
+        }
+      ]
+    },
+    {
+      "id": "tool-runtime",
+      "type": "database",
+      "label": "Tools, dependencies and docs",
+      "sublabel": "_vendor/blmcp + _vendor/runtime",
+      "tag": "Inside the integrated Extension",
+      "pos": [
+        550,
+        110
+      ],
+      "size": [
+        330,
+        108
+      ],
+      "sources": [
+        {
+          "path": "src/blender_mcp_integration/server.py",
+          "line": 50,
+          "end_line": 67
+        },
+        {
+          "path": "docs/integration-design.md",
+          "line": 5,
+          "end_line": 5
+        }
+      ]
+    },
+    {
+      "id": "blender-bridge",
+      "type": "backend",
+      "label": "Integrated Extension + bridge",
+      "sublabel": "Blender process · service control",
+      "tag": "blender_mcp_integration/_vendor/bridge",
+      "pos": [
+        550,
+        520
+      ],
+      "size": [
+        330,
+        108
+      ],
+      "sources": [
+        {
+          "path": "src/blender_mcp_integration/__init__.py",
+          "line": 60,
+          "end_line": 88
+        },
+        {
+          "path": "src/blender_mcp_integration/__init__.py",
+          "line": 123,
+          "end_line": 142
+        }
+      ]
+    },
+    {
+      "id": "blender-scene",
+      "type": "backend",
+      "label": "bpy / current scene",
+      "sublabel": "Blender process · bpy execution",
+      "tag": "Location: Blender installation",
+      "pos": [
+        60,
+        520
+      ],
+      "size": [
+        300,
+        108
+      ],
+      "sources": [
+        {
+          "path": "docs/integration-design.md",
+          "line": 9,
+          "end_line": 9
+        },
+        {
+          "path": "src/blender_mcp_integration/__init__.py",
+          "line": 62,
+          "end_line": 79
+        }
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Agent + user configuration",
+      "wraps": [
+        "agent-client",
+        "client-config"
+      ],
+      "pad": 30
+    },
+    {
+      "kind": "region",
+      "label": "Integrated ZIP · Extensions repo",
+      "wraps": [
+        "mcp-service",
+        "tool-runtime",
+        "blender-bridge"
+      ],
+      "pad": 76
+    },
+    {
+      "kind": "region",
+      "label": "Blender host · Python / bpy",
+      "wraps": [
+        "blender-scene"
+      ],
+      "pad": 34
+    }
+  ],
+  "connections": [
+    {
+      "id": "mcp-request",
+      "from": "agent-client",
+      "to": "mcp-service",
+      "label": "HTTP :8000 + Bearer",
+      "variant": "emphasis"
+    },
+    {
+      "id": "mcp-result",
+      "from": "mcp-service",
+      "to": "agent-client",
+      "label": "HTTP · tool result",
+      "variant": "default",
+      "fromSide": "top",
+      "toSide": "top",
+      "labelAt": [
+        450,
+        250
+      ]
+    },
+    {
+      "id": "load-client-settings",
+      "from": "client-config",
+      "to": "agent-client",
+      "label": "Read MCP settings",
+      "variant": "default",
+      "labelDx": -90,
+      "labelDy": 40
+    },
+    {
+      "id": "load-tools",
+      "from": "mcp-service",
+      "to": "tool-runtime",
+      "label": "Load tools + deps",
+      "variant": "default",
+      "labelDx": -100,
+      "labelDy": -30
+    },
+    {
+      "id": "bridge-request",
+      "from": "mcp-service",
+      "to": "blender-bridge",
+      "label": "TCP :9876 · code",
+      "variant": "emphasis",
+      "labelAt": [
+        824,
+        445
+      ]
+    },
+    {
+      "id": "bridge-result",
+      "from": "blender-bridge",
+      "to": "mcp-service",
+      "label": "TCP · JSON/image",
+      "variant": "default",
+      "fromSide": "right",
+      "toSide": "right",
+      "labelAt": [
+        824,
+        478
+      ]
+    },
+    {
+      "id": "execute-scene-code",
+      "from": "blender-bridge",
+      "to": "blender-scene",
+      "label": "Execute Python / bpy",
+      "variant": "emphasis"
+    },
+    {
+      "id": "scene-result",
+      "from": "blender-scene",
+      "to": "blender-bridge",
+      "label": "Scene result",
+      "variant": "default",
+      "fromSide": "bottom",
+      "toSide": "bottom"
+    },
+    {
+      "id": "process-control",
+      "from": "blender-bridge",
+      "to": "mcp-service",
+      "label": "Start / stop service",
+      "variant": "dashed",
+      "fromSide": "top",
+      "toSide": "bottom",
+      "via": [
+        [
+          715,
+          496
+        ],
+        [
+          675,
+          496
+        ],
+        [
+          675,
+          418
+        ],
+        [
+          715,
+          418
+        ]
+      ],
+      "labelAt": [
+        575,
+        456
+      ]
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Interfaces and requests",
+      "items": [
+        "The agent uses Streamable HTTP at http://127.0.0.1:8000/ with a Bearer token.",
+        "The TCP bridge defaults to localhost:9876; arrows distinguish requests and returned results."
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Who controls the service?",
+      "items": [
+        "The integrated Extension starts and stops the independent MCP service; the agent connects to its URL.",
+        "Disabling the Extension or exiting Blender ends its service; enabling it can auto-start it."
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Installation locations and processes",
+      "items": [
+        "Background frames mark installation areas; node subtitles identify processes. One package may supply code for separate processes.",
+        "The ZIP contains the bridge, MCP tools, API / manual data and private dependencies; its interpreter comes from the Blender installation."
+      ]
+    },
+    {
+      "dot": "slate",
+      "title": "Local configuration",
+      "items": [
+        "The client and Blender run in the same native OS on one computer; use the actual configured ports and paths.",
+        "Logs, the HTTP token and session files live in the Extension user data directory."
+      ]
+    }
+  ]
+}

@@ -20,5 +20,5 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: official-upstream-review
-          path: build/upstream-review/
+          path: build/latest/upstream-review/
           if-no-files-found: error

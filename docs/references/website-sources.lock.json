@@ -1,0 +1,56 @@
+{
+  "version": 1,
+  "checked_on": "2026-10-08",
+  "astrowind": {
+    "repository": "https://github.com/arthelokyo/astrowind",
+    "commit": "14e1a691f80548dcc36370847b1a02c0d0b12821",
+    "template_version": "1.0.0-beta.66",
+    "license": "MIT",
+    "usage": "visual-reference",
+    "package_json_sha256": "03da08546d72085ac0e87ac3616da41d859d6b3ae36ed20a21bc30488d35fb3a",
+    "package_lock_json_sha256": "6af0be0e479544fefa04a1b2922c236530d4a94142c1cd204c616e0aa0b05226",
+    "node_requirement": ">=22.22.3",
+    "direct_dependencies_checked": 40,
+    "locked_versions": {
+      "astro": "7.3.1",
+      "tailwindcss": "4.3.3",
+      "typescript": "5.9.3",
+      "sharp": "0.35.4"
+    },
+    "demo": {
+      "url": "https://astrowind.vercel.app/",
+      "source_commit_association": "unverified"
+    }
+  },
+  "skill": {
+    "name": "frontend-design",
+    "repository": "https://github.com/anthropics/skills",
+    "commit": "683bc88e56f3e09ba94f7055977f3d3aa499f202",
+    "path": "skills/frontend-design",
+    "license": "Apache-2.0",
+    "scope": "project",
+    "agent": "codex",
+    "installer": "skills@1.7.1",
+    "source_skill_md_sha256": "d91970639e9f5c37682ac7ab60094d35f1c7c1f38d731bd56396563aee10c1d3",
+    "installed_skill_md_sha256": "b8009ae690dfa69edc7f08bb8715f32db8817112cfa4388741dbaf876c237df8",
+    "installed_line_endings": "CRLF"
+  },
+  "archify": {
+    "repository": "https://github.com/tt-a1i/archify",
+    "version": "3.0.1",
+    "tag_object": "679f195584e4216fd582c073d8964b3a9f59107e",
+    "commit": "2ab3cae7ac2c2a55d7386ca789d03c4fcd31816c",
+    "license": "MIT",
+    "embedded_font_license": "OFL-1.1",
+    "usage": "checked-html-and-native-svg-export",
+    "dependency_installation": "none",
+    "source_directory": "build/latest/inputs/archify/2ab3cae7ac2c2a55d7386ca789d03c4fcd31816c",
+    "local_patch": {
+      "path": "web/diagrams/archify-readability.patch",
+      "sha256": "59c082d1736f6a266605733c900f7339687cc33799c4af42af9ef72405d44b29",
+      "purpose": "larger architecture and installation typography, centered node text, transparent edge labels with matching measurement bounds, and visible default installation locations; frame tops aligned with resolved title rails",
+      "working_directory": "build/.working/archify/archify",
+      "dependency_changes": "none"
+    }
+  }
+}

@@ -1,0 +1,9 @@
+{
+  "tool": "built-in image_gen.imagegen",
+  "intent": "Generate a new website hero illustrating Agent / MCP / Blender",
+  "prompt": "Use case: stylized-concept. Asset type: a landscape 4:3 hero illustration for the Blender MCP Integrated website. Primary request: clearly show the relationship between an AI agent and Blender through a local MCP connection. Create an elegant isometric 3D technical illustration, not a real application screenshot. On the left, a compact dark agent terminal with abstract conversation lines and a single readable label 'Agent'. In the middle, a small physical connector hub labelled 'MCP', joined to both sides with two clean opposing curved arrows, making the request and returned scene result obvious. On the right, a large recognizable 3D editing workspace labelled 'Blender', with an orange cube, a camera wireframe and a sphere on a perspective grid. Use only these three labels, no extra text, no brand logo, no fabricated interface controls, no robot, no human. Color palette: dark blue charcoal #10171b backdrop, slate #172126 surfaces, warm orange #ff984f object and outgoing request path, pale green #a7d7b1 returning result path, off-white labels. Sophisticated restrained soft studio lighting, crisp geometry, matte surfaces, subtle depth, generous margins, readable when shrunk to a 450px-wide image. The subject is local tool-mediated collaboration; do not imply a cloud network or an AI model running inside Blender. Opaque background.",
+  "generated_source": "C:/Users/ustcw/.codex/generated_images/01a11a7c-0f1c-7ae2-aff3-90947dae491d/exec-55a69d03-d7d2-4cfa-bae4-0969ba3cb2f5.png",
+  "project_asset": "web/agent-blender.png",
+  "type": "Conceptual local-connection illustration",
+  "actual_application_screenshot": false
+}

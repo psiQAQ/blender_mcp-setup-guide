@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 620 470" fill="none">
+  <defs>
+    <radialGradient id="glow"><stop stop-color="#fd8b44" stop-opacity=".15"/><stop offset="1" stop-color="#fd8b44" stop-opacity="0"/></radialGradient>
+    <linearGradient id="top" x1="243" y1="135" x2="390" y2="222" gradientUnits="userSpaceOnUse"><stop stop-color="#ffb97c"/><stop offset="1" stop-color="#e98242"/></linearGradient>
+    <linearGradient id="left" x1="225" y1="202" x2="334" y2="324" gradientUnits="userSpaceOnUse"><stop stop-color="#a3512a"/><stop offset="1" stop-color="#512f25"/></linearGradient>
+    <linearGradient id="right" x1="327" y1="219" x2="417" y2="315" gradientUnits="userSpaceOnUse"><stop stop-color="#dd753d"/><stop offset="1" stop-color="#713d29"/></linearGradient>
+    <pattern id="dots" width="23" height="23" patternUnits="userSpaceOnUse"><circle cx="1" cy="1" r=".7" fill="#8599a1" opacity=".2"/></pattern>
+  </defs>
+  <path fill="url(#dots)" d="M0 0h620v470H0z"/>
+  <ellipse cx="322" cy="245" rx="250" ry="210" fill="url(#glow)"/>
+  <g stroke="#788c95" stroke-opacity=".13" stroke-width="1">
+    <path d="m-85 232 480 277M-36 204l480 277M13 176l480 277M62 148l480 277M111 120l480 277M160 92l480 277M209 64l480 277M258 36l480 277M307 8l480 277"/>
+    <path d="m-62 367 480-277M-13 395l480-277M36 423l480-277M85 451l480-277M134 479l480-277M183 507l480-277M232 535l480-277M281 563l480-277"/>
+  </g>
+  <path d="m31 266 526 182" stroke="#d78464" stroke-opacity=".3"/><path d="m65 447 502-292" stroke="#8bba91" stroke-opacity=".3"/>
+  <ellipse cx="324" cy="340" rx="94" ry="23" fill="#03090c" opacity=".45"/>
+  <g stroke="#ffc99b" stroke-linejoin="round" stroke-width="1.5">
+    <path d="m314 131 107 61-109 63-105-62z" fill="url(#top)"/>
+    <path d="m207 193 105 62v119l-105-61z" fill="url(#left)"/>
+    <path d="m312 255 109-63v121l-109 61z" fill="url(#right)"/>
+  </g>
+  <g stroke="#ffb879" stroke-width="1" opacity=".38"><path d="m314 131 0 118-107 64M314 249l107 64" stroke-dasharray="4 5"/></g>
+  <g fill="#ffe4c8"><circle cx="314" cy="131" r="3"/><circle cx="207" cy="193" r="3"/><circle cx="421" cy="192" r="3"/><circle cx="312" cy="255" r="3"/><circle cx="207" cy="313" r="3"/><circle cx="421" cy="313" r="3"/><circle cx="312" cy="374" r="3"/></g>
+  <g stroke="#94a9b3" stroke-width="1" opacity=".5"><path d="m109 115 37-22 38 21v44l-37 23-38-22zM109 115l38 22 37-23M147 137v44"/><path d="m109 159 37-23 38 22M146 93v43" stroke-dasharray="3 4"/></g>
+  <g stroke="#9daba9" stroke-width="1" opacity=".45"><ellipse cx="507" cy="346" rx="42" ry="24"/><ellipse cx="507" cy="346" rx="26" ry="24"/><ellipse cx="507" cy="346" rx="9" ry="24"/><path d="M465 346h84M470 335h74M470 357h74"/></g>
+  <path d="m368 153 48-41h85" stroke="#e49b65" stroke-opacity=".55"/><circle cx="368" cy="153" r="3" fill="#ffb879"/>
+  <g fill="#b8c2c6" font-family="ui-monospace,monospace" font-size="11"><text x="423" y="103">Cube.001</text><text x="68" y="64" fill="#7e929c" font-size="10">PERSPECTIVE / LOCAL</text><text x="63" y="405" fill="#789284" font-size="10">Y</text><text x="561" y="434" fill="#bd8f79" font-size="10">X</text></g>
+  <g transform="translate(553 55)" stroke-width="1.5"><path d="M0 0v-22" stroke="#8fbee3"/><path d="m0 0 20 11" stroke="#d18c76"/><path d="m0 0-20 11" stroke="#87b297"/><circle r="3" fill="#bac5cc"/></g>
+  <path d="M38 35h14m-14 0v14M582 35h-14m14 0v14M38 435h14m-14 0v-14M582 435h-14m14 0v-14" stroke="#61717a" stroke-opacity=".4"/>
+</svg>

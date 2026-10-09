@@ -14,13 +14,15 @@ from pathlib import Path
 from platforms import resolve
 
 
+from build_cache import pinned_input
+
 ROOT = Path(__file__).resolve().parents[1]
 
 
 def prepare(identifier, minimum=False):
     _, target = resolve(identifier)
     record = target["minimum_blender" if minimum else "blender"]
-    tools = ROOT / "build/toolchain" / identifier / record["version"]
+    tools = pinned_input("toolchain", identifier + ("-minimum" if minimum else "-current"), record["version"])
     tools.mkdir(parents=True, exist_ok=True)
     archive = tools / Path(record["url"]).name
     if not archive.exists():

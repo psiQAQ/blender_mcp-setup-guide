@@ -1,0 +1,334 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "官方 Extension + stdio：安装与运行",
+    "locale": "zh-CN",
+    "quality_profile": "showcase",
+    "output": "build/visual-refresh/aligned-diagrams/stdio-zh/stdio.zh.html",
+    "repository": {
+      "url": "https://github.com/psiQAQ/blender_mcp-setup-guide.git",
+      "revision": "7f281466d9ef01a957f872906c0bc468198a0635",
+      "provider": "github",
+      "link_mode": "web"
+    },
+    "legend": {
+      "entries": {
+        "frontend": {
+          "label": "智能体客户端"
+        },
+        "backend": {
+          "label": "运行组件"
+        },
+        "database": {
+          "label": "文件与依赖"
+        }
+      }
+    },
+    "viewBox": [
+      1000,
+      720
+    ]
+  },
+  "components": [
+    {
+      "id": "agent-client",
+      "type": "frontend",
+      "label": "智能体 / MCP 客户端",
+      "sublabel": "Codex / Claude Code / OpenCode",
+      "tag": "进程：客户端",
+      "pos": [
+        60,
+        286
+      ],
+      "size": [
+        300,
+        108
+      ],
+      "sources": [
+        {
+          "path": "docs/blender_mcp-stdio-setup_zh.md",
+          "line": 5,
+          "end_line": 12
+        }
+      ]
+    },
+    {
+      "id": "client-config",
+      "type": "database",
+      "label": "客户端 MCP 配置",
+      "sublabel": "command: blender-mcp + env",
+      "tag": "位置：客户端用户配置目录",
+      "pos": [
+        60,
+        110
+      ],
+      "size": [
+        300,
+        108
+      ],
+      "sources": [
+        {
+          "path": "docs/blender_mcp-stdio-setup_zh.md",
+          "line": 63,
+          "end_line": 82
+        }
+      ]
+    },
+    {
+      "id": "mcp-service",
+      "type": "backend",
+      "label": "blender-mcp",
+      "sublabel": "独立 Python 进程",
+      "tag": "外部 Python · uv 工具环境",
+      "pos": [
+        550,
+        286
+      ],
+      "size": [
+        330,
+        108
+      ],
+      "sources": [
+        {
+          "path": "docs/blender_mcp-stdio-setup_zh.md",
+          "line": 5,
+          "end_line": 5
+        },
+        {
+          "path": "docs/blender_mcp-stdio-setup_zh.md",
+          "line": 35,
+          "end_line": 52
+        }
+      ]
+    },
+    {
+      "id": "tool-runtime",
+      "type": "database",
+      "label": "工具、依赖与文档",
+      "sublabel": "blmcp + MCP SDK + Python deps",
+      "tag": "uv tool dir / uv tool dir --bin",
+      "pos": [
+        550,
+        110
+      ],
+      "size": [
+        330,
+        108
+      ],
+      "sources": [
+        {
+          "path": "docs/blender_mcp-stdio-setup_zh.md",
+          "line": 35,
+          "end_line": 52
+        }
+      ]
+    },
+    {
+      "id": "blender-bridge",
+      "type": "backend",
+      "label": "官方 MCP Extension",
+      "sublabel": "Blender 进程 · 桥接已启用",
+      "tag": "Extensions / mcp",
+      "pos": [
+        550,
+        520
+      ],
+      "size": [
+        330,
+        108
+      ],
+      "sources": [
+        {
+          "path": "docs/blender_mcp-stdio-setup_zh.md",
+          "line": 15,
+          "end_line": 22
+        }
+      ]
+    },
+    {
+      "id": "blender-scene",
+      "type": "backend",
+      "label": "bpy / 当前场景",
+      "sublabel": "Blender 进程 · 执行场景操作",
+      "tag": "位置：Blender 安装目录",
+      "pos": [
+        60,
+        520
+      ],
+      "size": [
+        300,
+        108
+      ],
+      "sources": [
+        {
+          "path": "docs/integration-design.md",
+          "line": 9,
+          "end_line": 9
+        },
+        {
+          "path": "src/blender_mcp_integration/__init__.py",
+          "line": 62,
+          "end_line": 79
+        }
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "智能体安装与用户配置",
+      "wraps": [
+        "agent-client",
+        "client-config"
+      ],
+      "pad": 30
+    },
+    {
+      "kind": "region",
+      "label": "独立 uv 工具环境",
+      "wraps": [
+        "mcp-service",
+        "tool-runtime"
+      ],
+      "pad": 34
+    },
+    {
+      "kind": "region",
+      "label": "官方 Extension",
+      "wraps": [
+        "blender-bridge"
+      ],
+      "pad": 34
+    },
+    {
+      "kind": "region",
+      "label": "Blender 宿主安装 · Python / bpy",
+      "wraps": [
+        "blender-scene"
+      ],
+      "pad": 34
+    }
+  ],
+  "connections": [
+    {
+      "id": "mcp-request",
+      "from": "agent-client",
+      "to": "mcp-service",
+      "label": "MCP 请求 · stdin",
+      "variant": "emphasis"
+    },
+    {
+      "id": "mcp-result",
+      "from": "mcp-service",
+      "to": "agent-client",
+      "label": "工具结果 · stdout",
+      "variant": "default",
+      "fromSide": "top",
+      "toSide": "top",
+      "labelAt": [
+        450,
+        250
+      ]
+    },
+    {
+      "id": "load-client-settings",
+      "from": "client-config",
+      "to": "agent-client",
+      "label": "读取 MCP 配置",
+      "variant": "default",
+      "labelDx": -90,
+      "labelDy": 40
+    },
+    {
+      "id": "load-tools",
+      "from": "mcp-service",
+      "to": "tool-runtime",
+      "label": "载入工具与依赖",
+      "variant": "default",
+      "labelDx": -100,
+      "labelDy": -30
+    },
+    {
+      "id": "bridge-request",
+      "from": "mcp-service",
+      "to": "blender-bridge",
+      "label": "TCP :9876 · 代码",
+      "variant": "emphasis",
+      "labelAt": [
+        824,
+        445
+      ]
+    },
+    {
+      "id": "bridge-result",
+      "from": "blender-bridge",
+      "to": "mcp-service",
+      "label": "TCP · JSON/图像",
+      "variant": "default",
+      "fromSide": "right",
+      "toSide": "right",
+      "labelAt": [
+        824,
+        478
+      ]
+    },
+    {
+      "id": "execute-scene-code",
+      "from": "blender-bridge",
+      "to": "blender-scene",
+      "label": "执行 Python / bpy",
+      "variant": "emphasis"
+    },
+    {
+      "id": "scene-result",
+      "from": "blender-scene",
+      "to": "blender-bridge",
+      "label": "返回场景结果",
+      "variant": "default",
+      "fromSide": "bottom",
+      "toSide": "bottom"
+    },
+    {
+      "id": "process-control",
+      "from": "agent-client",
+      "to": "mcp-service",
+      "label": "启动 / 停止服务",
+      "variant": "dashed"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "接口与请求",
+      "items": [
+        "智能体以 stdio 与 MCP 服务通信；服务再连接已启动的 Blender TCP 桥接。",
+        "TCP 桥接默认 localhost:9876；箭头明确区分请求与结果方向。"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "谁控制服务？",
+      "items": [
+        "客户端按 command 启动并管理独立 MCP 服务；Blender 内单独启动 TCP 桥接。",
+        "Blender 的桥接开关仅控制桥接，不负责启动客户端的 stdio 进程。"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "安装位置与运行进程",
+      "items": [
+        "背景框表示安装区域；节点副标题表示运行进程。同一安装包可以包含不同进程使用的代码。",
+        "工具与依赖在 uv 环境，Extension 在 Blender 用户仓库；两处分别安装。"
+      ]
+    },
+    {
+      "dot": "slate",
+      "title": "同机配置",
+      "items": [
+        "客户端与 Blender 在同一台电脑的原生系统中运行；端口与安装路径以实际配置为准。",
+        "客户端保存 MCP command 和桥接 Host / Port；uv tool dir 可查询实际工具目录。"
+      ]
+    }
+  ]
+}

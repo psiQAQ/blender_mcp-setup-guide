@@ -1,0 +1,117 @@
+name: Refresh release website
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'web/**'
+      - 'scripts/pages_render.py'
+      - 'scripts/pages_site.py'
+      - 'scripts/run_checks.py'
+      - 'tests/test_pages*.py'
+      - '.github/workflows/pages.yml'
+      - 'docs/release-site.md'
+  workflow_dispatch:
+  workflow_run:
+    workflows: ['Publish validated integration']
+    types: [completed]
+
+permissions:
+  contents: read
+
+# Serialize with package publication so a website refresh cannot replace a newer channel.
+concurrency:
+  group: extension-release
+  cancel-in-progress: false
+
+jobs:
+  build:
+    if: >-
+      github.event_name != 'workflow_run' ||
+      (github.event.workflow_run.conclusion == 'success' &&
+       github.event.workflow_run.head_repository.full_name == github.repository)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      pages: read
+    outputs:
+      base_url: ${{ steps.pages.outputs.base_url }}
+      site_commit: ${{ steps.source.outputs.commit }}
+    steps:
+      # workflow_run may refer to an older release branch. Only use the trusted main renderer.
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          persist-credentials: false
+      - name: Record the website source commit
+        id: source
+        run: echo "commit=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - id: pages
+        uses: actions/configure-pages@v5
+      - name: Run repository unit tests
+        run: python -B scripts/run_checks.py
+      - name: Verify published channels and render the website
+        env:
+          PAGES_BASE: ${{ steps.pages.outputs.base_url }}
+        run: python -B scripts/pages_site.py --base-url "$PAGES_BASE" --refresh --site build/latest/site
+      - name: Recheck immutable metadata and downloads before deployment
+        env:
+          PAGES_BASE: ${{ steps.pages.outputs.base_url }}
+        run: python -B scripts/pages_site.py --base-url "$PAGES_BASE" --site build/latest/site
+      # Verification consumes metadata from this run, never artifacts from workflow_run.
+      - name: Save publication verification metadata
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-site-verification
+          path: |
+            build/latest/site/*.json
+            build/latest/site/**/*.json
+          if-no-files-found: error
+          retention-days: 7
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: build/latest/site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      actions: read
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
+
+  verify:
+    needs: [build, deploy]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      actions: read
+    steps:
+      # Use the exact trusted main commit that prepared this deployment.
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.build.outputs.site_commit }}
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - uses: actions/download-artifact@v4
+        with:
+          name: release-site-verification
+          path: build/latest/site
+      - name: Verify immutable metadata and public downloads after deployment
+        env:
+          PAGES_BASE: ${{ needs.build.outputs.base_url }}
+        run: python -B scripts/pages_site.py --base-url "$PAGES_BASE" --site build/latest/site --deployed

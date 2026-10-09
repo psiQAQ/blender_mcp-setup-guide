@@ -1,0 +1,11 @@
+Architecture viewer and SVG export generated with Archify v3.0.1 plus the local readability patch.
+Source: https://github.com/tt-a1i/archify/tree/2ab3cae7ac2c2a55d7386ca789d03c4fcd31816c
+Copyright (c) 2026 tt-a1i (Archify); Copyright (c) 2025 Cocoon AI.
+Archify viewer code: MIT; see LICENSE.archify.txt.
+Embedded JetBrains Mono font: SIL Open Font License 1.1; see JetBrainsMono-OFL.txt.
+Diagrams use semantic icons without third-party brand marks.
+Local modifications: larger node, installation boundary and interface text; centered node text;
+transparent edge labels with corresponding measurement bounds;
+installation locations visible in the default READ view; showcase frame tops aligned with title rails.
+Patch: archify-readability.patch. Base commit and patch SHA-256: .scratch/release-site-visual/references.lock.json.
+Diagram content: Blender MCP Integrated installation and runtime behavior.

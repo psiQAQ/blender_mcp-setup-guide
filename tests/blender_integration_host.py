@@ -12,6 +12,8 @@ import bpy
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
 from check_reports import write_json
+sys.path.insert(0, str(Path(__file__).parent))
+from native_install_capture import capture_install
 
 
 def main():
@@ -19,30 +21,18 @@ def main():
     package, control, http_port, bridge_port = arguments[:4]
     control = Path(control)
     control.mkdir(parents=True, exist_ok=True)
-    repo = None
-    if len(arguments) == 5:
-        bpy.context.preferences.system.use_online_access = True
-        repo = bpy.context.preferences.extensions.repos.new(
-            name="Integration Test", module="integration_test", remote_url=arguments[4],
-        )
-        repo.use_sync_on_startup = False
-        repo_index = list(bpy.context.preferences.extensions.repos).index(repo)
-        bpy.context.preferences.extensions.active_repo = repo_index
-        assert bpy.ops.extensions.repo_sync(repo_index=repo_index) == {"FINISHED"}
-        outcome = bpy.ops.extensions.package_install(
-            repo_index=repo_index, pkg_id="blender_mcp_integration", enable_on_install=True,
-        )
-    else:
-        outcome = bpy.ops.extensions.package_install_files(
-            filepath=str(Path(package).resolve()), repo="user_default", enable_on_install=True,
-        )
-    assert outcome == {"FINISHED"}, outcome
+    with capture_install(control):
+        install(arguments, package)
+    repo = next((item for item in bpy.context.preferences.extensions.repos if item.module == 'integration_test'), None) if len(arguments) == 5 else None
     module_name = f"bl_ext.{repo.module if repo else 'user_default'}.blender_mcp_integration"
     addon = importlib.import_module(module_name)
     prefs = bpy.context.preferences.addons[module_name].preferences
     prefs.autostart = False
     prefs.http_port = int(http_port)
     prefs.bridge_port = int(bridge_port)
+    make_cli_fixture(control)
+    blend_file = control / "cli-test.blend"
+    bpy.ops.wm.save_as_mainfile(filepath=str(blend_file))
     addon.start_service()
 
     def publish():
@@ -50,6 +40,8 @@ def main():
             "http_port": prefs.http_port, "bridge_port": prefs.bridge_port,
             "token": addon.SERVICE.token, "pid": addon.SERVICE.process.pid,
             "log": str(addon.SERVICE.directory / "service.log"),
+            "blend_file": str(blend_file),
+            "host_binary": bpy.app.binary_path,
         })
 
     try:
@@ -67,6 +59,22 @@ def main():
                 command_file.unlink()
                 if action == "parent-exit":
                     os._exit(0)
+                elif action == "stop-start":
+                    addon.stop_service()
+                    addon.start_service()
+                elif action == "timer-exception":
+                    bridge = addon._bridge
+                    original_poll = bridge.poll
+                    def unexpected_poll_error():
+                        raise ValueError("Injected unexpected bridge failure")
+                    bridge.poll = unexpected_poll_error
+                    try:
+                        assert addon._poll_service() is None
+                        assert "ValueError: Injected unexpected bridge failure" in addon.LAST_ERROR
+                        assert addon.SERVICE.process is None and addon._bridge is None
+                    finally:
+                        bridge.poll = original_poll
+                    addon.start_service()
                 elif action == "upgrade":
                     assert repo is not None
                     before = json.loads((Path(addon.__file__).parent / "provenance.json").read_text())
@@ -159,6 +167,43 @@ def main():
     finally:
         addon.stop_service()
         bpy.ops.preferences.addon_disable(module=module_name)
+
+
+def install(arguments, package):
+    if len(arguments) == 5:
+        bpy.context.preferences.system.use_online_access = True
+        repo = bpy.context.preferences.extensions.repos.new(
+            name="Integration Test", module="integration_test", remote_url=arguments[4],
+        )
+        repo.use_sync_on_startup = False
+        repo_index = list(bpy.context.preferences.extensions.repos).index(repo)
+        bpy.context.preferences.extensions.active_repo = repo_index
+        assert bpy.ops.extensions.repo_sync(repo_index=repo_index) == {"FINISHED"}
+        outcome = bpy.ops.extensions.package_install(
+            repo_index=repo_index, pkg_id="blender_mcp_integration", enable_on_install=True,
+        )
+    else:
+        outcome = bpy.ops.extensions.package_install_files(
+            filepath=str(Path(package).resolve()), repo="user_default", enable_on_install=True,
+        )
+    assert outcome == {"FINISHED"}, outcome
+
+
+def make_cli_fixture(control):
+    library = control / "library.blend"
+    mesh = bpy.data.meshes.new("LinkedMesh")
+    obj = bpy.data.objects.new("LinkedFixture", mesh)
+    bpy.data.libraries.write(str(library), {obj})
+    bpy.data.objects.remove(obj)
+    bpy.data.meshes.remove(mesh)
+    with bpy.data.libraries.load(str(library), link=True) as (_, target):
+        target.objects = ["LinkedFixture"]
+    bpy.context.scene.collection.objects.link(target.objects[0])
+    image = bpy.data.images.new("MissingFixture", width=1, height=1)
+    image.source = "FILE"
+    image.use_fake_user = True
+    image.filepath = str(control / "missing-fixture.png")
+    bpy.context.scene["mcp_fixture"] = "all-tools"
 
 
 if __name__ == "__main__":

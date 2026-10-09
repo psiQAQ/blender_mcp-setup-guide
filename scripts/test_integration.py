@@ -10,15 +10,21 @@ import socket
 import subprocess
 import sys
 import time
+import threading
 import urllib.error
 import urllib.request
 import zipfile
 from pathlib import Path
+from datetime import timedelta
 
 from check_reports import run_check, write_json
+from mcp_checks import HTTP_READ_SECONDS, SDK_READ_TIMEOUT, check_cli_tools
+from mcp_checks import HTTP_READ_SECONDS, SDK_READ_TIMEOUT, check_cli_tools
 from publication import digest
 from platforms import process_options
 
+
+from build_cache import LATEST, current_work
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -61,19 +67,19 @@ def wait_file(path, process, timeout=45):
         time.sleep(0.05)
 
 
-async def check_session(connection):
+async def check_session(connection, cli=True):
     import httpx
     from mcp import ClientSession
     from mcp.client.streamable_http import streamable_http_client
 
-    async with httpx.AsyncClient(headers={"Authorization": f"Bearer {connection['token']}"}, trust_env=False) as http:
+    async with httpx.AsyncClient(headers={"Authorization": f"Bearer {connection['token']}"}, trust_env=False, timeout=HTTP_READ_SECONDS) as http:
         async with streamable_http_client(f"http://127.0.0.1:{connection['http_port']}/", http_client=http) as (read, write, _):
-            async with ClientSession(read, write) as session:
+            async with ClientSession(read, write, read_timeout_seconds=SDK_READ_TIMEOUT) as session:
                 initialized = await session.initialize()
                 tools = await session.list_tools()
                 names = {tool.name for tool in tools.tools}
                 assert "execute_blender_code" in names
-                response = await session.call_tool("execute_blender_code", {"code": "import bpy, sys, platform\nresult = {'version': bpy.app.version_string, 'count': len(bpy.data.objects), 'python': sys.version, 'architecture': platform.machine()}"})
+                response = await session.call_tool("execute_blender_code", {"code": "import bpy, sys, platform\nresult = {'version': bpy.app.version_string, 'binary': bpy.app.binary_path, 'background': bpy.app.background, 'count': len(bpy.data.objects), 'python': sys.version, 'architecture': platform.machine()}"})
                 assert not response.isError, response
                 structured = response.structuredContent or json.loads(response.content[0].text)
                 assert structured["status"] == "ok", structured
@@ -93,9 +99,19 @@ async def check_session(connection):
                 restored = await session.call_tool("execute_blender_code", {"code": "import bpy\nresult = {'count': len(bpy.data.objects)}"})
                 after = restored.structuredContent or json.loads(restored.content[0].text)
                 assert after["result"]["count"] == original_count
+                if not structured["result"]["background"]:
+                    deferred = await session.call_tool("execute_blender_code", {"code": "def check_is_finished():\n    return {'values': {1, 2}}"})
+                    failure = deferred.structuredContent or json.loads(deferred.content[0].text)
+                    assert failure["status"] == "error" and "JSON-serializable" in failure["message"], failure
+                    recovered = await session.call_tool("execute_blender_code", {"code": "result = {'recovered': True}"})
+                    result = recovered.structuredContent or json.loads(recovered.content[0].text)
+                    assert result["status"] == "ok" and result["result"]["recovered"], result
+                cli_results = await check_cli_tools(session, connection, structured["result"]) if cli else {}
                 assert len(names) == 26, names
                 return {"server": initialized.serverInfo.name, "tools": len(names), "blender": structured["result"]["version"],
-                        "python": structured["result"]["python"], "architecture": structured["result"]["architecture"]}
+                        "python": structured["result"]["python"], "architecture": structured["result"]["architecture"],
+                        "cli_host_executable": "Passed" if cli else "Not Run", "cli_tools": cli_results,
+                        "deferred_failure_recovery": "Passed" if not structured["result"]["background"] else "Not Run"}
 
 
 def request_status(connection, headers):
@@ -116,6 +132,73 @@ def check_bridge_auth(connection):
             data += bridge.recv(65536)
         response = json.loads(data.split(b"\0")[0])
         assert response["status"] == "error" and "authentication" in response["message"]
+
+
+def start_inflight_cli(connection, directory, host):
+    """Start a real tool call and retain a handle to its test-owned Blender child."""
+    marker = directory / "cli-child.json"
+    outcome = []
+
+    async def call():
+        import httpx
+        from mcp import ClientSession
+        from mcp.client.streamable_http import streamable_http_client
+        async with httpx.AsyncClient(headers={"Authorization": f"Bearer {connection['token']}"}, trust_env=False, timeout=HTTP_READ_SECONDS) as http:
+            async with streamable_http_client(f"http://127.0.0.1:{connection['http_port']}/", http_client=http) as (read, write, _):
+                # Deliberately short: this call is interrupted by lifecycle cleanup.
+                async with ClientSession(read, write, read_timeout_seconds=timedelta(seconds=15)) as session:
+                    await session.initialize()
+                    return await session.call_tool("execute_blender_code_for_cli", {
+                        "blend_file": connection["blend_file"],
+                        "code": f"import bpy,os,json,time\nfrom pathlib import Path\np = Path({str(marker)!r})\nt = p.with_suffix('.pending')\nt.write_text(json.dumps({{'pid':os.getpid(),'binary':bpy.app.binary_path}}))\nt.replace(p)\ntime.sleep(120)\nresult = {{'completed': True}}",
+                    })
+
+    def worker():
+        try:
+            outcome.append(asyncio.run(call()))
+        except Exception as error:
+            outcome.append(error)
+
+    thread = threading.Thread(target=worker, daemon=True)
+    thread.start()
+    wait_file(marker, host, timeout=45)
+    identity = json.loads(marker.read_text())
+    assert Path(identity["binary"]).resolve() == Path(connection["host_binary"]).resolve()
+    kernel, handle = None, None
+    if os.name == "nt":
+        kernel = ctypes.WinDLL("kernel32", use_last_error=True)
+        kernel.OpenProcess.argtypes = [ctypes.c_uint32, ctypes.c_int, ctypes.c_uint32]
+        kernel.OpenProcess.restype = ctypes.c_void_p
+        kernel.WaitForSingleObject.argtypes = [ctypes.c_void_p, ctypes.c_uint32]
+        kernel.CloseHandle.argtypes = [ctypes.c_void_p]
+        handle = kernel.OpenProcess(0x00100000, False, identity["pid"])
+        if not handle:
+            raise ctypes.WinError(ctypes.get_last_error())
+
+    def verify():
+        try:
+            if kernel:
+                assert kernel.WaitForSingleObject(handle, 15000) == 0, "In-flight Blender CLI survived service cleanup"
+            else:
+                deadline = time.monotonic() + 15
+                while True:
+                    try:
+                        os.kill(identity["pid"], 0)
+                        status = Path(f"/proc/{identity['pid']}/stat")
+                        if status.exists() and status.read_text().split(")", 1)[1].split()[0] == "Z":
+                            break
+                    except ProcessLookupError:
+                        break
+                    if time.monotonic() >= deadline:
+                        raise AssertionError("In-flight Blender CLI survived service cleanup")
+                    time.sleep(0.1)
+            thread.join(timeout=20)
+            assert not thread.is_alive(), "Stopped tool call did not finish"
+            assert outcome and (isinstance(outcome[0], Exception) or outcome[0].isError), outcome
+        finally:
+            if kernel and handle:
+                kernel.CloseHandle(handle)
+    return verify
 
 
 def check_parent_exit(args, directory):
@@ -140,6 +223,7 @@ def check_parent_exit(args, directory):
         try:
             wait_file(directory / "service.json", parent)
             connection = json.loads((directory / "service.json").read_text())
+            verify_child = start_inflight_cli(connection, directory, parent)
             if kernel:
                 handle = kernel.OpenProcess(0x00100000, False, connection["pid"])
                 if not handle:
@@ -147,6 +231,7 @@ def check_parent_exit(args, directory):
             write_json(directory / "action.json", {"action": "parent-exit"})
             parent.wait(timeout=10)
             assert parent.returncode == 0
+            verify_child()
             if kernel:
                 assert kernel.WaitForSingleObject(handle, 15000) == 0, "Service survived abrupt Blender exit"
             else:
@@ -173,15 +258,17 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--blender", required=True, type=Path)
     parser.add_argument("--package", required=True, type=Path)
+    parser.add_argument('--minimum', action='store_true', help='Keep minimum-version evidence separate from the current host')
     args = parser.parse_args()
     package_hash = digest(args.package)
-    run = ROOT / "build/tests" / f"integration-{time.time_ns()}"
-    run.mkdir(parents=True)
+    run = current_work("integration")
     initialize_client_runtime(args.package, run / "client")
     http_port, bridge_port = free_port(), free_port()
     environment = os.environ.copy()
     environment["BLENDER_USER_RESOURCES"] = str(run / "profile")
     environment["PYTHONDONTWRITEBYTECODE"] = "1"
+    environment["PATH"] = ""
+    environment["BLENDER_PATH"] = str(run / "nonexistent-blender")
     log = (run / "blender.log").open("w", encoding="utf-8")
     process = subprocess.Popen([
         str(args.blender), "--background", "--factory-startup", "--python-exit-code", "1",
@@ -190,6 +277,10 @@ def main():
     ], env=environment, stdin=subprocess.DEVNULL, stdout=log, stderr=subprocess.STDOUT,
         **process_options())
     checks = {}
+    name = 'minimum' if args.minimum else 'integration'
+    report = {"status": "Not Run", "package_sha256": package_hash, "checks": checks,
+              "log": str(run / "blender.log"), "gui": "Not Run"}
+    write_json(LATEST / f"{name}-tests.json", report)
     try:
         wait_file(run / "service.json", process)
         connection = json.loads((run / "service.json").read_text(encoding="utf-8"))
@@ -200,15 +291,24 @@ def main():
         check_bridge_auth(connection)
         checks["authentication"] = "Passed"
         details = asyncio.run(check_session(connection))
+        report["details"] = details
         checks["mcp-session-scene-and-reversible-operation"] = "Passed"
-        for action in ("duplicate-start", "port-conflict", "crash-recovery", "disable-enable", "cleanup-error"):
+        checks["cli-host-executable-without-path"] = "Passed"
+        checks["all-six-cli-tools-with-positive-fixtures"] = "Passed"
+        verify_child = start_inflight_cli(connection, run, process)
+        write_json(run / "action.json", {"action": "stop-start"})
+        wait_file(run / "action-result.json", process)
+        verify_child()
+        checks["stop-with-inflight-cli"] = "Passed"
+        connection = json.loads((run / "service.json").read_text())
+        for action in ("duplicate-start", "port-conflict", "crash-recovery", "timer-exception", "disable-enable", "cleanup-error"):
             (run / "action-result.json").unlink(missing_ok=True)
             write_json(run / "action.json", {"action": action})
             wait_file(run / "action-result.json", process)
             result = json.loads((run / "action-result.json").read_text(encoding="utf-8"))
             assert result == {"action": action, "status": "Passed"}
             connection = json.loads((run / "service.json").read_text(encoding="utf-8"))
-            asyncio.run(check_session(connection))
+            asyncio.run(check_session(connection, cli=False))
             checks[action] = "Passed"
         (run / "stop").touch()
         process.wait(timeout=15)
@@ -217,10 +317,12 @@ def main():
         checks["stop-and-port-cleanup"] = "Passed"
         check_parent_exit(args, run / "parent-exit")
         checks["abrupt-parent-exit-and-session-cleanup"] = "Passed"
+        checks["parent-exit-with-inflight-cli"] = "Passed"
         if digest(args.package) != package_hash:
             raise RuntimeError("Package changed during integration validation")
         report = {"status": "Passed", "package_sha256": package_hash, "checks": checks, "details": details, "log": str(run / "blender.log"), "gui": "Not Run"}
-        (ROOT / "build/integration-tests.json").write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
+        name = 'minimum' if args.minimum else 'integration'
+        (LATEST / f"{name}-tests.json").write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
         print(json.dumps(report, indent=2))
     finally:
         (run / "stop").touch()
@@ -231,7 +333,13 @@ def main():
                 process.terminate()
                 process.wait(timeout=10)
         log.close()
+        if report["status"] != "Passed":
+            report.update(status="Failed", checks=checks)
+            if (run / "native-install.json").exists():
+                report["native_install"] = json.loads((run / "native-install.json").read_text(encoding="utf-8"))
+            write_json(LATEST / f"{name}-tests.json", report)
 
 
 if __name__ == "__main__":
-    run_check("integration", main)
+    import sys
+    run_check("minimum" if '--minimum' in sys.argv else "integration", main)

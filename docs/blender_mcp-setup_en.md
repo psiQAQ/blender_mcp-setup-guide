@@ -2,7 +2,12 @@
 
 # Install the Blender MCP integrated Extension
 
-This package targets **Windows x64, Linux x64, macOS Apple Silicon and Blender 5.1.x with bundled CPython 3.13**, with the client and Blender on the same computer. The supported range is 5.1.0 ≤ Blender < 5.2.0. Blender 5.0 uses Python 3.11 and is incompatible; see [the official 5.0 source](https://github.com/blender/blender/blob/v5.0.0/build_files/build_environment/cmake/versions.cmake) and [5.1 release notes](https://www.blender.org/download/releases/5-1/). It includes Blender Lab MCP v1.0.3, dependencies and documentation. Users do not need a separate uv or Python installation.
+This package targets **Windows x64, Linux x64, macOS Apple Silicon and Blender 5.1 stable or 5.2 preview with bundled CPython 3.13**, with the client and Blender on the same computer. The 5.1 line uses official v1.0.3; the 5.2 preview uses a pinned official main snapshot. Packages include MCP, dependencies and documentation; users do not need separate uv or Python. Blender 5.0 uses Python 3.11 and is incompatible; see [the official 5.0 source](https://github.com/blender/blender/blob/v5.0.0/build_files/build_environment/cmake/versions.cmake) and [5.1 release notes](https://www.blender.org/download/releases/5-1/).
+
+| Blender range | Package version | Online update index |
+| --- | --- | --- |
+| 5.1.0 ≤ version < 5.2.0 | `1.0.3+integration.1`, stable | `https://notes.psiqaq.cn/blender_mcp-setup-guide/index.json` |
+| 5.2.0 ≤ version < 5.3.0 | `1.0.2-dev.1+integration.1`, preview | `https://notes.psiqaq.cn/blender_mcp-setup-guide/blender-5.2/preview/index.json` |
 
 For a client-managed official MCP process, use the separate [official stdio guide](blender_mcp-stdio-setup_en.md). The [README](../README.md) compares the two methods.
 
@@ -14,11 +19,11 @@ flowchart LR
 
 ## 1. Obtain and install the package
 
-1. Obtain the compatible `blender_mcp_integration-1.0.3+integration.1-<platform>.zip`, choosing `windows-x64`, `linux-x64` or `macos-arm64`. Download it from [Releases](https://github.com/psiQAQ/blender_mcp-setup-guide/releases). If no compatible release exists, follow the [build instructions](integration-build.md); local output is in `build/dist/`.
+1. Obtain the compatible `blender_mcp_integration-<version>-<platform>.zip` using the table, choosing `windows-x64`, `linux-x64` or `macos-arm64`. Download it from [Releases](https://github.com/psiQAQ/blender_mcp-setup-guide/releases); choose the **Pre-release** for Blender 5.2. Install the platform ZIP; the evidence ZIP is for auditing.
 2. In Blender, open **Edit → Preferences → Add-ons → top-right menu → Install from Disk**, select the ZIP, then install and enable **Blender MCP Integrated**.
 3. Expand its preferences. Stop and disable the original **MCP** Extension before starting the integration if both are installed, to avoid bridge-port conflicts.
 
-Local ZIP installation is sufficient. Alternatively, add `https://psiQAQ.github.io/blender_mcp-setup-guide/index.json` under **Extensions → Repositories → Add Remote Repository**; Blender selects the matching platform package and offers updates. Online Extensions repository installation and updates require **Preferences → System → Network → Allow Online Access**.
+Local ZIP installation is sufficient. Alternatively, add the matching index from the table under **Extensions → Repositories → Add Remote Repository**; Blender selects the matching platform package and offers updates. If Blender 5.1 and 5.2 share an extension directory, create a separate preview repository for 5.2. Online installation and updates require **Preferences → System → Network → Allow Online Access**.
 
 ## 2. Start the service and copy its configuration
 
