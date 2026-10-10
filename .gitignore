@@ -12,3 +12,4 @@ docs/extensions-getting_started.md
 extensions/
 .agents/skills/*
 !.agents/skills/blender-mcp-skills
+.vscode/
