@@ -68,7 +68,7 @@ class OwnedWindow:
 
 
 async def audit(connection, run, report, path, rounds, window, http_read_timeout,
-                skip_window_matrix, multi_window):
+                skip_window_matrix, multi_window, screenshot_only, early_minimized):
     import httpx
     from mcp import ClientSession
     from mcp.client.streamable_http import streamable_http_client
@@ -177,6 +177,14 @@ async def audit(connection, run, report, path, rounds, window, http_read_timeout
                     row.update(path=str(png), bytes=len(raw), sha256=hashlib.sha256(raw).hexdigest())
                     try:
                         row.update(await image_details(session, png))
+                        observations = json.loads((run / 'diagnostic/screenshots.json').read_text(encoding='utf-8'))
+                        observed = observations['captures'][-1]
+                        if observed.get('output', {}).get('sha256') != row['sha256']:
+                            raise AssertionError('Observed screenshot output does not match the MCP image bytes')
+                        row['content_valid'] = observed['content_valid']
+                        row['non_dominant_channel_fraction'] = observed['output']['non_dominant_channel_fraction']
+                        if not row['content_valid']:
+                            raise AssertionError('Screenshot lacks meaningful spatial variation across the test interface')
                         row['status'] = 'Passed'
                     except Exception as error:
                         row.update(status='Failed', error=str(error))
@@ -184,6 +192,19 @@ async def audit(connection, run, report, path, rounds, window, http_read_timeout
                 async def capture(phase):
                     response = await call('get_screenshot_of_window_as_image', {}, phase)
                     await save_capture(response, phase)
+
+                if screenshot_only:
+                    if early_minimized and not window.state()['minimized']:
+                        raise RuntimeError('Early-minimized MCP probe requires an actually minimized host')
+                    for number in range(rounds):
+                        await capture(f'screenshot-only-{number + 1}')
+                    if early_minimized:
+                        window.show(9)
+                        await asyncio.sleep(0.5)
+                        if window.state()['minimized']:
+                            raise RuntimeError('Owned MCP host did not restore')
+                        await capture('early-minimized-restored')
+                    return
 
                 # The historical ten-tool ordering, including an image and an API
                 # member miss before search, stays in one live SDK session.
@@ -278,6 +299,8 @@ def main():
     parser.add_argument('--multi-window', action='store_true')
     parser.add_argument('--render-samples', type=int)
     parser.add_argument('--skip-initial-redraw', action='store_true')
+    parser.add_argument('--screenshot-only', action='store_true')
+    parser.add_argument('--early-minimized', action='store_true')
     args = parser.parse_args()
     if os.name != 'nt':
         parser.error('Owned-window state comparisons currently require Windows')
@@ -285,6 +308,8 @@ def main():
         parser.error('rounds and HTTP read timeout must be positive')
     if args.render_samples is not None and (not args.historical_scene or args.render_samples < 1):
         parser.error('render-samples requires historical-scene and a positive sample count')
+    if args.early_minimized and not args.screenshot_only:
+        parser.error('early-minimized requires screenshot-only to isolate the failing capture')
     run = current_work('mcp-response-diagnosis')
     report_path = LATEST / f'mcp-response-{args.label}-tests.json'
     report = {'status': 'Not Run', 'package_sha256': digest(args.package),
@@ -295,6 +320,7 @@ def main():
               'sdk_timeout_seconds': SDK_READ_TIMEOUT.total_seconds(),
               'diagnostic_driver_sha256': digest(Path(__file__)),
               'initial_redraw_forced': not args.skip_initial_redraw,
+              'screenshot_only': args.screenshot_only, 'early_minimized': args.early_minimized,
               'scene_profile': 'historical' if args.historical_scene else 'standard fixture'}
     if args.historical_scene:
         previous = json.loads((LATEST / 'live-mcp-tools-tests.json').read_text(encoding='utf-8'))['before']
@@ -313,16 +339,20 @@ def main():
             '--factory-startup', '--python-exit-code', '1',
             '--python', str(ROOT / 'tests/blender_tools_host.py'), '--', str(args.package.resolve()),
             str(run), str(free_port()), str(free_port()), 'diagnostic',
-            *(['skip-initial-redraw'] if args.skip_initial_redraw else [])], env=environment,
+            *(['skip-initial-redraw'] if args.skip_initial_redraw else []),
+            *(['early-minimized'] if args.early_minimized else [])], env=environment,
             stdin=subprocess.DEVNULL, stdout=log, stderr=subprocess.STDOUT, **process_options(gui=True))
         try:
             wait_result(run / 'service.json', run, process)
             connection = json.loads((run / 'service.json').read_text())
             report['host'] = json.loads((run / 'host.json').read_text())
+            if (run / 'startup-window.json').exists():
+                report['startup_window'] = json.loads((run / 'startup-window.json').read_text())
             initialize_client_runtime(args.package, run / 'client')
             window = OwnedWindow(process.pid)
             asyncio.run(audit(connection, run, report, report_path, args.rounds, window,
-                              args.http_read_timeout, args.skip_window_matrix, args.multi_window))
+                              args.http_read_timeout, args.skip_window_matrix, args.multi_window,
+                              args.screenshot_only, args.early_minimized))
             report['diagnosis_complete'] = True
             report['status'] = 'Failed' if any(row['status'] == 'Failed' for row in
                     [*report['calls'], *report['screenshots']]) else 'Passed'
@@ -347,6 +377,11 @@ def main():
                         report['server_events'].append(json.loads(line[len('[MCP-DIAG] '):]))
             if (run / 'native-install.json').exists():
                 report['native_install'] = json.loads((run / 'native-install.json').read_text())
+            screenshot_diagnostics = run / 'diagnostic/screenshots.json'
+            if screenshot_diagnostics.exists():
+                report['screenshot_diagnostics'] = json.loads(screenshot_diagnostics.read_text(encoding='utf-8'))
+                if report['screenshot_diagnostics']['status'] != 'Passed':
+                    report['status'] = 'Failed'
             write_json(report_path, report)
     print(json.dumps({'status': report['status'], 'report': str(report_path),
                       'calls': len(report.get('calls', []))}), flush=True)

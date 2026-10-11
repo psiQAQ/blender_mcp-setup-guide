@@ -26,6 +26,16 @@ def main():
     bpy.context.preferences.view.language = "en_US"
     bpy.context.preferences.view.use_translate_interface = False
     assert not bpy.app.background
+    if "early-minimized" in arguments[4:]:
+        from blender_screenshot_probe import OwnedMainWindow
+        startup_window = OwnedMainWindow()
+        initial_window_state = startup_window.state()
+        minimized_window_state = startup_window.show(6)
+        write_json(control / "startup-window.json", {
+            "before": initial_window_state, "after": minimized_window_state,
+        })
+        if not minimized_window_state["minimized"]:
+            raise RuntimeError("ShowWindow(SW_MINIMIZE) did not minimize the owned main window before installation")
     with capture_install(control):
         assert bpy.ops.extensions.package_install_files(
             filepath=package, repo="user_default", enable_on_install=True,

@@ -1,13 +1,13 @@
 # 历史截图与 SDK 超时的定向诊断
 
-2026-10-09，Windows x64，Blender 5.1.1 与 5.2.2 LTS。候选包来源与 SHA-256 见[完整工具检查](mcp-tool-checks.md)。本轮只增加诊断入口，没有修改产品源码、候选 ZIP、系统 Blender 或用户配置。
+Windows x64，Blender 5.1.1 与 5.2.2 LTS。候选包来源与 SHA-256 见[完整工具检查](mcp-tool-checks.md)。HTTP 诊断于 2026-10-09 完成；黑图与原生安装的后续结论更新至 2026-10-11。截图诊断只修改隔离安装副本，系统安装器修复的部署范围见[原生修复](native-install-fix.md)。
 
 | 问题 | 当前判断 | 状态 |
 | --- | --- | --- |
 | `search_api_docs` 长时间等待后报 SDK 超时 | 原测试客户端没有设置 HTTPX 超时，实际读取期限为 5 秒；冷搜索超过此期限。真实调用复现，单变量修改后通过 | 超时机制已定位；显式配置读取期限的复测 Passed |
 | 缩略图文件已生成，SDK 仍报超时 | 同一客户端期限可以产生此现象；实际渲染完成前 HTTP 流已断开。真实慢渲染复现，单变量修改后通过 | 机制已定位；历史那次 EEVEE 渲染没有服务耗时记录，无法逐事件回填 |
-| 窗口截图全黑 | 两张历史 PNG 的 RGB 确实全为零；当前旧包与新包、两种图形后端及窗口状态检查均未复现 | 原因未确认，未标为修复 |
-| 原生安装重命名拒绝的剩余归因 | 新增一次管理员记录、普通权限安装的跟踪，12 次中 3 次失败，记录没有丢失事件；失败期间捕获到 Codex 打开子目录 | 支持短时外部访问竞争；永久修复和具体内核拒绝来源未确认，见[目录诊断](native-install-diagnosis.md) |
+| 窗口截图全黑 | 启动阶段最小化的 OpenGL 窗口可复现完全相同的黑图；恢复窗口后截图正常 | 已定位一种机制并验证恢复方法；历史唯一归因未确认，见[黑图诊断](black-screenshot-diagnosis.md) |
+| 原生安装重命名拒绝 | 真实文件/子目录句柄可阻止父目录重命名；有界重试修复已经验证并部署到两版系统安装器 | 短时占用恢复 Passed；持续拒绝仍明确失败，见[原生修复](native-install-fix.md) |
 
 ## HTTP 期限与 SDK 期限
 
@@ -46,7 +46,7 @@
 
 用户已确认历史现场没有远程桌面、锁屏或显示器切换。历史报告中的 GUI 有两个窗口，但原进程已经关闭，未留下当时的图形后端及 framebuffer 状态。两次尝试在启动时最小化窗口，初次截图记录仍是 `minimized: false`，因此不能声称覆盖了“首次绘制之前始终最小化”的条件。后续明确处于最小化和隐藏状态的截图检查通过。
 
-以上结果排查了若干可执行条件，未获得能够稳定产生历史黑图的现场循环。没有足够证据归责上游、集成代码或驱动，也没有以猜测修改产品。
+2026-10-11 补齐首次绘制前的窗口状态检查后，5.1.1 与 5.2.2 的 OpenGL 进程均在启动阶段最小化时复现全黑。保持最小化时，显式重绘和等待事件循环都不能恢复；只恢复窗口再截图即正常。5.2.2 Vulkan 的前三张是纯深灰，恢复后正常，更换后端未解决空白图。复现黑图与历史图哈希相同，但历史缺少的状态仍不能事后补齐，因此只能确认同一症状的可复现机制及恢复方法，不能宣称历史唯一根因已经证实。完整结果与命令见[黑图诊断](black-screenshot-diagnosis.md)。
 
 ## 复现入口与报告解释
 
@@ -55,7 +55,7 @@
 ```powershell
 $python = 'C:\Users\ustcw\miniforge3\python.exe'
 $blender = 'C:\Program Files\Blender Foundation\Blender 5.2\blender.exe'
-$package = 'build/latest/dist/blender_mcp_integration-1.0.2-dev.2+integration.1-windows-x64.zip'
+$package = 'build/latest/validated/blender-5.2/windows-x64/dist/blender_mcp_integration-1.0.2-dev.2+integration.1-windows-x64.zip'
 
 # 复现旧客户端期限：搜索与慢渲染预期 Failed，保留真实输出文件。
 & $python -B scripts/diagnose_mcp_responses.py --blender $blender --package $package --label local-http5 --historical-scene --render-samples 64 --rounds 1 --skip-window-matrix --http-read-timeout 5
@@ -73,4 +73,4 @@ $package = 'build/latest/dist/blender_mcp_integration-1.0.2-dev.2+integration.1-
 
 最后复核的 `mcp-response-5.2-final-tests.json` 在官方原生安装阶段再次发生 WinError 5，尚未调用工具；Failed 报告与日志独立保留。测试入口现会在收到安装器 ERROR 后直接报告安装失败，避免下游 ModuleNotFoundError 掩盖原因。新的独立 `mcp-response-5.2-final-recheck-tests.json` 为 Passed：11 次真实调用与 1 次图像内容检查通过。独立重跑成功不会覆盖前一次安装失败。
 
-诊断汇总保存在 `build/latest/mcp-response-diagnosis-summary.json`。独立人工 GUI 验收、修改 SDK 依赖、永久修复黑图、正式发布及外部 issue 提交均为 Not Run。
+2026-10-09 的诊断汇总保存在 `build/latest/mcp-response-diagnosis-summary.json`，后续报告见上方黑图与原生修复文档。独立人工 GUI 验收、修改 SDK 依赖、截图自动恢复补丁、正式发布及外部 issue 提交均为 Not Run。
