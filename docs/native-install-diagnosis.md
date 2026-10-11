@@ -1,5 +1,7 @@
 # Windows 原生扩展目录重命名诊断
 
+2026-10-11：宿主安装器的有界重试修复已应用到 Blender 5.1.1 / 5.2.2，并通过系统安装入口复测，详见[修复边界、验证和部署](native-install-fix.md)。以下为 2026-10-09 的现场记录；旧报告可能因候选替换而将顶层状态标为 `Not Run`，其历史用例不代替当前候选验收。当前包位于 `build/latest/validated/blender-<版本>/windows-x64/dist/`。
+
 2026-10-09，Windows x64，Blender 5.1.1 / Python 3.13.9 与 Blender 5.2.2 LTS / Python 3.13.13。
 
 `WinError 5` 发生在 **Blender 官方扩展安装器将解压暂存目录改为正式目录** 的阶段，早于集成扩展导入和 MCP 服务启动。5.1 与 5.2 均有实际失败记录。最新一次 WPR 跟踪没有丢失事件，12 次普通权限安装中 3 次失败，失败期间均捕获到 Codex 桌面进程打开暂存子目录。证据支持短时外部访问竞争；此前第二次跟踪的第 12 次失败仍不能回填具体占用者，永久修复和具体内核拒绝来源也未确认。
@@ -112,10 +114,10 @@ PID 150648 的进程元数据对应 Codex 桌面的 `ChatGPT.exe`。以下时刻
 ```powershell
 $python = 'C:\Users\ustcw\miniforge3\python.exe'
 $hostPython = 'C:\Program Files\Blender Foundation\Blender 5.2\5.2\python\bin\python.exe'
-$installer = 'C:\Program Files\Blender Foundation\Blender 5.2\5.2\scripts\addons_core\bl_pkg\cli\blender_ext.py'
-$package = 'build/latest/dist/blender_mcp_integration-1.0.2-dev.2+integration.1-windows-x64.zip'
+$installer = 'build/latest/native-install-fix/blender-5.2.2/blender_ext.original.py'
+$package = 'build/latest/validated/blender-5.2/windows-x64/dist/blender_mcp_integration-1.0.2-dev.2+integration.1-windows-x64.zip'
 
-# 默认调用未改动的官方安装器，记录首次重命名。
+# 系统已打补丁时，显式使用保留的官方原始字节副本进行历史对照。
 & $python -B scripts/diagnose_native_install.py --python $hostPython --installer $installer --package $package --version 5.2.2 --runs 8 --label local-5.2
 
 # 独立测试短时恢复；报告仍保留首次失败。
