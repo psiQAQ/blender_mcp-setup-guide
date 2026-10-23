@@ -15,7 +15,7 @@
 
 ```mermaid
 flowchart LR
-    Client[Codex / Claude Code / OpenCode] -->|本机 HTTP + Bearer token| Service[随包 MCP 服务]
+    Client[Codex / Claude Code / OpenCode / DeepSeek Harness] -->|本机 HTTP + Bearer token| Service[随包 MCP 服务]
     Service -->|本机 TCP 9876 + 桥接凭据| Blender[Blender Extension]
 ```
 
@@ -129,6 +129,33 @@ opencode mcp list
 ```
 
 然后按第 4 节读取场景。配置位置见 [OpenCode config](https://opencode.ai/docs/config/)，字段见 [OpenCode MCP 文档](https://opencode.ai/docs/mcp-servers/)。
+
+### 3.4 DeepSeek Harness
+
+DeepSeek Harness（`dsh`）把 MCP 服务器写在 profile 的用户补丁层。以 `dsh web` 启动的 `web` profile 为例，Windows 为 `%USERPROFILE%\.dsh\profiles\web\cordis.patch.yml`，Linux/macOS 为 `~/.dsh/profiles/web/cordis.patch.yml`；启动其他 profile 时改用对应目录。把条目并入该文件顶层列表并保留已有内容；文件为空时按下例写入 `insert` 列表：
+
+```yaml
+- insert:
+    - id: mcp-blender
+      name: '@deepseek-ai/dsh-mcp-client'
+      config:
+        serverName: blender
+        transport: streamable-http
+        url: http://127.0.0.1:8000/
+        headers:
+          Authorization: 'Bearer YOUR_BLENDER_MCP_TOKEN'
+        toolCallTimeoutMs: 300000
+```
+
+`streamable-http` 对应集成包的 HTTP 服务，`serverName` 决定工具名前缀：连接后工具以 `mcp__blender__<tool>` 出现在智能体的工具列表。token 取自偏好面板的 **Copy Connection Configuration**，扩展用户数据目录的 `service/http-token.txt` 保存同一份值。每个 Blender 版本目录各保存一份，切换版本后要替换该值，否则请求返回 HTTP 401。此文件只在本机使用，不要提交到版本库。
+
+profile 默认热加载补丁，保存后无需重启 GUI。Blender 未运行时 harness 仍可启动，工具会在服务运行后随重连出现。可先检查合成后的配置，再按第 4 节读取场景：
+
+```text
+dsh --profile web --dump-config
+```
+
+配置字段与作用域见 [DeepSeek Harness 仓库](https://github.com/deepseek-ai/deepseek-harness)。
 
 ## 4. 验证实际连接与排查故障
 

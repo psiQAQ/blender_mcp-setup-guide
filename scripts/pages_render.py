@@ -43,7 +43,7 @@ MCP_TOOLS = (
 COPY = {
     "zh": {
         "lang": "zh-Hans", "other_lang": "en", "language_label": "EN", "page_title": "下载与安装",
-        "description": "基于 Blender Lab 官方 MCP 的社区集成版。下载匹配 Blender 版本的 Extension ZIP，无需另装 uv 或 Python，连接 Codex、Claude Code 与 OpenCode。",
+        "description": "基于 Blender Lab 官方 MCP 的社区集成版。下载匹配 Blender 版本的 Extension ZIP，无需另装 uv 或 Python，连接 Codex、Claude Code、OpenCode 与 DeepSeek Harness。",
         "skip": "跳转到内容", "navigation": "主导航", "nav_about": "功能", "nav_download": "下载", "nav_install": "安装", "nav_faq": "常见问题", "nav_skill": "Extension 开发 Skill",
         "community_label": "Blender Lab MCP 社区集成版",
         "hero_title": "让想法，<br>直接进入 Blender。",
@@ -96,7 +96,7 @@ COPY = {
     },
     "en": {
         "lang": "en", "other_lang": "zh-Hans", "language_label": "中文", "page_title": "Download & install",
-        "description": "A community integration of Blender Lab's official MCP. Install one Extension ZIP for your Blender version, without separate uv or Python setup. Connect Codex, Claude Code and OpenCode.",
+        "description": "A community integration of Blender Lab's official MCP. Install one Extension ZIP for your Blender version, without separate uv or Python setup. Connect Codex, Claude Code, OpenCode and DeepSeek Harness.",
         "skip": "Skip to content", "navigation": "Main navigation", "nav_about": "Features", "nav_download": "Download", "nav_install": "Install", "nav_faq": "FAQ", "nav_skill": "Extension Dev Skill",
         "community_label": "A community integration of Blender Lab MCP",
         "hero_title": "From an idea.<br>Into Blender.",

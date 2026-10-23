@@ -15,7 +15,7 @@ For a client-managed official MCP process, use the separate [official stdio guid
 
 ```mermaid
 flowchart LR
-    Client[Codex / Claude Code / OpenCode] -->|Local HTTP + Bearer token| Service[Bundled MCP service]
+    Client[Codex / Claude Code / OpenCode / DeepSeek Harness] -->|Local HTTP + Bearer token| Service[Bundled MCP service]
     Service -->|Local TCP 9876 + bridge credential| Blender[Blender Extension]
 ```
 
@@ -129,6 +129,33 @@ opencode mcp list
 ```
 
 Then read the scene using section 4. See [OpenCode configuration](https://opencode.ai/docs/config/) and [MCP fields](https://opencode.ai/docs/mcp-servers/).
+
+### 3.4 DeepSeek Harness
+
+DeepSeek Harness (`dsh`) keeps MCP servers in the profile's user patch layer. For the `web` profile started by `dsh web`, the file is `%USERPROFILE%\.dsh\profiles\web\cordis.patch.yml` on Windows or `~/.dsh/profiles/web/cordis.patch.yml` on Linux/macOS; other profiles use their own directory. Merge the entry into the file's top-level list and keep the existing items, or write the `insert` list when the file is still empty:
+
+```yaml
+- insert:
+    - id: mcp-blender
+      name: '@deepseek-ai/dsh-mcp-client'
+      config:
+        serverName: blender
+        transport: streamable-http
+        url: http://127.0.0.1:8000/
+        headers:
+          Authorization: 'Bearer YOUR_BLENDER_MCP_TOKEN'
+        toolCallTimeoutMs: 300000
+```
+
+`streamable-http` selects the integration's HTTP service, and `serverName` sets the tool namespace: after connecting, tools appear in the agent's tool list as `mcp__blender__<tool>`. Copy the token with **Copy Connection Configuration**; the extension user data directory stores the same value in `service/http-token.txt`. Each Blender version directory keeps its own token, so replace it after switching versions or requests fail with HTTP 401. Keep this file local; do not commit it.
+
+The profile hot-reloads its patch, so no GUI restart is needed. The harness still starts while Blender is closed and connects once the service runs. Inspect the composed configuration, then read the scene using section 4:
+
+```text
+dsh --profile web --dump-config
+```
+
+See the [DeepSeek Harness repository](https://github.com/deepseek-ai/deepseek-harness) for fields and scope.
 
 ## 4. Verify communication and diagnose errors
 
