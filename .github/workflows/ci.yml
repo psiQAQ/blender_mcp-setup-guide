@@ -1,9 +1,27 @@
 name: Validate Extension
 
+# Validation builds and installs the extension package, which is composed from src/,
+# submodules/blender_mcp, packaging/ and LICENSE. Documentation, website, skill and
+# scratch-only updates do not change that package, so they skip this expensive matrix.
+# Keep both lists identical; add a path here only when it is not a package input.
 on:
   push:
     branches: [main, release/blender-5.1, release/blender-5.2]
+    paths-ignore:
+      - 'docs/**'
+      - 'web/**'
+      - 'assets/**'
+      - '.agents/**'
+      - '.scratch/**'
+      - 'README.md'
   pull_request:
+    paths-ignore:
+      - 'docs/**'
+      - 'web/**'
+      - 'assets/**'
+      - '.agents/**'
+      - '.scratch/**'
+      - 'README.md'
   workflow_dispatch:
   workflow_call:
 
