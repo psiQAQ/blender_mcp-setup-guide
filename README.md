@@ -34,7 +34,7 @@ Each line provides Windows x64, Linux x64 and macOS Apple Silicon packages. The 
 | Integrated Extension | Native Windows x64 / Linux x64 / macOS ARM64, Blender 5.1 stable or 5.2 preview / CPython 3.13; client and Blender on one computer | Install a bundled ZIP, copy Bearer-authenticated local HTTP settings; no separate uv/Python for users | [English](docs/blender_mcp-setup_en.md) / [中文](docs/blender_mcp-setup_zh.md) |
 | Official Extension + stdio | Officially supported Windows/macOS/Linux environments, Blender 5.1+ | Install the official Extension plus Git/uv and an external MCP tool; the client manages its stdio process | [English](docs/blender_mcp-stdio-setup_en.md) / [中文](docs/blender_mcp-stdio-setup_zh.md) |
 
-Each guide includes complete Codex, Claude Code and OpenCode settings, file locations, verification and removal steps; the integrated guide also covers DeepSeek Harness. Choose one method for a Blender instance and replace its client entry when switching.
+Each guide includes complete Codex, Claude Code, OpenCode and DeepSeek Harness settings, file locations, verification and removal steps. Choose one method for a Blender instance and replace its client entry when switching.
 
 ## Setup prompts
 

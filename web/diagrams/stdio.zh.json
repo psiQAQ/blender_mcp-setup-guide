@@ -35,7 +35,7 @@
       "id": "agent-client",
       "type": "frontend",
       "label": "智能体 / MCP 客户端",
-      "sublabel": "Codex / Claude Code / OpenCode",
+      "sublabel": "Codex / Claude Code / OpenCode 等",
       "tag": "进程：客户端",
       "pos": [
         60,

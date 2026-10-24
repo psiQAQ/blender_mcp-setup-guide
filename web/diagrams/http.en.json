@@ -35,7 +35,7 @@
       "id": "agent-client",
       "type": "frontend",
       "label": "Agent / MCP client",
-      "sublabel": "Codex / Claude Code / OpenCode",
+      "sublabel": "Codex / Claude Code / OpenCode…",
       "tag": "Process: client",
       "pos": [
         60,

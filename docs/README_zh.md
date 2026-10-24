@@ -34,7 +34,7 @@ flowchart LR
 | 集成 Extension | 原生 Windows x64 / Linux x64 / macOS ARM64、Blender 5.1 稳定版或 5.2 预发布版 / CPython 3.13，客户端与 Blender 同机 | 安装随包 ZIP，复制带凭据的本机 HTTP 配置；用户无需另外安装 uv/Python | [中文](blender_mcp-setup_zh.md) / [English](blender_mcp-setup_en.md) |
 | 官方 Extension + stdio | 官方支持的 Windows/macOS/Linux 环境、Blender 5.1+ | 安装官方 Extension、Git/uv 和外部 MCP 工具，由客户端管理 stdio 进程 | [中文](blender_mcp-stdio-setup_zh.md) / [English](blender_mcp-stdio-setup_en.md) |
 
-两份教程均提供 Codex、Claude Code、OpenCode 的完整配置、文件位置、验证和移除步骤，集成版教程另含 DeepSeek Harness。同一个 Blender 实例选择一种方式；切换时替换客户端的对应条目。
+两份教程均提供 Codex、Claude Code、OpenCode 与 DeepSeek Harness 的完整配置、文件位置、验证和移除步骤。同一个 Blender 实例选择一种方式；切换时替换客户端的对应条目。
 
 ## 给 Agent 的安装提示词
 

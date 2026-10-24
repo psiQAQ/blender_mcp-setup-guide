@@ -8,7 +8,7 @@ For a Windows package with bundled dependencies and copied HTTP settings, use th
 
 ```mermaid
 flowchart LR
-    Client[Codex / Claude Code / OpenCode] -->|MCP stdio| Service[Client-managed blender-mcp]
+    Client[Codex / Claude Code / OpenCode / DeepSeek Harness] -->|MCP stdio| Service[Client-managed blender-mcp]
     Service -->|TCP localhost:9876| Blender[Official MCP Extension]
 ```
 
@@ -149,6 +149,34 @@ opencode mcp list
 ```
 
 Then read the scene using section 4. `command` is the complete command array; environment variables use `environment`. See [configuration locations](https://opencode.ai/docs/config/) and [MCP fields](https://opencode.ai/docs/mcp-servers/).
+
+### 3.4 DeepSeek Harness
+
+DeepSeek Harness (`dsh`) keeps MCP servers in the profile's user patch layer. For the `web` profile started by `dsh web`, the file is `%USERPROFILE%\.dsh\profiles\web\cordis.patch.yml` on Windows or `~/.dsh/profiles/web/cordis.patch.yml` on Linux/macOS; other profiles use their own directory. Merge the entry into the file's top-level list and keep the existing items, or write the `insert` list when the file is still empty:
+
+```yaml
+- insert:
+    - id: mcp-blender
+      name: '@deepseek-ai/dsh-mcp-client'
+      config:
+        serverName: blender
+        transport: stdio
+        command: blender-mcp
+        env:
+          BLENDER_MCP_HOST: localhost
+          BLENDER_MCP_PORT: '9876'
+        toolCallTimeoutMs: 300000
+```
+
+`stdio` makes the harness launch the external MCP tool, and `serverName` sets the tool namespace: after connecting, tools appear in the agent's tool list as `mcp__blender__<tool>`. `command` uses `blender-mcp` from PATH; when PATH lacks the tool directory, use the absolute executable path from `uv tool dir --bin` in section 2. When the integrated setup already uses the same `id`, replace that entry instead of adding a second one.
+
+The profile hot-reloads its patch, so no GUI restart is needed. Inspect the composed configuration, then read the scene using section 4:
+
+```text
+dsh --profile web --dump-config
+```
+
+See the [DeepSeek Harness repository](https://github.com/deepseek-ai/deepseek-harness) for fields and scope.
 
 ## 4. Verify communication and diagnose errors
 

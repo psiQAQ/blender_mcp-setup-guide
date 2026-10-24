@@ -8,7 +8,7 @@
 
 ```mermaid
 flowchart LR
-    Client[Codex / Claude Code / OpenCode] -->|MCP stdio| Service[客户端启动 blender-mcp]
+    Client[Codex / Claude Code / OpenCode / DeepSeek Harness] -->|MCP stdio| Service[客户端启动 blender-mcp]
     Service -->|TCP localhost:9876| Blender[官方 MCP Extension]
 ```
 
@@ -149,6 +149,34 @@ opencode mcp list
 ```
 
 再按第 4 节读取场景。字段 `command` 是完整命令数组，环境变量字段名为 `environment`。位置与语法见 [OpenCode config](https://opencode.ai/docs/config/) 和 [MCP 文档](https://opencode.ai/docs/mcp-servers/)。
+
+### 3.4 DeepSeek Harness
+
+DeepSeek Harness（`dsh`）把 MCP 服务器写在 profile 的用户补丁层。以 `dsh web` 启动的 `web` profile 为例，Windows 为 `%USERPROFILE%\.dsh\profiles\web\cordis.patch.yml`，Linux/macOS 为 `~/.dsh/profiles/web/cordis.patch.yml`；启动其他 profile 时改用对应目录。把条目并入该文件顶层列表并保留已有内容；文件为空时按下例写入 `insert` 列表：
+
+```yaml
+- insert:
+    - id: mcp-blender
+      name: '@deepseek-ai/dsh-mcp-client'
+      config:
+        serverName: blender
+        transport: stdio
+        command: blender-mcp
+        env:
+          BLENDER_MCP_HOST: localhost
+          BLENDER_MCP_PORT: '9876'
+        toolCallTimeoutMs: 300000
+```
+
+`stdio` 表示由 harness 启动外部 MCP 工具，`serverName` 决定工具名前缀：连接后工具以 `mcp__blender__<tool>` 出现在智能体的工具列表。`command` 使用 PATH 中的 `blender-mcp`；PATH 未包含工具目录时，改用第 2 节 `uv tool dir --bin` 查到的可执行文件绝对路径。与集成版共用同一个 `id` 时直接替换该条目，不要重复添加。
+
+profile 默认热加载补丁，保存后无需重启 GUI。可先检查合成后的配置，再按第 4 节读取场景：
+
+```text
+dsh --profile web --dump-config
+```
+
+配置字段与作用域见 [DeepSeek Harness 仓库](https://github.com/deepseek-ai/deepseek-harness)。
 
 ## 4. 验证实际连接与排查故障
 

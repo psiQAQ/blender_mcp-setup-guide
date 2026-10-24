@@ -471,8 +471,8 @@ svg[data-preset="editorial"][data-animation="trace"] [data-animate="node"] { ani
         <path data-edge-from="blender-bridge" data-edge-to="mcp-service" data-edge-label="Start / stop service" data-edge-key="8" data-edge-id="process-control" data-composition-points="715,520;715,496;675,496;675,418;715,418;715,394" d="M 715 520 L 715 504 Q 715 496 707 496 L 683 496 Q 675 496 675 488 L 675 426 Q 675 418 683 418 L 707 418 Q 715 418 715 410 L 715 394" class="a-dashed" stroke-width="1.5" marker-end="url(#arrowhead-dashed)"/>
 
         <!-- Components -->
-        <g id="node-agent-client" data-node-id="agent-client" data-node-label="Agent / MCP client" tabindex="0" role="button" aria-label="Focus Agent / MCP client, Codex / Claude Code / OpenCode, Agent + user configuration" aria-pressed="false" data-node-kind="frontend" data-node-sublabel="Codex / Claude Code / OpenCode" data-node-tag="Process: client" data-node-context="Agent + user configuration">
-          <title>Agent / MCP client · Codex / Claude Code / OpenCode · Agent + user configuration · Process: client</title>
+        <g id="node-agent-client" data-node-id="agent-client" data-node-label="Agent / MCP client" tabindex="0" role="button" aria-label="Focus Agent / MCP client, Codex / Claude Code / OpenCode…, Agent + user configuration" aria-pressed="false" data-node-kind="frontend" data-node-sublabel="Codex / Claude Code / OpenCode…" data-node-tag="Process: client" data-node-context="Agent + user configuration">
+          <title>Agent / MCP client · Codex / Claude Code / OpenCode… · Agent + user configuration · Process: client</title>
           <rect x="60" y="286" width="300" height="108" rx="6" class="c-mask"/>
           <rect x="60" y="286" width="300" height="108" rx="6" class="c-frontend" stroke-width="1.5"/>
           <g aria-hidden="true" data-semantic-sigil="frontend" class="semantic-sigil s-frontend" transform="translate(66 292) scale(0.6875)">
@@ -482,7 +482,7 @@ svg[data-preset="editorial"][data-animation="trace"] [data-animate="node"] { ani
             <circle cx="6.3" cy="4.8" r=".7" class="sigil-fill"/>
           </g>
           <text data-node-label="" x="210" y="323" class="t-primary" font-size="20" font-weight="600" text-anchor="middle">Agent / MCP client</text>
-        <text x="210" y="348" class="t-muted" font-size="15" text-anchor="middle">Codex / Claude Code / OpenCode</text>
+        <text x="210" y="348" class="t-muted" font-size="15" text-anchor="middle">Codex / Claude Code / OpenCode…</text>
         <text x="210" y="371" class="t-frontend" font-size="14" text-anchor="middle">Process: client</text>
         </g>
 
