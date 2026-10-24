@@ -1,0 +1,254 @@
+{
+  "status": "Passed",
+  "platform": "Windows-11-10.0.22631-SP0",
+  "scope": "Standalone standard-library attachment; real native installer calls and file handles; no GUI",
+  "reproducer_sha256": "e8896f02c2e81352794aee43a515d8e17bb59fcfa68f45bf2823c7b9b88e3896",
+  "cases": [
+    {
+      "installer_sha256": "3738e7660bdaa7493d756be3132274eef6eb748305a16cf957f5e324573e93da",
+      "blender_version": "5.1.1",
+      "python_version": "3.13.9",
+      "hold_child": false,
+      "share_mask": null,
+      "installer_return": true,
+      "manifest_matches": true,
+      "rename_attempts": [
+        {
+          "source_exists": true,
+          "destination_exists": false,
+          "status": "Passed"
+        }
+      ],
+      "messages": [
+        {
+          "kind": "STATUS",
+          "message": "Installed \"rename_issue_fixture\""
+        }
+      ],
+      "close_errors": [],
+      "release_after_first_failure_seconds": null,
+      "mode": "original",
+      "process_exit_code": 0,
+      "installation_status": "Passed",
+      "reproduction_check": "Passed"
+    },
+    {
+      "installer_sha256": "3738e7660bdaa7493d756be3132274eef6eb748305a16cf957f5e324573e93da",
+      "blender_version": "5.1.1",
+      "python_version": "3.13.9",
+      "hold_child": true,
+      "share_mask": 7,
+      "installer_return": false,
+      "manifest_matches": false,
+      "rename_attempts": [
+        {
+          "source_exists": true,
+          "destination_exists": false,
+          "status": "Failed",
+          "winerror": 5
+        }
+      ],
+      "messages": [
+        {
+          "kind": "ERROR",
+          "message": "Failed to rename directory for \"rename_issue_fixture\": [WinError 5] \u62d2\u7edd\u8bbf\u95ee\u3002: '<work>\\\\repository\\\\rename_issue_fixture@' -> '<work>\\\\repository\\\\rename_issue_fixture'"
+        }
+      ],
+      "close_errors": [],
+      "release_after_first_failure_seconds": 0.024366,
+      "mode": "original",
+      "process_exit_code": 1,
+      "installation_status": "Failed",
+      "reproduction_check": "Passed"
+    },
+    {
+      "installer_sha256": "e9d5575b583bbf7fe0d3cda546330d6eada0cd5d1a4574b9c991cb056e6110aa",
+      "blender_version": "5.1.1",
+      "python_version": "3.13.9",
+      "hold_child": false,
+      "share_mask": null,
+      "installer_return": true,
+      "manifest_matches": true,
+      "rename_attempts": [
+        {
+          "source_exists": true,
+          "destination_exists": false,
+          "status": "Passed"
+        }
+      ],
+      "messages": [
+        {
+          "kind": "STATUS",
+          "message": "Installed \"rename_issue_fixture\""
+        }
+      ],
+      "close_errors": [],
+      "release_after_first_failure_seconds": null,
+      "mode": "patched",
+      "process_exit_code": 0,
+      "installation_status": "Passed",
+      "reproduction_check": "Passed"
+    },
+    {
+      "installer_sha256": "e9d5575b583bbf7fe0d3cda546330d6eada0cd5d1a4574b9c991cb056e6110aa",
+      "blender_version": "5.1.1",
+      "python_version": "3.13.9",
+      "hold_child": true,
+      "share_mask": 7,
+      "installer_return": true,
+      "manifest_matches": true,
+      "rename_attempts": [
+        {
+          "source_exists": true,
+          "destination_exists": false,
+          "status": "Failed",
+          "winerror": 5
+        },
+        {
+          "source_exists": true,
+          "destination_exists": false,
+          "status": "Passed"
+        }
+      ],
+      "messages": [
+        {
+          "kind": "STATUS",
+          "message": "Retrying directory rename for \"rename_issue_fixture\": WinError 5 (1/5)"
+        },
+        {
+          "kind": "STATUS",
+          "message": "Installed \"rename_issue_fixture\""
+        }
+      ],
+      "close_errors": [],
+      "release_after_first_failure_seconds": 0.033866,
+      "mode": "patched",
+      "process_exit_code": 0,
+      "installation_status": "Passed",
+      "reproduction_check": "Passed"
+    },
+    {
+      "installer_sha256": "246cb49882f6129340767023bdc28e98c8ea6e743f64ebbff8aec774f842e5e1",
+      "blender_version": "5.2.2",
+      "python_version": "3.13.13",
+      "hold_child": false,
+      "share_mask": null,
+      "installer_return": true,
+      "manifest_matches": true,
+      "rename_attempts": [
+        {
+          "source_exists": true,
+          "destination_exists": false,
+          "status": "Passed"
+        }
+      ],
+      "messages": [
+        {
+          "kind": "STATUS",
+          "message": "Installed \"rename_issue_fixture\""
+        }
+      ],
+      "close_errors": [],
+      "release_after_first_failure_seconds": null,
+      "mode": "original",
+      "process_exit_code": 0,
+      "installation_status": "Passed",
+      "reproduction_check": "Passed"
+    },
+    {
+      "installer_sha256": "246cb49882f6129340767023bdc28e98c8ea6e743f64ebbff8aec774f842e5e1",
+      "blender_version": "5.2.2",
+      "python_version": "3.13.13",
+      "hold_child": true,
+      "share_mask": 7,
+      "installer_return": false,
+      "manifest_matches": false,
+      "rename_attempts": [
+        {
+          "source_exists": true,
+          "destination_exists": false,
+          "status": "Failed",
+          "winerror": 5
+        }
+      ],
+      "messages": [
+        {
+          "kind": "ERROR",
+          "message": "Failed to rename directory for \"rename_issue_fixture\": [WinError 5] \u62d2\u7edd\u8bbf\u95ee\u3002: '<work>\\\\repository\\\\rename_issue_fixture@' -> '<work>\\\\repository\\\\rename_issue_fixture'"
+        }
+      ],
+      "close_errors": [],
+      "release_after_first_failure_seconds": 0.032629,
+      "mode": "original",
+      "process_exit_code": 1,
+      "installation_status": "Failed",
+      "reproduction_check": "Passed"
+    },
+    {
+      "installer_sha256": "84129906b9692676cd16f18cf8b1638867b5a439c624a104955b5d82b8ff170d",
+      "blender_version": "5.2.2",
+      "python_version": "3.13.13",
+      "hold_child": false,
+      "share_mask": null,
+      "installer_return": true,
+      "manifest_matches": true,
+      "rename_attempts": [
+        {
+          "source_exists": true,
+          "destination_exists": false,
+          "status": "Passed"
+        }
+      ],
+      "messages": [
+        {
+          "kind": "STATUS",
+          "message": "Installed \"rename_issue_fixture\""
+        }
+      ],
+      "close_errors": [],
+      "release_after_first_failure_seconds": null,
+      "mode": "patched",
+      "process_exit_code": 0,
+      "installation_status": "Passed",
+      "reproduction_check": "Passed"
+    },
+    {
+      "installer_sha256": "84129906b9692676cd16f18cf8b1638867b5a439c624a104955b5d82b8ff170d",
+      "blender_version": "5.2.2",
+      "python_version": "3.13.13",
+      "hold_child": true,
+      "share_mask": 7,
+      "installer_return": true,
+      "manifest_matches": true,
+      "rename_attempts": [
+        {
+          "source_exists": true,
+          "destination_exists": false,
+          "status": "Failed",
+          "winerror": 5
+        },
+        {
+          "source_exists": true,
+          "destination_exists": false,
+          "status": "Passed"
+        }
+      ],
+      "messages": [
+        {
+          "kind": "STATUS",
+          "message": "Retrying directory rename for \"rename_issue_fixture\": WinError 5 (1/5)"
+        },
+        {
+          "kind": "STATUS",
+          "message": "Installed \"rename_issue_fixture\""
+        }
+      ],
+      "close_errors": [],
+      "release_after_first_failure_seconds": 0.03225,
+      "mode": "patched",
+      "process_exit_code": 0,
+      "installation_status": "Passed",
+      "reproduction_check": "Passed"
+    }
+  ]
+}

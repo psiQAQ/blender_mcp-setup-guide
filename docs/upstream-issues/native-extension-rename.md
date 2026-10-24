@@ -1,71 +1,143 @@
-# Windows extension staging-directory rename intermittently fails with WinError 5
+# Issue title
 
-Target: [Blender host issue tracker](https://projects.blender.org/blender/blender/issues). Prepared locally, not submitted. The installer's comment references #130211; its contents could not be checked because the tracker returned HTTP 403.
+Windows: extension installation fails on a short-lived child file handle
 
-## Environment and scope
+# Issue body
 
-Windows x64, Blender 5.1.1 / bundled Python 3.13.9 and Blender 5.2.2 LTS / bundled Python 3.13.13. A platform-matching extension ZIP is installed into a disposable local repository inside an open development workspace. The failure occurs before the extension is imported or its MCP server starts.
+````markdown
+### System Information
 
-The unchanged `bl_pkg/cli/blender_ext.py` performs `os.rename(staging, installed)` after extraction. On 5.2.2 this is line 4147. The source exists and the destination is absent. The error is `Failed to rename directory ... [WinError 5] Access is denied`. Temporary extraction is then removed.
+- Operating system: Windows 11 Pro 23H2, build 22631.4751, x64.
+- Graphics card: NVIDIA GeForce RTX 4070 Ti SUPER.
+- Graphics driver: NVIDIA 572.83.
+- Relevant conditions: the original intermittent failure occurred while installing into a disposable extension repository inside a development workspace. The standalone reproduction uses only the bundled Python and Windows filesystem APIs; it does not require a graphics context, a particular monitor setup, user preferences, a third-party add-on, an editor, or administrator permissions.
 
-The wrapper runs this original file through `runpy` in the bundled `python.exe -I -S -B`, observing the rename in a disposable process. Program Files, user Blender preferences and security settings remain unchanged.
+The system and GPU information above was checked on 2026-10-11.
 
-## Reproduction
+### Blender Version
 
-From a workspace visible to editor/indexing processes, repeat native `install-files` into a fresh local directory with the matching bundled Python and a valid ZIP. The setup and exact package hashes are in [the diagnostic report](../native-install-diagnosis.md) and [MCP checks](../mcp-tool-checks.md).
+**Broken:** the following official installers were tested:
+
+| Blender | Build hash | Branch | Bundled Python |
+| --- | --- | --- | --- |
+| 5.1.1 | `b70da489d7f4` | `blender-v5.1-release` | 3.13.9 |
+| 5.2.2 LTS | `d13f752e3b9c` | `blender-v5.2-release` | 3.13.13 |
+
+**Worked:** unknown; no older working official version has been identified. This is not claimed to be a regression from a particular release. A locally modified installer is used only as a recovery experiment, not as a known-good official version.
+
+The original-file tests use byte-verified backups retained before applying a local patch. Original `blender_ext.py` SHA-256:
+
+- 5.1.1: `3738e7660bdaa7493d756be3132274eef6eb748305a16cf957f5e324573e93da`
+- 5.2.2: `246cb49882f6129340767023bdc28e98c8ea6e743f64ebbff8aec774f842e5e1`
+
+Current main was inspected at [`754ebe3c4b4e1402a159df6e1e58823cc93ef887`](https://github.com/blender/blender/blob/754ebe3c4b4e1402a159df6e1e58823cc93ef887/scripts/addons_core/bl_pkg/cli/blender_ext.py#L4349-L4364): the corresponding operation still attempts `os.rename` once and returns failure on an exception. A daily build from this commit has **not** been run.
+
+### Description of the Issue
+
+**Actual result**
+
+On Windows, extension installation can fail after successful extraction when a reader briefly holds a file or directory inside the staging directory open. The final `os.rename(staging, installed)` returns `WinError 5`, and the installer immediately reports failure before the extension is imported.
+
+In the controlled reproduction, the staging directory exists, the destination does not exist, and the child file is opened with `FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE`. Closing that owned handle makes the rename possible. A local bounded-retry experiment completes the same installation after a short wait.
+
+This was first encountered intermittently while installing into a disposable extension repository inside a development workspace. One zero-loss FileIO trace captured 3 failed installations out of 12 ordinary-user attempts. The attached standalone reproduction removes the large extension package and the editor from the required setup.
+
+The user-visible effect is a failed extension installation. During an update, the existing implementation may already have removed or relocated the previous version before this rename, so the extension can be left unavailable. Already-installed extension execution is outside the failing step.
+
+**Expected result**
+
+Please consider a bounded recovery path for a transient staging-directory rename failure, while retaining a clear failure for persistent permission problems, long-lived readers, or an occupied destination. The Windows restriction itself is not the bug being reported; the concern is installation recovery from brief, recoverable contention.
+
+**Local recovery experiment**
+
+A local patch retries only Windows `WinError 5`, while the source is still a directory and the destination is absent. It waits 50/100/200/400/800 ms, for at most six native rename calls and 1.55 seconds of intentional waiting. It checks source/destination again after each wait, honors cancellation, and preserves failure for other errors or persistent denial. It does not bypass permissions or close another process's handles.
+
+Actual results from the attached standalone script, on both 5.1.1 and 5.2.2:
+
+| Condition | Original installer | Local retry experiment |
+| --- | --- | --- |
+| No child handle | Installed; one successful rename | Installed; one successful rename |
+| Brief child file handle | Failed; one real `WinError 5`; no installed manifest | Installed; first native attempt failed, second succeeded after the first 50 ms wait |
+
+There are eight runs in the attached JSON: two versions, original/patched, clean/held. `installation_status` records the actual install result; `reproduction_check` records whether the observed result matches the stated experiment. A successful reproduction check does not turn a failed original installation into a successful one.
+
+Separate tests exercised child-directory handles, persistent contention, reinstall, cancellation and path changes. Persistent contention still failed after the retry limit. Boundary-condition errors were explicitly injected in those additional branch tests; the main reproduction above uses a real native file-handle failure. Background Blender installation, enablement and reinstallation also passed with the local patch. These results do not constitute manual GUI-click acceptance or a daily-build test.
+
+The retry proposal does not add transactional rollback of the previous extension version, and does not claim to fix all causes of `WinError 5`.
+
+**Related report and evidence limits**
+
+The source comment references [#130211](https://projects.blender.org/blender/blender/issues/130211). Its associated [fix `f03fba614d`](https://github.com/blender/blender/commit/f03fba614d354c0a3a5d952798803715488679e6) added rename error handling and handling of an existing file at the destination. That change does not add a retry for a short-lived child reader. This report supplies that controlled reproduction and recovery experiment; please link or merge it with an existing report if appropriate.
+
+Historical traces recorded Pylance and Codex desktop access overlapping some failures. Successful cases also had nearby reader activity. These observations support investigation of timing-dependent contention but do not establish that either application caused every failure, nor identify a kernel filter or antivirus product responsible for a particular result. The standalone test establishes the behavior of an intentionally held real handle, not the identity of a historical reader.
+
+The raw ETL includes unrelated machine/process information and is retained locally. The attached summary contains the installer hashes, minimal reproduction results and expected outcomes needed to assess this report. The full tracker discussion and a complete duplicate search were not accessible during preparation.
+
+The recorded reproductions are installation failures, not Blender crashes. The attached JSON contains the error and installation results; no crash dump was produced.
+
+### Steps to Reproduce the Issue
+
+No `.blend` file is required: the failure occurs in the standalone extension installer before any scene or extension is loaded. The reproduction does not depend on startup-file contents. The script creates a minimal valid extension ZIP containing an empty register/unregister implementation and one child text file.
+
+1. Extract the attached ZIP into a writable working directory. It contains `native_rename_repro.py` and `native-extension-rename-repro.json`.
+2. Use an **unmodified** Blender installer file. The script reads it without changing Blender's installation or user preferences.
+3. Open PowerShell in that directory and run the control followed by the held-child case. Each work-directory name must be unused:
 
 ```powershell
 $python = 'C:\Program Files\Blender Foundation\Blender 5.2\5.2\python\bin\python.exe'
 $installer = 'C:\Program Files\Blender Foundation\Blender 5.2\5.2\scripts\addons_core\bl_pkg\cli\blender_ext.py'
 
-# Use a new owned directory for each run. Verify the installed manifest;
-# process exit code alone did not reliably indicate installation success.
-& $python -I -S -B $installer install-files '<matching-extension.zip>' --local-dir '<fresh-local-repository>' --blender-version 5.2.2 --python-version 3.13.13
+# Each --work directory must be new. The script refuses to reuse an existing one.
+# Control: no child handle, expected successful installation and exit code 0.
+& $python -I -S -B .\native_rename_repro.py `
+    --installer $installer --blender-version 5.2.2 --work .\rename-clean
+
+# Reproduction: a real short-lived child handle, expected failure on the original installer.
+& $python -I -S -B .\native_rename_repro.py `
+    --installer $installer --blender-version 5.2.2 --work .\rename-held --hold-child
 ```
 
-This is intermittent. In the recorded ordinary-token series, 3 of 12 installs failed. A separate 5.1 series also captured failures.
+4. Compare the two `result.json` files. The control installs successfully. On the original installer, the held-child run returns exit code 1, has no installed manifest, and records the following fields:
 
-## Captured evidence
+```json
+{
+  "installer_return": false,
+  "manifest_matches": false,
+  "rename_attempts": [
+    {
+      "source_exists": true,
+      "destination_exists": false,
+      "status": "Failed",
+      "winerror": 5
+    }
+  ]
+}
+```
 
-The second WPR run elevated only the recorder; all installer workers remained non-administrative. FileIO Rename / OperationEnd captured `STATUS_ACCESS_DENIED (0xC0000022)` for installer PIDs 28056, 72656 and 14780.
+The installer also emits `Failed to rename directory for "rename_issue_fixture"` with `WinError 5`. The localized Windows error text and work-directory paths vary by machine.
 
-- Case 1: Pylance PID 135884 opened a child RST document 3.6 microseconds before the rename. Cleanup followed 8.8034 milliseconds after rename start, later than its denied completion.
-- Case 5: Codex desktop PID 150648 opened the `_vendor` child directory 22.8 microseconds before rename. Cleanup followed 64.3 microseconds after start; the denied operation ended at 206.5 microseconds.
-- Case 12: no remaining external child object was captured at rename start. Its exact holder is unconfirmed.
+5. To repeat on 5.1.1, use its matching bundled Python and installer paths and `--blender-version 5.1.1`, with new work-directory names. Work directories are retained for inspection.
 
-The second trace reports 2553 lost events. Cleaned file objects awaiting final Close and failed opens are not treated as live user handles. Some successful cases also have nearby editor activity; mere activity does not establish causation. Captured filter callback addresses map to `fileinfo.sys`, without final return-status attribution. No antivirus attribution is claimed.
+**How the controlled reproduction works**
 
-A third, separately authorized recording reduced unrelated providers and stacks. It again used 12 ordinary-token installers, without retry. Cases 3, 5 and 8 failed in Python and had no installed manifest; the other nine completed. xperf reports zero lost events and zero lost buffers. The recorder is stopped.
+The script loads the original file with `runpy`, then calls `subcmd_client._install_package_from_file_impl` on the generated ZIP. To control the timing, it temporarily wraps `os.rename` in this disposable diagnostic process. Immediately before the first staging-to-destination call, it opens a real child file handle, then calls the real `os.rename`. It does **not** inject an exception or replace the filesystem operation with a fake result. After the first native failure, it schedules the handle to close after 20 ms; the measured release delay is recorded in the JSON. The wrapper is restored and only the handle it owns is closed.
+````
 
-For each actual failure, Codex desktop `ChatGPT.exe` PID 150648 successfully opened a child directory during the rename interval (share mask 7):
+# Submission note
 
-| Case | Child | Open after Rename start | Cleanup after start | Associated FileIo OpEnd |
-| --- | --- | --- | --- | --- |
-| 3 | `_vendor` | 57.1 us | 111.0 us | 90.5 us, `0xC0000022` |
-| 5 | `_vendor` | 109.5 us | 180.6 us | 134.9 us, `0xC0000022` |
-| 8 | `_vendor/runtime` | 83.3 us | 948.5 us | 936.7 us, `0xC0000022` |
+建议提交。新增价值是两版原版安装器的独立确定性复现、真实子句柄和原版/修复对照；维护者可能将有限重试视为健壮性改进，是否按 bug 或 enhancement 接收由上游判断。
 
-Case 3 had no uncleaned external child object at Rename start. An inventory limited to the start instant would miss its later open. This strengthens the transient workspace-reader explanation, without identifying the holder in the second trace's historical case 12.
+标题填写上方 **Issue title**。正文已经按网页的四个栏目排列，可整体复制 **Issue body** 内的英文内容，或将各节分别粘贴到对应栏目；不要复制网页的 Instructions、Help the developers 提示，也不要把本节中文说明复制进正文。提交目标是 [Blender 源码仓库 Issues](https://projects.blender.org/blender/blender/issues)，不是 MCP 插件仓库。
 
-Two successful installations, cases 4 and 7, also have an associated FileIo OpEnd with `0xC0000022`. Case 4 was independently decoded with xperf, including its stack. The event is logged on the `fileinfo.sys` postoperation path; it is not a complete record of subsequent upper-filter processing. These are retained as local event observations, not counted as additional failed installations or attributed to a particular driver. Caller outcome and event outcome are separate fields in the analysis. The exact reason for the later successful Win32 outcome is unconfirmed.
+提交前先查看 [#130211](https://projects.blender.org/blender/blender/issues/130211)，并同时搜索开放和关闭的问题，例如 `Failed to rename directory`、`WinError 5`、`extension install`。已确认相关旧提交和当前源码，但 tracker 正文访问受限，尚未排除重复；若已有报告正在跟进同一触发条件，将本文作为补充证据。
 
-A controlled Win32 experiment separately opened either a child file or child directory with share masks 3 and 7. Parent DELETE access succeeded, but parent rename failed with WinError 5 until the owned child handle closed. It matches the directory-open-file restriction in Microsoft's [FileRenameInformation specification](https://learn.microsoft.com/en-us/openspecs/windows_protocols/ms-fsa/87f86c9b-6c2a-4803-84b7-131a74a434fa).
+在网页的 Drop files here 区域上传已准备的[附件 ZIP](../../build/latest/native-extension-rename-issue-attachments.zip)。其中包含以下两份已实际运行并核验的附件；脚本会自行生成最小扩展 ZIP，复现不需要 `.blend`、MCP 插件包或原始 ETL：
 
-## Expected behavior and tested recovery direction
+- [native_rename_repro.py](attachments/native_rename_repro.py)：独立标准库复现脚本。
+- [native-extension-rename-repro.json](evidence/native-extension-rename-repro.json)：八次实际运行结果，绑定原版/修复安装器和脚本 SHA-256。
 
-An installer should report the failure reliably and avoid treating an incomplete installation as usable. A short-lived external reader should have a bounded recovery path where safe.
+你本机的两版系统安装器已经打过补丁。若你自己复跑英文正文命令验证原版故障，应将 `$installer` 改为仓库保留的原版文件，例如 `build/latest/native-install-fix/blender-5.2.2/blender_ext.original.py` 的绝对路径；不必为了报告而还原系统文件。维护者使用干净的官方安装则可直接使用正文路径。
 
-A diagnostic-only retry around the original rename checked WinError 5, source-directory existence and destination absence, then used waits of 50/100/200/400/800 milliseconds. In 12 ordinary-token runs on each host, all 24 installations completed; 5.1 had one first-attempt failure and 5.2 had two. All three recovered on the first 50-millisecond retry. Reports still label those first attempts Failed.
+当前未运行最新 daily build，也未完成独立 GUI 点击复现，正文已明确标出。可通过 Blender 的 `Help > Report a Bug` 补入当前系统信息；不要把本地修复版本填写为已知正常的官方版本。官方要求见[有效 bug 报告指南](https://developer.blender.org/docs/handbook/bug_reports/making_good_bug_reports/)，去重和源码依据见[研究记录](../../.scratch/mcp-tool-reliability/native-rename-upstream-research.md)。
 
-This is evidence for a bounded recovery proposal, not a production patch or proof all WinError 5 failures are transient. Persistent permission failures, occupied destinations and other errors must remain failures. Upgrade rollback behavior and a host patch require separate validation.
-
-## Local evidence
-
-- `native-rename-trace-5.2-external-tests.json`, `findings.json`, `rename-context.json`
-- `native-rename-trace-5.2-external-focused-tests.json`, latest `findings.json`, `rename-context.json`, `worker-windows.json`, `case-4-events.csv`, and zero-loss `trace-statistics.txt`
-- Latest focused byte-verified `native-install.etl.gz`, retained locally; decompress before WPA inspection. Earlier full traces are retired with original/archive hashes and compact findings preserved
-- `windows-rename-contract-tests.json`
-- `windows-rename-sections-tests.json`: six successful renames while a child process retained only a data mapping, ruling out that narrow mapping-only explanation
-- `native-rename-5.1-bounded-retry-tests.json` and `native-rename-5.2-bounded-retry-tests.json`
-
-Raw ETL may include unrelated system/process data and should be reviewed before sharing. The relevant compact context and hashes can be supplied first. No external handles were forcibly closed and no security settings were changed.
+状态：已提交为 [Blender #165012](https://projects.blender.org/blender/blender/issues/165012)（2026-10-11，Type/Bug、Severity/Normal、Status/Needs Triage）；附件 ZIP 已随 issue 上传。若上游有新结论，更新本节并补充对应回复。
